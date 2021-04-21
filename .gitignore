@@ -2,6 +2,10 @@
 references/
 data/
 
+# Jupyter notebook files
+.ipynb_checkpoints/
+python/.ipynb_checkpoints/
+
 # History files
 .Rhistory
 .Rapp.history
