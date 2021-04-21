@@ -1,10 +1,10 @@
 # Install megaman package
 
-- Software requirements: 
+Software requirements: 
     
-    Anaconda/Miniconda
-    python versions 2.7, 3.5 or 3.6
-    a C++ compiler such as gcc/g++
+- Anaconda/Miniconda
+- python versions 2.7, 3.5 or 3.6
+- a C++ compiler such as gcc/g++
     
 Following the instructions from the [source](https://github.com/mmp2/megaman), the megaman package can be installed on MacOS or Linux system by running the following conda commands in the terminal. 
 
@@ -29,3 +29,9 @@ $ conda activate manifold_env
 $ pip install jupyter # install for the first time
 $ jupyter notebook
 ```
+
+# Jupyter notebook kernel
+
+Inside a jupyter notebook, set the kernel as `manifold_env` to run the code properly. 
+
+`Kernel -> Change Kernel -> manifold_env`
