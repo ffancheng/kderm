@@ -1,6 +1,6 @@
 library(tidyverse)
 # load("~/git/mlann_github_old/data/spdemand_3639id336tow.rda")
-load("~/git/mlann_github_old/data/spdemand_3id10tow.rda")
+load("~/git/mlann_github_old/data/spdemand_3639id336tow.rda")
 # spdemand <- spdemand %>% 
 #   # mutate(id = paste0(id, "_", tow)) %>% 
 #   select(-id, -tow)
