@@ -19,3 +19,5 @@ class(h_isomap)
 # they look quite different but the R and Python arrays are really the same
 (y <- py_to_r(h_isomap))
 r_to_py(y)
+y[1,,]
+
