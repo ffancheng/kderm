@@ -6,7 +6,7 @@
 ## points and checking would neutralize the performance gain, so bd
 ## trees are not really usable.
 
-makeKNNgraph <- function (x, k, eps = 0, annmethod = c("kdtree", "annoy", "hnsw"), nt = 50, search.k = 500, nlinks = 16, ef.construction = 200, diag = FALSE, distance = c("euclidean", "manhattan")){
+makeKNNgraph <- function (x, k, annmethod = c("kdtree", "annoy", "hnsw"), eps = 0, radius = 0, nt = 50, search.k = 500, nlinks = 16, ef.construction = 200, diag = FALSE, distance = c("euclidean", "manhattan"), treetype = c("kd", "bd"), searchtype = c("standard", "priority", "radius")){
   ## requireNamespace("RANN")
   ## requireNamespace("igraph")
   require(BiocNeighbors)
@@ -58,10 +58,12 @@ makeKNNgraph <- function (x, k, eps = 0, annmethod = c("kdtree", "annoy", "hnsw"
   
   switch(annmethod,
          "kdtree" = {
-           treetype <- "kd"                
-           searchtype <- "priority"
-           nn2res <- dplyr::case_when(distance=="euclidean" ~ RANN::nn2(data = x, query = x, k = k + 1, treetype = treetype, searchtype = searchtype, eps = eps),
-                                      distance=="manhattan" ~ RANN.L1::nn2(data = x, query = x, k = k + 1, treetype = treetype, searchtype = searchtype, eps = eps),
+           # treetype <- "kd"                
+           # searchtype <- "priority"
+           # if(is.null(k) == is.null(radius)) stop("Please specify either k or radius for k-d trees to find nearest neighbors, but not both. ")
+           
+           nn2res <- dplyr::case_when(distance=="euclidean" ~ RANN::nn2(data = x, query = x, k = k + 1, treetype = treetype, searchtype = searchtype, eps = eps, radius = radius),
+                                      distance=="manhattan" ~ RANN.L1::nn2(data = x, query = x, k = k + 1, treetype = treetype, searchtype = searchtype, eps = eps, radius = radius),
            )
            names(nn2res) <- c("nn.idx", "nn.dists")
            

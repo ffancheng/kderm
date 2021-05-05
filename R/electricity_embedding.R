@@ -4,6 +4,8 @@ library(dtplyr)
 library(reticulate)
 library(viridis)
 library(ks)
+Jmisc::sourceAll("R/sources")
+
 
 load("data/spdemand_3639id336tow.rda")
 nid <- 1
@@ -15,12 +17,21 @@ train <- spdemand %>%
          # id <= sort(unique(spdemand[,id]))[nid],
          id == 1003) %>%
   dplyr::select(-id, -tow) %>%
-  as.data.table()
+  data.table::as.data.table()
 N <- nrow(train)
 
 # Parameters fixed
 D <- 2
 K <- 20
+
+
+x <- train
+s <- 2
+k <- 20
+radius <- 1
+method <- "annIsomap"
+annmethod <- "kdtree"
+distance <- "euclidean"
 
 # RColorBrewer::display.brewer.all()
 # cols <- RColorBrewer::brewer.pal(6, "Blues")
