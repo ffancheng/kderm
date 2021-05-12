@@ -3,9 +3,12 @@ library(dimRed)
 library(dtplyr)
 library(reticulate)
 library(viridis)
-library(ks)
+# library(ks)
+library(hdrcde)
+library(igraph)
+library(seurat)
+library(matrixcalc)
 Jmisc::sourceAll("R/sources")
-
 
 load("data/spdemand_3639id336tow.rda")
 nid <- 1
@@ -21,44 +24,126 @@ train <- spdemand %>%
 N <- nrow(train)
 
 # Parameters fixed
-D <- 2
-K <- 20
-
-
 x <- train
 s <- 2
 k <- 20
-radius <- 1
 method <- "annIsomap"
 annmethod <- "kdtree"
 distance <- "euclidean"
+treetype = "kd"
+searchtype = "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
+radius <- .4
+metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype) 
+
+# Comparison of Isomap embedding plot
+par(mfrow = c(1, 2))
+plot(metric_isomap$embedding, col = viridis::viridis(24)) # metricML
+# plot(e@data@data, col = viridis::viridis(24)) # embedding from dimRed, same as metricML()
+emb_isomap <-
+  feather::read_feather("data/embedding_isomap_1id336tow.feather")
+plot(-emb_isomap$`0`, emb_isomap$`1`, col = viridis::viridis(24)) # embedding from megaman, radius = 0.4
+
+# Use adjacency matrix as input for metricML and dimRed, then the embedding should be close, as well as the Riemannian metric
+metric_isomap$adj_matrix # renormalized adjacency matrix
+metric_isomap$weighted_graph %>% is.connected()
+riem_isomap <- metric_isomap$rmetric
+riem_isomap[,,1] %>% 
+  # isSymmetric()
+  matrixcalc::is.positive.definite() # FALSE
+
+np = import("numpy")
+H_isomap <- np$load("data/hmatrix_isomap_1id336tow.npy")
+H_isomap[1,,, drop=TRUE] %>% 
+  matrixcalc::is.positive.definite() # TRUE
+
+pd <- rep(NA, N)
+for (i in 1:N) {
+  pd[i] <- riem_isomap[,,i] %>% 
+    # isSymmetric()
+    matrixcalc::is.positive.definite() # FALSE
+}
+pd %>% sum
+
+determinant(riem_isomap[,,i])
+r <- riem_isomap[,,i]
+eigen(r)
+
+## TODO: plot ellipse to show distortion
+library(ellipse)
+plotcorr(r)
+plotcorr(solve(r))
+
+
+
+
+
+
+# save.par <- par(ask = interactive())
+# Plot the correlation matrix for the mtcars data full model fit
+data(mtcars)
+fit <- lm(mpg ~ ., mtcars)
+plotcorr(summary(fit, correlation = TRUE)$correlation)
+# Plot a second figure with numbers in place of the
+# ellipses
+plotcorr(summary(fit, correlation = TRUE)$correlation, numbers = TRUE)
+# Colour the ellipses to emphasize the differences. The color range
+# is based on RColorBrewer's Reds and Blues (suggested by Gregor Gorjanc)
+corr.mtcars <- cor(mtcars)
+ord <- order(corr.mtcars[1,])
+xc <- corr.mtcars[ord, ord]
+colors <- c("#A50F15","#DE2D26","#FB6A4A","#FCAE91","#FEE5D9","white",
+            "#EFF3FF","#BDD7E7","#6BAED6","#3182BD","#08519C")
+plotcorr(xc, col=colors[5*xc + 6])
+plotcorr(xc, col=colors[5*xc + 6], type = "upper")
+plotcorr(xc, col=colors[5*xc + 6], type = "lower", diag = TRUE)
+# par(save.par)
+
+# Same as
+# e <- dimRed::embed(x,
+#                    .method = method,
+#                    knn = k,
+#                    ndim = s,
+#                    annmethod = annmethod,
+#                    radius = radius, 
+#                    eps = epsilon, 
+#                    nt = nt, 
+#                    nlinks = nlinks, 
+#                    ef.construction = ef.construction, 
+#                    distance = distance,
+#                    treetype = treetype,
+#                    searchtype = searchtype,
+#                    .mute = c("output")
+#                    
+# )
+# plot(e@data@data, col = viridis::viridis(24))
 
 # RColorBrewer::display.brewer.all()
 # cols <- RColorBrewer::brewer.pal(6, "Blues")
 
-
 # Check the embedding plot using R and Python
 # Isomap looks similar
 
-# dimRed embedding plot
-png("figures/dimred_embedding.png",
-    width = 800,
-    height = 600)
-par(mfrow = c(2, 2))
-for (i in 1:3) {
+# # dimRed embedding plot
+# png("figures/dimred_embedding.png",
+#     width = 800,
+#     height = 600)
+# par(mfrow = c(2, 2))
+# for (i in 1:3) {
+  
+  i=1
   method <- c("Isomap", "LLE", "LaplacianEigenmaps")[i]
   e <-
     dimRed::embed(
-      train,
+      x,
       .method = method,
-      knn = K,
-      ndim = D,
+      knn = k,
+      ndim = s,
       .mute = c("output")
     )
   # plot(e, type = "2vars")
   plot(e@data@data, col = viridis::viridis(24))
-}
-dev.off()
+# }
+# dev.off()
 
 # megaman embedding plot
 emb_isomap <-
@@ -118,7 +203,7 @@ ker.density <- function(x, h) {
     s[i] = 0
   for (i in 1:n) {
     for (j in 1:n)
-      s[i] = s[i] + exp(-((x[i] - x[j]) ^ 2) / (2 * h * h))
+      s[i] = s[i] + exp(-((x[i] - x[j]) ^ 2) / (2 * h * h)) # h^2?                      
     t[i] = s[i]
   }
   for (i in 1:n)
@@ -127,80 +212,107 @@ ker.density <- function(x, h) {
   hist(x, freq = FALSE)
   lines(z)
 }
+par(mfrow = c(1,1))
 ker.density(data, 0.8)
 
 
 # 2-d kde
-kde2d_mod <- function (data, h) {
-  # Data is a matrix
-  print(Sys.time()) #for timing
+mkde <- function (x, h) {
+  # Data is a matrix of n*d
+  # H is an array of dimension (d,d,n)
+  start <- Sys.time()
   
-  nx <- dim(data)[1]
-  if (dim(data)[2] != 2) 
-    stop("data vectors have only one variable")
-  if (any(!is.finite(data))) 
-    stop("missing or infinite values in the data are not allowed")
-  if (any(!is.finite(lims))) 
-    stop("only finite values are allowed in 'lims'")
+  n <- nrow(x)
+  if (dim(x)[2] < 2)
+    stop("Data matrix has only one variable.")
+  if (any(!is.finite(x))) 
+    stop("Missing or infinite values in the data are not allowed! ")
+  if (!all.equal(nrow(h), ncol(h), dim(x)[2]))
+    stop("The bandwidth matrix is of wrong dimension. ")
   
-  for (i in 2:n)
-    s[i] = 0
+  s <- rep(0, n)
+  y <- rep(0, n)
   for (i in 1:n) {
-    for (j in 1:n)
-      s[i] = s[i] + exp(-((x[i] - x[j]) ^ 2) %*% solve(2 * h %*% h))
-    t[i] = s[i]
+    for (j in 1:n){
+      s[i] <- s[i] + abs(det(h[,,i]))^(-1/2) * exp(- 1/2 * t(x[i,] - x[j,]) %*% solve(h[,,i]) %*% (x[i,] - x[j,]))
+    }
+    y[i] <- s[i] / (n * 2 * pi)
   }
-  for (i in 1:n)
-    y[i] = t[i] / (n * h * sqrt(2 * pi))
-  z = complex(re = x, im = y)
-  hist(x, freq = FALSE)
-  lines(z)
-  }
-  
-  print(Sys.time())
-  #Un-transpose the final data.
-  z<-t(matrix(z,n,n))
-  dim(z)<-c(n^2,1)
-  z<-as.vector(z)
-  return(z)
-}
+  print(Sys.time() - start) 
 
-kde2d_mod(data = as.matrix(emb_isomap[1, ]), h = H_isomap[1,,])
-          
-
-# kernel estimated in grid
-grid<- function(n,lims) {
-  num <- rep(n, length.out = 2L)
-  gx <- seq.int(lims[1L], lims[2L], length.out = num[1L])
-  gy <- seq.int(lims[3L], lims[4L], length.out = num[2L])
-  
-  v1=rep(gy,length(gx))
-  v2=rep(gx,length(gy))
-  v1<-matrix(v1, nrow=length(gy), ncol=length(gx))
-  v2<-t(matrix(v2, nrow=length(gx), ncol=length(gy)))
-  grid_out<-c(unlist(v1),unlist(v2))
-  
-  grid_out<-aperm(array(grid_out,dim=c(n,n,2)),c(3,2,1) ) #reshape
-  grid_out<-unlist(as.list(grid_out))
-  dim(grid_out)<-c(2,n^2)
-  grid_out<-t(grid_out)
-  return(grid_out)
+  return(y)
 }
+x = metric_isomap$embedding
+f <- mkde(x = metric_isomap$embedding, h = riem_isomap)
+# is.na(f) <- sapply(f, is.infinite)
+# matrixcalc::is.positive.definite(riem_isomap[,,1])
 
-# plotting
-kde2d_mod_plot<-function(kde2d_mod_output,n,lims){
-  num <- rep(n, length.out = 2L)
-  gx <- seq.int(lims[1L], lims[2L], length.out = num[1L])
-  gy <- seq.int(lims[3L], lims[4L], length.out = num[2L])
+
+# Plotting
+embed_den <- as_tibble(cbind(x = x[,1], y = x[,2], z = f)) %>%
+  drop_na() # %>% 
+  # arrange(x, y)
+
+embed_den_list <- list(x = embed_den$x, y = embed_den$y, z = embed_den$z)
+
+embed_den
+hdrscatterplot(embed_den$x, embed_den$y)
+hdrinfo <- hdr.2d(embed_den$x, embed_den$y, prob = c(50, 95, 99)) 
+plot.hdr2d(hdrinfo)
+# If density values are specified
+hdrinfo1 <- hdr.2d(embed_den$x, embed_den$y, prob = c(50, 95, 99), den = embed_den_list)
+plot.hdr2d(hdrinfo)
+filled.contour(x = embed_den$x, y = embed_den$y, z = embed_den$z)
+
+
+
+# Contour plot after interpolation
+library(akima)
+# ?interp()
+akima.spl <- interp(embed_den$x, embed_den$y, embed_den$z, nx=100, ny=100, linear=FALSE)
+p.zmin <- min(embed_den$z,na.rm=TRUE)
+p.zmax <- max(embed_den$z,na.rm=TRUE)
+breaks <- pretty(c(p.zmin,p.zmax),10)
+# colors <- heat.colors(length(breaks)-1)
+hdrscatterplot(embed_den$x, embed_den$y)
+plot.hdr2d(hdrinfo)
+contour(akima.spl, main = "smooth interp(*, linear = FALSE)", col = viridis(length(breaks)-1), levels=breaks, add=TRUE)
+points(embed_den, pch = 20)
+
+filled.contour(akima.spl, color.palette = viridis,
+               plot.axes = { axis(1); axis(2);
+                 title("smooth  interp(*, linear = FALSE)");
+                 points(embed_den, pch = 3, col= hcl(c=20, l = 10))})
+
+
+
+
+
+
+
+
+# library(gghdr)
+# ggplot(data = embed_den, aes(x, y)) +
+#   geom_point(aes(colour = hdr_bin(x, y, prob = c(50, 95, 99)/100))) +
+#   scale_colour_viridis_d(direction = -1) 
+# 
+#        
+# as_tibble(cbind(x, den = f)) %>%
+#   ggplot(aes(E1, E2)) + 
+#   geom_point() + 
+#   # geom_density2d_filled()
+#   # stat_density_2d(aes(fill = ..density..), geom = "raster", contour = "white")
+#   stat_density_2d(aes(fill = den), geom = "polygon", colour=FALSE) +
+#   scale_fill_distiller(palette=4, direction=-1)
   
-  v1=rep(gy,length(gx))
-  v2=rep(gx,length(gy))
-  v1<-matrix(v1, nrow=length(gy), ncol=length(gx))
-  v2<-t(matrix(v2, nrow=length(gx), ncol=length(gy)))
-  
-  image.plot(v1,v2,matrix(kde2d_mod_output,n,n))
-  map('world', fill = FALSE,add=TRUE)
-}
+
+
+
+
+
+
+
+
 
 
 ###############################################################################
@@ -219,45 +331,45 @@ kde2d_mod_plot<-function(kde2d_mod_output,n,lims){
 ## list with first d components with the points that the density
 ## estimate is evaluated at, and values of the density estimate
 ##############################################################################
-?ks::kde
-?ks::vkde
-
-i = 1
-for (i in 1:N) {
-  f_i <- ks:::kde.balloon.2d(x = as.matrix(emb_isomap[i, ]),
-                             H = H_isomap[i, , ])
-  plot(f_i, display = "persp")
-  
-}
-
-
-data(worldbank)
-wb <- as.matrix(na.omit(worldbank[, 4:5]))
-xmin <- c(-70, -25)
-xmax <- c(25, 70)
-fhat <- kde(x = wb, xmin = xmin, xmax = xmax)
-fhat.sp <- kde.sp(x = wb, xmin = xmin, xmax = xmax)
-plot(
-  fhat,
-  display = "persp",
-  box = TRUE,
-  phi = 20,
-  zlim = c(0, max(fhat.sp$estimate))
-)
-plot(
-  fhat.sp,
-  display = "persp",
-  box = TRUE,
-  phi = 20,
-  zlim = c(0, max(fhat.sp$estimate))
-)
-if (interactive()) {
-  fhat.ball <- kde.balloon(x = wb, xmin = xmin, xmax = xmax)
-  plot(
-    fhat.ball,
-    display = "persp",
-    box = TRUE,
-    phi = 20,
-    zlim = c(0, max(fhat.sp$estimate))
-  )
-}
+# ?ks::kde
+# ?ks::vkde
+# 
+# i = 1
+# for (i in 1:N) {
+#   f_i <- ks:::kde.balloon.2d(x = as.matrix(emb_isomap[i, ]),
+#                              H = H_isomap[i, , ])
+#   plot(f_i, display = "persp")
+#   
+# }
+# 
+# 
+# data(worldbank)
+# wb <- as.matrix(na.omit(worldbank[, 4:5]))
+# xmin <- c(-70, -25)
+# xmax <- c(25, 70)
+# fhat <- kde(x = wb, xmin = xmin, xmax = xmax)
+# fhat.sp <- kde.sp(x = wb, xmin = xmin, xmax = xmax)
+# plot(
+#   fhat,
+#   display = "persp",
+#   box = TRUE,
+#   phi = 20,
+#   zlim = c(0, max(fhat.sp$estimate))
+# )
+# plot(
+#   fhat.sp,
+#   display = "persp",
+#   box = TRUE,
+#   phi = 20,
+#   zlim = c(0, max(fhat.sp$estimate))
+# )
+# if (interactive()) {
+#   fhat.ball <- kde.balloon(x = wb, xmin = xmin, xmax = xmax)
+#   plot(
+#     fhat.ball,
+#     display = "persp",
+#     box = TRUE,
+#     phi = 20,
+#     zlim = c(0, max(fhat.sp$estimate))
+#   )
+# }

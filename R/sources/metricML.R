@@ -132,10 +132,10 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   ###--------------------------
   # Step4: embedding metric hn, inverse of the Riemannian matrix, symmetric
   ###--------------------------
-  hn <- riemann_metric(Y = fn, laplacian = Ln, ndim = s, invert.h = F) # array of N*s*s
+  hn <- riemann_metric(Y = fn, laplacian = Ln, ndim = s, invert.h = T) # array of N*s*s
   
   return(list(embedding=fn, rmetric=hn, 
-              # weighted_graph=g, 
+              weighted_graph=g,
               adj_matrix=Kn))
 }
 
@@ -161,7 +161,7 @@ Laplacian <- function(W, radius){
 # The Riemannian metric and its dual associated with an embedding Y. 
 # The Riemannian metric is currently denoted by G, its dual by H, and the Laplacian by L. 
 # G at each point is the matrix inverse of H.
-riemann_metric <- function(Y, laplacian, ndim, invert.h = FALSE){
+riemann_metric <- function(Y, laplacian, ndim, invert.h = TRUE){
   
   H <- array(NA, dim = c(ndim, ndim, nrow(Y)))
   
@@ -173,10 +173,21 @@ riemann_metric <- function(Y, laplacian, ndim, invert.h = FALSE){
     }
   }
   
+  # Array H corresponds to \tilde{H} in Step 4(a)
+  # The embedding metric H is the pseudo inverse of \tilde{H}
+  # for (i in 1:nrow(Y)) {
+  #   Hsvals <- eigen(H[,,i])
+  #   Huu <- Hsvals$vectors
+  #   Hvv <- Hsvals$values[1:ndim]
+  #   Hvv1 <- diag(x = 1 / Hvv)
+  #   H[,,i] <- Huu %*% Hvv1 %*% t(Huu)
+  #   H[, , i] <- 0.5 * (H[, , i] + t(H[, , i]))
+  # }
+  
   
   if(invert.h){
     for (i in 1:nrow(Y)) {
-      H[, , i] <- solve(H[, , i]) 
+      H[, , i] <- solve(H[, , i])
       H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
     }
   }
@@ -184,3 +195,6 @@ riemann_metric <- function(Y, laplacian, ndim, invert.h = FALSE){
   return(H)
 }
 
+# a <- H[,,1]
+# eigen(a)
+# is.positive.definite(a) # FALSE
