@@ -123,7 +123,7 @@
                             org.data     = orgdata,
                             running.time = c(knn_time, dijkstra_time, eigen_time),
                             nn.idx       = knng$nn2res$nn.idx,
-                            nn.dists     = knng$nn2res$nn.dists,
+                            # nn.dists     = knng$nn2res$nn.dists,
                             has.org.data = keep.org.data,
                             # apply        = appl,
                             has.apply    = TRUE,
