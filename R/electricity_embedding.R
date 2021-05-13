@@ -65,15 +65,25 @@ for (i in 1:N) {
 pd %>% sum
 
 determinant(riem_isomap[,,i])
-r <- riem_isomap[,,i]
-eigen(r)
+mat <- riem_isomap[,,i]
+eigen(mat)
 
 ## TODO: plot ellipse to show distortion
+emb <- metric_isomap$embedding
+i = 1
+mat <- riem_isomap[,,i] # not positive definite
+center <- c(emb[i,1], emb[i,2])
+
+mat <- matrix(c(2.2, 0.4, 0.4, 2.8), nrow=2) # covariance matrix -> cov(dataMatrix)
+
 library(ellipse)
-plotcorr(r)
-plotcorr(solve(r))
+# plotcorr(mat)
+# plotcorr(solve(mat))
+plot(ellipse::ellipse(mat, center = center, scale = c(1,1)), type = "l")
 
-
+car::ellipse(center, shape=mat, radius=1, col="red", lty=2)
+# library(mixtools)
+mixtools::ellipse(mu = center, sigma = mat, type = "l")
 
 
 
