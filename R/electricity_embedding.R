@@ -21,6 +21,9 @@ train <- spdemand %>%
          id == 1003) %>%
   dplyr::select(-id, -tow) %>%
   data.table::as.data.table()
+
+saveRDS(train, file = "data/spdemand_1id336tow_train.rds")
+
 N <- nrow(train)
 
 # Parameters fixed
@@ -56,11 +59,13 @@ H_isomap <- np$load("data/hmatrix_isomap_1id336tow.npy")
 H_isomap[1,,, drop=TRUE] %>% 
   matrixcalc::is.positive.definite() # TRUE
 
-pd <- rep(NA, N)
+pd <- rep(NA, N*2)
 for (i in 1:N) {
-  pd[i] <- riem_isomap[,,i] %>% 
+  riem_isomap[,,i] %>% 
     # isSymmetric()
-    matrixcalc::is.positive.definite() # FALSE
+    # matrixcalc::is.positive.definite() # FALSE
+    eigen(,only.values = T) %>% 
+    print()
 }
 pd %>% sum
 
@@ -188,7 +193,7 @@ H_isomap[1, , ] # the matrix for the first data point
 
 
 # Variable kernel density estimate
-# hat(f)(x) = n^(-1) sum_i K_H (x - X_i).
+# \hat{f}(x) = n^{-1} \sum_i K_H (x - X_i)
 
 # calculate the density estimate for each point in emb_isomap with each H matrix, H_isomap[i,,]
 
