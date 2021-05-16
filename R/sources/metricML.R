@@ -128,11 +128,12 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   )
   fn <- e@data@data
   colnames(fn) <- paste0("E", 1:s)
+  fn[,1] <- -fn[,1]
   
   ###--------------------------
   # Step4: embedding metric hn, inverse of the Riemannian matrix, symmetric
   ###--------------------------
-  hn <- riemann_metric(Y = fn, laplacian = Ln, ndim = s, invert.h = T) # array of N*s*s
+  hn <- riemann_metric(Y = fn, laplacian = Ln, ndim = s, invert.h = F) # array of N*s*s
   
   return(list(embedding=fn, rmetric=hn, 
               weighted_graph=g,
