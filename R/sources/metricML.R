@@ -13,7 +13,7 @@
 #' @param treetype Character vector specifying the standard 'kd' tree or a 'bd' (box-decomposition, AMNSW98) tree which may perform better for larger point sets. See details in ?RANN::nn2
 #' @param searchtype Search types: priority visits cells in increasing order of distance from the query point, and hence, should converge more rapidly on the true nearest neighbour, but standard is usually faster for exact searches. radius only searches for neighbours within a specified radius of the point. If there are no neighbours then nn.idx will contain 0 and nn.dists will contain 1.340781e+154 for that point. See details in ?RANN::nn2
 #' 
-#' @return A list of the embedding coordinates \code{fn} and the embedding metric \code{hn} for each point \code{p} \in \code{x}. \code{fn} is a matrix of dimension \code{n} \times \code{n}, while \code{hn} is an array of dimension \code{n} \times \code{s} \times \code{s}
+#' @return A list of the embedding coordinates \code{fn} and the embedding metric \code{hn} for each point \code{p} \in \code{x}. \code{fn} is a matrix of dimension \code{n} \times \code{s}, while \code{hn} is an array of dimension \code{n} \times \code{s} \times \code{s}
 #' 
 #' @references Perraul-Joncas, D., and Meila, M. (2013), "Non-linear dimensionality reduction: Riemannian metric estimation and the problem of geometric discovery," arXiv:1305.7255[stat.ML].
 #' 
@@ -128,7 +128,8 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   )
   fn <- e@data@data
   colnames(fn) <- paste0("E", 1:s)
-  fn[,1] <- -fn[,1]
+  fn[,1] <- -fn[,1] # try flipping coordinates for each point?
+  fn[,2] <- -fn[,2]
   
   ###--------------------------
   # Step4: embedding metric hn, inverse of the Riemannian matrix, symmetric
@@ -145,13 +146,12 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
 # Function for graph Laplacian
 # Input: W: N*N weight matrix for the neighborhood graph, radius: bandwidth parameter
 # Output: L: N*N graph Laplacian matrix
-Laplacian <- function(W, radius){
+Laplacian <- function(W, radius, lambda = 1){
   
-  Tn <- Matrix::Diagonal(x = 1 / rowSums(W)) # inverse of a diagonal matrix
-  # temp <- solve(Tn)
-  W1 <- Tn %*% W %*% Tn
-  Tn1 <- Matrix::Diagonal(x = 1 / rowSums(W1)) # inverse of Tn1
-  L <- (Matrix::Diagonal(nrow(W)) - Tn1 %*% W1) / radius
+  D <- Matrix::Diagonal(x = rowSums(W)^(-lambda)) # inverse of a diagonal matrix
+  W1 <- D %*% W %*% D
+  D1 <- Matrix::Diagonal(x = 1 / rowSums(W1)) # inverse of Tn1
+  L <- (D1 %*% W1 - Matrix::Diagonal(nrow(W))) / (radius / 4) # c=1/4 for heat kernel, depending on the choice of weights
   
   return(L)
 }
