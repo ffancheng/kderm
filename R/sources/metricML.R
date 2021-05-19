@@ -68,7 +68,7 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
     as_tibble() %>% 
     mutate(row.idx = rep(1:N, times = k+1)) %>% 
     filter(nn.idx!=0) %>% 
-    mutate(weights = exp(- nn.dists / (radius^2))) %>% 
+    mutate(weights = exp(- nn.dists / (radius ^ 2))) %>% 
     arrange(row.idx)
   # View(closest)
   
@@ -78,7 +78,7 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
     to   = closest$nn.idx,
     attr = "weight"] <-
     closest$weights # k_radius(p,p')
-  # is.connected(g)
+  if(!is.connected(g)) stop("Neighborhood graph not connected. Please select a larger k/radius. ")
   
   # for(i in 1:nrow(closest)){
   #   Kn[closest$row.idx[i], closest$nn.idx[i]] <- closest$weights[i]
@@ -103,7 +103,7 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   ## Step2: Laplacian matrix
   ###--------------------------
   # igraph::laplacian_matrix(g)
-  Ln <- Laplacian(W = Kn, radius = radius)
+  Ln <- Laplacian(W = Kn, radius = radius, lambda = 1)
   
 
   ###--------------------------
@@ -134,9 +134,10 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   ###--------------------------
   # Step4: embedding metric hn, inverse of the Riemannian matrix, symmetric
   ###--------------------------
-  hn <- riemann_metric(Y = fn, laplacian = Ln, d = s, invert.h = F) # array of N*s*s
+  hn <- riemann_metric(Y = fn, laplacian = Ln, d = s) # array of N*s*s
   
-  return(list(embedding=fn, rmetric=hn, 
+  return(list(embedding=fn, 
+              rmetric=hn, 
               weighted_graph=g,
               adj_matrix=Kn))
 }
@@ -151,7 +152,7 @@ Laplacian <- function(W, radius, lambda = 1){
   D <- Matrix::Diagonal(x = rowSums(W)^(-lambda)) # inverse of a diagonal matrix
   W1 <- D %*% W %*% D
   D1 <- Matrix::Diagonal(x = 1 / rowSums(W1)) # inverse of Tn1
-  L <- (D1 %*% W1 - Matrix::Diagonal(nrow(W))) / (radius / 4) # c=1/4 for heat kernel, depending on the choice of weights
+  L <- 1 / (radius^2 / 4) * (D1 %*% W1 - Matrix::Diagonal(nrow(W))) # c=1/4 for heat kernel, depending on the choice of weights
   
   return(L)
 }
@@ -164,6 +165,8 @@ Laplacian <- function(W, radius, lambda = 1){
 # The Riemannian metric is currently denoted by G, its dual metric by H, and the Laplacian by L. 
 # G at each point is the matrix inverse of H.
 riemann_metric <- function(Y, laplacian, d){
+  
+  # TODO: add dimension check for all inputs
   
   H <- array(NA, dim = c(d, d, nrow(Y)))
   
@@ -181,10 +184,10 @@ riemann_metric <- function(Y, laplacian, d){
   for (i in 1:nrow(Y)) {
     Hsvals <- eigen(H[ , ,i])
     Huu <- Hsvals$vectors
-    Hvv <- Hsvals$values[1:d] # top d largest eigenvalues
+    Hvv <- Hsvals$values[1:d] # top d largest eigenvalues, already sorted in decreasing order
     Hvv1 <- diag(x = 1 / Hvv)
     H[ , ,i] <- Huu %*% Hvv1 %*% t(Huu)
-    # H[, , i] <- 0.5 * (H[, , i] + t(H[, , i]))
+    H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
   }
   
   
