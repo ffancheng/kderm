@@ -111,7 +111,7 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   ###--------------------------
   e <- dimRed::embed(x,
                      .method = method,
-                     knn = 100,
+                     knn = k,
                      ndim = s,
                      annmethod = annmethod,
                      radius = radius, 
@@ -128,13 +128,13 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   )
   fn <- e@data@data
   colnames(fn) <- paste0("E", 1:s)
-  fn[,1] <- -fn[,1] # try flipping coordinates for each point?
-  fn[,2] <- -fn[,2]
+  # fn[,1] <- -fn[,1] # try flipping coordinates for each point?
+  # fn[,2] <- -fn[,2]
   
   ###--------------------------
   # Step4: embedding metric hn, inverse of the Riemannian matrix, symmetric
   ###--------------------------
-  hn <- riemann_metric(Y = fn, laplacian = Ln, ndim = s, invert.h = F) # array of N*s*s
+  hn <- riemann_metric(Y = fn, laplacian = Ln, d = s, invert.h = F) # array of N*s*s
   
   return(list(embedding=fn, rmetric=hn, 
               weighted_graph=g,
@@ -160,38 +160,40 @@ Laplacian <- function(W, radius, lambda = 1){
 
 # Function for Riemannian metric for each point
 # The Riemannian metric and its dual associated with an embedding Y. 
-# The Riemannian metric is currently denoted by G, its dual by H, and the Laplacian by L. 
+# The intrinsic dimension d
+# The Riemannian metric is currently denoted by G, its dual metric by H, and the Laplacian by L. 
 # G at each point is the matrix inverse of H.
-riemann_metric <- function(Y, laplacian, ndim, invert.h = TRUE){
+riemann_metric <- function(Y, laplacian, d){
   
-  H <- array(NA, dim = c(ndim, ndim, nrow(Y)))
+  H <- array(NA, dim = c(d, d, nrow(Y)))
   
-  for (i in 1:ndim) {
-    for (j in i:ndim) {
+  for (i in 1:d) {
+    for (j in i:d) {
       yij <- Y[, i] * Y[, j]
-      H[i, j, ] <- as.vector(0.5 * (laplacian %*% yij - Y[, i] * (laplacian %*% Y[, i]) - Y[, j] * (laplacian %*% Y[, j])))
+      H[i, j, ] <- as.vector(0.5 * (laplacian %*% yij - Y[, i] * (laplacian %*% Y[, j]) - Y[, j] * (laplacian %*% Y[, i])))
       H[j, i, ] <- H[i, j, ] # symmetric matrix
     }
   }
   
-  # Array H corresponds to \tilde{H} in Step 4(a)
-  # The embedding metric H is the pseudo inverse of \tilde{H}
-  # for (i in 1:nrow(Y)) {
-  #   Hsvals <- eigen(H[,,i])
-  #   Huu <- Hsvals$vectors
-  #   Hvv <- Hsvals$values[1:ndim]
-  #   Hvv1 <- diag(x = 1 / Hvv)
-  #   H[,,i] <- Huu %*% Hvv1 %*% t(Huu)
-  #   H[, , i] <- 0.5 * (H[, , i] + t(H[, , i]))
-  # }
-  
-  
-  if(invert.h){
-    for (i in 1:nrow(Y)) {
-      H[, , i] <- solve(H[, , i])
-      H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
-    }
+  ## Pseudo inverse of H gives the final embedding metric h
+  ## Array H corresponds to \tilde{H} in Step 4(a)
+  ## The embedding metric H is the pseudo inverse of \tilde{H}
+  for (i in 1:nrow(Y)) {
+    Hsvals <- eigen(H[ , ,i])
+    Huu <- Hsvals$vectors
+    Hvv <- Hsvals$values[1:d] # top d largest eigenvalues
+    Hvv1 <- diag(x = 1 / Hvv)
+    H[ , ,i] <- Huu %*% Hvv1 %*% t(Huu)
+    # H[, , i] <- 0.5 * (H[, , i] + t(H[, , i]))
   }
+  
+  
+  # if(invert.h){
+  #   for (i in 1:nrow(Y)) {
+  #     H[, , i] <- solve(H[, , i])
+  #     H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
+  #   }
+  # }
 
   return(H)
 }
