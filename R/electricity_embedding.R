@@ -22,7 +22,7 @@ train <- spdemand %>%
   dplyr::select(-id, -tow) %>%
   data.table::as.data.table()
 
-saveRDS(train, file = "data/spdemand_1id336tow_train.rds")
+# saveRDS(train, file = "data/spdemand_1id336tow_train.rds")
 
 N <- nrow(train)
 
@@ -59,12 +59,14 @@ H_isomap <- np$load("data/hmatrix_isomap_1id336tow.npy")
 H_isomap[1,,, drop=TRUE] %>% 
   matrixcalc::is.positive.definite() # TRUE
 
-pd <- rep(NA, N*2)
+pd <- rep(NA, N)
 for (i in 1:N) {
-  riem_isomap[,,i] %>% 
+  # pd[i] <- 
+  riem_isomap[,,i] %>%  # R
+  # H_isomap[i,,, drop=TRUE] %>% # Python
     # isSymmetric()
     # matrixcalc::is.positive.definite() # FALSE
-    eigen(,only.values = T) %>% 
+    eigen(only.values = T) %>%
     print()
 }
 pd %>% sum

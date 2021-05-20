@@ -190,14 +190,12 @@ riemann_metric <- function(Y, laplacian, d){
     H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
   }
   
-  
   # if(invert.h){
   #   for (i in 1:nrow(Y)) {
   #     H[, , i] <- solve(H[, , i])
   #     H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
   #   }
   # }
-
   return(H)
 }
 
