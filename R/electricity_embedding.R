@@ -92,7 +92,16 @@ car::ellipse(center, shape=mat, radius=1, col="red", lty=2)
 # library(mixtools)
 mixtools::ellipse(mu = center, sigma = mat, type = "l")
 
-
+# Ellipse plot centered at each point with the covariance matrix as the Riem matrix
+for(i in 1:N){
+  mat <- riem_isomap[,,i]
+  center <- c(x[i,1], x[i,2])
+  add <- ifelse(i == 1, F, T)
+  car::ellipse(center, mat, radius = .002, 
+               col = blues9[5], asp = 1, pty = "s", lwd = 1, center.pch = 19, center.cex = 0,
+               fill = T, fill.alpha = 0.2, add = add, grid = T,
+               xlim = c(-.2, .25), ylim = c(-.2, .2))
+}
 
 
 # save.par <- par(ask = interactive())
