@@ -11,7 +11,7 @@
 #' @param nlinks The number of links parameter for HNSW algorithm
 #' @param distance The distance measure to be used in finding nearest neighbors, either \code{"euclidean"} or \code{"manhattan}
 #' @param treetype Character vector specifying the standard 'kd' tree or a 'bd' (box-decomposition, AMNSW98) tree which may perform better for larger point sets. See details in ?RANN::nn2
-#' @param searchtype Search types: priority visits cells in increasing order of distance from the query point, and hence, should converge more rapidly on the true nearest neighbour, but standard is usually faster for exact searches. radius only searches for neighbours within a specified radius of the point. If there are no neighbours then nn.idx will contain 0 and nn.dists will contain 1.340781e+154 for that point. See details in ?RANN::nn2
+#' @param searchtype Search types: priority visits cells in increasing order of distance from the query point, and hence, should converge more rapidly on the true nearest neighbour, but standard is usually faster for exact searches. Radius only searches for neighbours within a specified radius of the point. If there are no neighbours then nn.idx will contain 0 and nn.dists will contain 1.340781e+154 for that point. See details in ?RANN::nn2
 #' 
 #' @return A list of the embedding coordinates \code{fn} and the embedding metric \code{hn} for each point \code{p} \in \code{x}. \code{fn} is a matrix of dimension \code{n} \times \code{s}, while \code{hn} is an array of dimension \code{n} \times \code{s} \times \code{s}
 #' 
@@ -24,7 +24,7 @@
 #' metricML(x, s = 3, k = 10, method = "annLLE", annmethod = "annoy", nt = 50, distance = "manhattan")
 #' 
 metricML <- function(x, s, k = min(10, nrow(x)), radius = 0, 
-                     # adjacency_graph = NULL, 
+                     adjacency = NULL, 
                      method, annmethod = c("kdtree", "annoy", "hnsw"), 
                      eps = 0, nt = 50, nlinks = 16, ef.construction = 200,
                      distance = c("euclidean", "manhattan"), diag = FALSE,
@@ -42,10 +42,11 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
     k <- N - 1
   }
   
-  # TODO: input as the NN graph, skip Step1, but assign weights
-  # if(is.null(adjacency_graph)){
-  #
-  # }
+  # TODO: input as the adjacency matrix, skip Step1, but assign weights
+  if(!is.null(affinity)){
+    
+  }
+
   
   ###--------------------------
   ## Step1: similarity matrix, symmetric
@@ -68,7 +69,7 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
     as_tibble() %>% 
     mutate(row.idx = rep(1:N, times = k+1)) %>% 
     filter(nn.idx!=0) %>% 
-    mutate(weights = exp(- nn.dists / (radius ^ 2))) %>% 
+    mutate(weights = exp(- (nn.dists / radius) ^ 2)) %>%  # the weights
     arrange(row.idx)
   # View(closest)
   
@@ -198,7 +199,3 @@ riemann_metric <- function(Y, laplacian, d){
   # }
   return(H)
 }
-
-# a <- H[,,1]
-# eigen(a)
-# is.positive.definite(a) # FALSE
