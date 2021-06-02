@@ -14,6 +14,7 @@
 #' @param distance The distance measure to be used in finding nearest neighbors, either \code{"euclidean"} or \code{"manhattan}
 #' @param treetype Character vector specifying the standard 'kd' tree or a 'bd' (box-decomposition, AMNSW98) tree which may perform better for larger point sets. See details in ?RANN::nn2
 #' @param searchtype Search types: priority visits cells in increasing order of distance from the query point, and hence, should converge more rapidly on the true nearest neighbour, but standard is usually faster for exact searches. Radius only searches for neighbours within a specified radius of the point. If there are no neighbours then nn.idx will contain 0 and nn.dists will contain 1.340781e+154 for that point. See details in ?RANN::nn2
+#' @param invert.h Whether the Riemannian metric needs to be inverted. By default it is FALSE
 #' 
 #' @return A list of the embedding coordinates \code{fn} and the embedding metric \code{hn} for each point \code{p} \in \code{x}. \code{fn} is a matrix of dimension \code{n} \times \code{s}, while \code{hn} is an array of dimension \code{n} \times \code{s} \times \code{s}
 #' 
@@ -32,9 +33,11 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
                      distance = c("euclidean", "manhattan"), diag = FALSE,
                      treetype = c("kd", "bd"),
                      searchtype = c("standard", "priority", "radius"),
+                     invert.h = TRUE,
                      ...
                      ){
-  # TODO: input as the adjacency matrix, skip Step1, but assign weights
+  
+  # TODO: input as the adjacency/affinity matrix, skip Step1
   if(is.null(x)){
     
     if(!is.null(affinity)){
@@ -60,7 +63,6 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
       if(radius <= 0) stop("Please specify a positive value for `radius` when using radius search. ")
       k <- N - 1
     }
-    
     
     ###--------------------------
     ## Step1: similarity matrix, symmetric
@@ -110,32 +112,33 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   ###--------------------------
   ## Step3: embedding coordinates fn
   ###--------------------------
-  e <- dimRed::embed(x,
-                     .method = method,
-                     knn = k,
-                     ndim = s,
-                     annmethod = annmethod,
-                     radius = radius, 
-                     eps = eps,
-                     nt = nt,
-                     nlinks = nlinks,
-                     ef.construction = ef.construction,
-                     distance = distance,
-                     treetype = treetype,
-                     searchtype = searchtype,
-                     .mute = c("output"),
-                     ...
-                     
-  )
-  fn <- e@data@data
+  # e <- dimRed::embed(x,
+  #                    .method = method,
+  #                    knn = k,
+  #                    ndim = s,
+  #                    annmethod = annmethod,
+  #                    radius = radius, 
+  #                    eps = eps,
+  #                    nt = nt,
+  #                    nlinks = nlinks,
+  #                    ef.construction = ef.construction,
+  #                    distance = distance,
+  #                    treetype = treetype,
+  #                    searchtype = searchtype,
+  #                    .mute = c("output"),
+  #                    ...
+  #                    
+  # )
+  # fn <- e@data@data
+  
+  geodist <- igraph::distances(g, algorithm = "dijkstra")
+  fn <- cmdscale(geodist, k = 2)
   colnames(fn) <- paste0("E", 1:s)
-  # fn[,1] <- -fn[,1] # try flipping coordinates for each point?
-  # fn[,2] <- -fn[,2]
   
   ###--------------------------
   # Step4: embedding metric hn, inverse of the Riemannian matrix, symmetric
   ###--------------------------
-  hn <- riemann_metric(Y = fn, laplacian = Ln, d = s) # array of N*s*s
+  hn <- riemann_metric(Y = fn, laplacian = Ln, d = s, invert.h = invert.h) # array of N*s*s
   
   return(list(embedding=fn, 
               rmetric=hn, 
@@ -153,7 +156,7 @@ Laplacian <- function(W, radius, lambda = 1){
   D <- Matrix::Diagonal(x = rowSums(W)^(-lambda)) # inverse of a diagonal matrix
   W1 <- D %*% W %*% D
   D1 <- Matrix::Diagonal(x = 1 / rowSums(W1)) # inverse of Tn1
-  L <- 1 / (radius^2 / 4) * (D1 %*% W1 - Matrix::Diagonal(nrow(W))) # c=1/4 for heat kernel, depending on the choice of weights
+  L <- 4 / (radius^2) * (D1 %*% W1 - Matrix::Diagonal(nrow(W))) # c=1/4 for heat kernel, depending on the choice of weights
   
   return(L)
 }
@@ -165,7 +168,8 @@ Laplacian <- function(W, radius, lambda = 1){
 # The intrinsic dimension d
 # The Riemannian metric is currently denoted by G, its dual metric by H, and the Laplacian by L. 
 # G at each point is the matrix inverse of H.
-riemann_metric <- function(Y, laplacian, d){
+# `invert.h` controls whether the dual metric should be returned or not.
+riemann_metric <- function(Y, laplacian, d, invert.h = FALSE){
   
   # TODO: add dimension check for all inputs
   
@@ -191,11 +195,12 @@ riemann_metric <- function(Y, laplacian, d){
     H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
   }
   
-  # if(invert.h){
-  #   for (i in 1:nrow(Y)) {
-  #     H[, , i] <- solve(H[, , i])
-  #     H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
-  #   }
-  # }
+  if(invert.h){
+    for (i in 1:nrow(Y)) {
+      H[, , i] <- solve(H[, , i])
+      H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
+    }
+  }
+  
   return(H)
 }

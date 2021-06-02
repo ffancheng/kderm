@@ -64,7 +64,11 @@
                               ## TODO: add regularization
                               k <- geodist ^ 2
                               k <- .Call(stats:::C_DoubleCentre, k)
+                              # k <- multivariance:::double.center(k, normalize = T)
+                              # k <- energy::D_center(k)
                               k <- - k / 2
+                              # k[1:5,1:5]
+                              
                               ## TODO: explicit symmetrizing
                               ## TODO: return eigenvectors?
                               e <- RSpectra::eigs_sym(k, pars$ndim, which = "LA",

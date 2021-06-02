@@ -102,7 +102,7 @@ makeKNNgraph <- function (x, k = min(10,nrow(x)), annmethod = c("kdtree", "annoy
     as_tibble() %>% 
     mutate(row.idx = rep(1:N, times = k+1)) %>% 
     filter(nn.idx!=0) %>% 
-    mutate(weights = exp(- nn.dists / (radius^2))) %>% 
+    mutate(weights = exp(- (nn.dists / radius)^2)) %>% 
     arrange(row.idx)
   
   # Now construct the graph
