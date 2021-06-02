@@ -4,6 +4,8 @@
 #' @param s The number of the dimensions of the embedding
 #' @param k The number of nearest neighbors in manifold learning
 #' @param radius The bandwidth parameter for radius nearest neighbor searching 
+#' @param adjacency The adjacency matrix of the data of dimension \code{n*n}, NULL by default
+#' @param affinity The weighted adjacency matrix with gaussian kernel of dimension \code{n*n}, NULL by default
 #' @param method The manifold learning algorithm to be applied to the data \code{x}
 #' @param annmethod The approximate nearest neighbor searching method to be applied in manifold learning. The three methods are \code{"kdtree"}, \code{"annoy"}, and \code{"hnsw"}, but only \code{"kdtree"} is implemented for radius search now
 #' @param eps The parameter for k-d trees to search within \code{(1+epsilon)*distance} radius
@@ -24,7 +26,7 @@
 #' metricML(x, s = 3, k = 10, method = "annLLE", annmethod = "annoy", nt = 50, distance = "manhattan")
 #' 
 metricML <- function(x, s, k = min(10, nrow(x)), radius = 0, 
-                     adjacency = NULL, 
+                     adjacency = NULL, affinity = NULL,
                      method, annmethod = c("kdtree", "annoy", "hnsw"), 
                      eps = 0, nt = 50, nlinks = 16, ef.construction = 200,
                      distance = c("euclidean", "manhattan"), diag = FALSE,
@@ -32,74 +34,72 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
                      searchtype = c("standard", "priority", "radius"),
                      ...
                      ){
-  
-  N <- nrow(x)
-  
-  # if(is.null(k) == is.null(radius)) stop("Please specify either k or radius for k-d trees to find nearest neighbors, but not both. ")
-  # When there are more than `k` NNs found using radius search, print k NNs instead of 10. RANN::nn2() only prints `k` NNs
-  if(searchtype == "radius"){
-    if(radius <= 0) stop("Please specify a positive value for `radius` when using radius search. ")
-    k <- N - 1
-  }
-  
   # TODO: input as the adjacency matrix, skip Step1, but assign weights
-  if(!is.null(affinity)){
+  if(is.null(x)){
+    
+    if(!is.null(affinity)){
+      if(nrow(affinity) != ncol(affinity)) stop("The affinity matrix of the data should be a square matrix. ")
+      Kn <- affinity
+    } 
+    
+    if(!is.null(adjacency)){
+      if(nrow(adjacency) != ncol(adjacency)) stop("The adjacency matrix of the data should be a square matrix. ")
+      affinity <- exp(- (adjacency / radius) ^ 2)
+      Kn <- affinity
+    } 
+    
+    if(is.null(affinity) & is.null(adjacency)) stop("Please specify one of the data matrix, the adjacency matrix, and the affinity matrix along with the searching radius as the inputs.")
+    
+  } else{ # use data matrix input
+    
+    N <- nrow(x)
+    
+    # if(is.null(k) == is.null(radius)) stop("Please specify either k or radius for k-d trees to find nearest neighbors, but not both. ")
+    # When there are more than `k` NNs found using radius search, print k NNs instead of 10. RANN::nn2() only prints `k` NNs
+    if(searchtype == "radius"){
+      if(radius <= 0) stop("Please specify a positive value for `radius` when using radius search. ")
+      k <- N - 1
+    }
+    
+    
+    ###--------------------------
+    ## Step1: similarity matrix, symmetric
+    ###--------------------------
+    nn2res <- dplyr::case_when(distance=="euclidean" ~ 
+                                 RANN::nn2(data = x, query = x, k = k + 1, 
+                                           treetype = treetype, searchtype = searchtype, eps = eps,
+                                           radius = radius),
+                               distance=="manhattan" ~ 
+                                 RANN.L1::nn2(data = x, query = x, k = k + 1, 
+                                              treetype = treetype, searchtype = searchtype, eps = eps,
+                                              radius = radius),
+    )
+    names(nn2res) <- c("nn.idx", "nn.dists")
+    
+    # Convert RANN::nn2() output as N*N adjacency matrix
+    # Kn <- Matrix::Matrix(0, N, N, sparse = TRUE)
+    closest <- 
+      sapply(nn2res, cbind) %>%
+      as_tibble() %>% 
+      mutate(row.idx = rep(1:N, times = k+1)) %>% 
+      filter(nn.idx!=0) %>% 
+      mutate(weights = exp(- (nn.dists / radius) ^ 2)) %>%  # the weights
+      arrange(row.idx)
+    # View(closest)
+    
+    # Now construct the graph
+    g <- igraph::make_empty_graph(N, directed = TRUE)
+    g[from = closest$row.idx,
+      to   = closest$nn.idx,
+      attr = "weight"] <-
+      closest$weights # k_radius(p,p')
+    if(!is.connected(g)) stop("Neighborhood graph not connected. Please select a larger k/radius. ")
+    
+    Kn <- igraph::as_adjacency_matrix(g, attr = "weight", sparse = TRUE) # dgCMatrix, or g[]
     
   }
-
-  
-  ###--------------------------
-  ## Step1: similarity matrix, symmetric
-  ###--------------------------
-  nn2res <- dplyr::case_when(distance=="euclidean" ~ 
-                               RANN::nn2(data = x, query = x, k = k + 1, 
-                                         treetype = treetype, searchtype = searchtype, eps = eps,
-                                         radius = radius),
-                             distance=="manhattan" ~ 
-                               RANN.L1::nn2(data = x, query = x, k = k + 1, 
-                                            treetype = treetype, searchtype = searchtype, eps = eps,
-                                            radius = radius),
-  )
-  names(nn2res) <- c("nn.idx", "nn.dists")
-  
-  # Convert RANN::nn2() output as N*N adjacency matrix
-  # Kn <- Matrix::Matrix(0, N, N, sparse = TRUE)
-  closest <- 
-    sapply(nn2res, cbind) %>%
-    as_tibble() %>% 
-    mutate(row.idx = rep(1:N, times = k+1)) %>% 
-    filter(nn.idx!=0) %>% 
-    mutate(weights = exp(- (nn.dists / radius) ^ 2)) %>%  # the weights
-    arrange(row.idx)
-  # View(closest)
-  
-  # Now construct the graph
-  g <- igraph::make_empty_graph(N, directed = TRUE)
-  g[from = closest$row.idx,
-    to   = closest$nn.idx,
-    attr = "weight"] <-
-    closest$weights # k_radius(p,p')
-  if(!is.connected(g)) stop("Neighborhood graph not connected. Please select a larger k/radius. ")
-  
-  # for(i in 1:nrow(closest)){
-  #   Kn[closest$row.idx[i], closest$nn.idx[i]] <- closest$weights[i]
-  # }
-  # # Kn[1:10, 1:10]
-  # # isSymmetric(Kn) # TRUE
-  
-  # # TODO: The following code is for creating neighborhood graph, but errors apprear for radius search when there are 0s in the nn.idx from RANN::nn2()
-  # # For radius search only, radius need to be a small value but large enough to make a connected graph
-  # g <- igraph::make_empty_graph(N, directed = TRUE)
-  # g[from = if (diag) rep(seq_len(N), times = k + 1) else rep(seq_len(N), times = k),
-  #   to   = if (diag) as.vector(nn2res$nn.idx)  else as.vector(nn2res$nn.idx[, -1]),
-  #   attr = "weight"] <- 
-  #   if (diag)  as.vector(exp(- nn2res$nn.dists / (radius^2))) else as.vector(exp(- nn2res$nn.dists[, -1] / (radius^2))) # k_radius(p,p')
-  # 
-  # # g <- igraph::as.undirected(g, mode = "collapse", edge.attr.comb = "first")
-  #             
-  Kn <- igraph::as_adjacency_matrix(g, attr = "weight", sparse = TRUE) # dgCMatrix, or g[]
-  
-  
+      
+    
   ###--------------------------
   ## Step2: Laplacian matrix
   ###--------------------------
