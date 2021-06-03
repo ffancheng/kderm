@@ -37,7 +37,7 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
                      ...
                      ){
   
-  # TODO: input as the adjacency/affinity matrix, skip Step1
+  # input as the adjacency/affinity matrix, skip Step1
   if(is.null(x)){
     
     if(!is.null(affinity)){
@@ -109,30 +109,30 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   Ln <- Laplacian(W = Kn, radius = radius, lambda = 1)
   
 
-  ###--------------------------
-  ## Step3: embedding coordinates fn
-  ###--------------------------
-  # e <- dimRed::embed(x,
-  #                    .method = method,
-  #                    knn = k,
-  #                    ndim = s,
-  #                    annmethod = annmethod,
-  #                    radius = radius, 
-  #                    eps = eps,
-  #                    nt = nt,
-  #                    nlinks = nlinks,
-  #                    ef.construction = ef.construction,
-  #                    distance = distance,
-  #                    treetype = treetype,
-  #                    searchtype = searchtype,
-  #                    .mute = c("output"),
-  #                    ...
-  #                    
-  # )
-  # fn <- e@data@data
+  ##--------------------------
+  # Step3: embedding coordinates fn
+  ##--------------------------
+  e <- dimRed::embed(x,
+                     .method = method,
+                     knn = k,
+                     ndim = s,
+                     annmethod = annmethod,
+                     radius = radius,
+                     eps = eps,
+                     nt = nt,
+                     nlinks = nlinks,
+                     ef.construction = ef.construction,
+                     distance = distance,
+                     treetype = treetype,
+                     searchtype = searchtype,
+                     .mute = c("output"),
+                     ...
+
+  )
+  fn <- e@data@data
   
-  geodist <- igraph::distances(g, algorithm = "dijkstra")
-  fn <- cmdscale(geodist, k = 2)
+  # geodist <- igraph::distances(g, algorithm = "dijkstra")
+  # fn <- cmdscale(geodist, k = 2)
   colnames(fn) <- paste0("E", 1:s)
   
   ###--------------------------
@@ -143,7 +143,8 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   return(list(embedding=fn, 
               rmetric=hn, 
               weighted_graph=g,
-              adj_matrix=Kn))
+              adj_matrix=Kn,
+              laplacian=Ln))
 }
 
 
