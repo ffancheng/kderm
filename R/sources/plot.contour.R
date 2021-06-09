@@ -16,5 +16,5 @@ plot.contour <- function(x, f, pixel=100, lenbreak=5, plot.hdr = FALSE, ...){
                    points(embed_den, pch = 3, col= hcl(c=20, l = 10))}, 
                  ...)
   
-  return(list(p=p))
+  return(p)
 }
