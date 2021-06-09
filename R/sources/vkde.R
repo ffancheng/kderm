@@ -42,7 +42,7 @@ ker.density <- function(x, h) {
 mkde <- function (x, h) {
   # Data is a matrix of n*d
   # H is an array of dimension (d,d,n)
-  start <- Sys.time()
+  # start <- Sys.time()
   
   n <- nrow(x)
   if (dim(x)[2] < 2)
@@ -60,7 +60,7 @@ mkde <- function (x, h) {
     }
     y[i] <- s[i] / (n * 2 * pi)
   }
-  print(Sys.time() - start) 
+  # print(Sys.time() - start) 
   
   return(y)
 }
