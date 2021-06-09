@@ -1,6 +1,11 @@
 # Embedding plot of metricML() output for electricity data
-plot.embedding <- function(x) {
-  fn <- x$embedding
+plot.embedding <- function(x, embedding = FALSE) {
+  
+  if(embedding){
+    fn <- x
+  } else{
+    fn <- x$embedding
+  }
   
   todcolor <- colorspace::scale_color_continuous_sequential(
     palette = "viridis",
