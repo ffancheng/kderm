@@ -1,7 +1,7 @@
 ---
-title: "Riemannian metric from manifold learning"
+title: "Plotting for metric learning"
 author: "Fan Cheng"
-date: "03/06/2021"
+date: "2021-06-10"
 output: 
   # prettydoc::html_pretty:
     # theme: cayman
@@ -19,6 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(dimRed)
 library(reticulate)
+library(here)
 library(viridis)
 library(hdrcde)
 library(igraph)
@@ -29,7 +30,9 @@ Jmisc::sourceAll(here::here("R/sources"))
 set.seed(123)
 ```
 
-# Smart meter data for one household
+# Metric learning
+
+## Smart meter data for one household
 
 ```{r data}
 # load(here::here("data/spdemand_3639id336tow.rda"))
@@ -45,8 +48,6 @@ set.seed(123)
 #   data.table::as.data.table()
 train <- readRDS(here::here("data/spdemand_1id336tow_train.rds"))
 ```
-
-# Metric learning
 
 ## Radius searching with k-d trees
 
@@ -74,7 +75,7 @@ summary(metric_isomap)
 The function `metricML()` returns a list of
 
 -   the embedding coordinates `embedding` of $N \times s$
--   the embedding metric `rmetric` for each point $p \in x$ as an array
+-   the embedding metric `rmetric` for each point $p \in x$ as an array. By default, `invert.h = TRUE` returns the inverse of Riemannian metric. 
 -   the weighted neighborhood graph as an `igraph` object `weighted_graph`
 -   the sparse adjacency matrix from the graph `adj_matrix`
 -   the graph laplacian matrix `laplacian`
@@ -82,17 +83,20 @@ The function `metricML()` returns a list of
 
 # Embedding plot
 
-
 ```{r, eval=T, include=T}
 fn <- metric_isomap$embedding
-fn %>% head()
-emb_isomap <- feather::read_feather(here::here("data/embedding_isomap_1id336tow.feather"))
-emb_isomap %>% head()
-all.equal(as.matrix(emb_isomap), as.matrix(fn), tolerance = 1e-5, check.attributes = F)
-par(mfrow = c(1, 2))
-plot(fn, col = viridis::viridis(24), asp=1) 
-plot(emb_isomap$`0`, emb_isomap$`1`, col = viridis::viridis(24), asp=1)
+head(fn)
+plot(fn, col = viridis::viridis(24), asp = 1) 
 ```
+
+<!-- ```{r} -->
+<!-- emb_isomap <- feather::read_feather(here::here("data/embedding_isomap_1id336tow.feather")) -->
+<!-- head(emb_isomap) -->
+<!-- par(mfrow = c(1, 2)) -->
+<!-- plot(emb_isomap$`0`, emb_isomap$`1`, col = viridis::viridis(24), asp = 1) -->
+<!-- plot(fn, col = viridis::viridis(24), asp = 1) -->
+<!-- ``` -->
+
 
 
 
@@ -106,43 +110,50 @@ The underlying requirement is that the Riemannian metric needs to be a square po
 # TODO: if add = FALSE, fix xlim, ylim, radius for generating ellipse
 # Done: add argument `n.plot` to specify how many ellipse to be added
 x <- metric_isomap$embedding
+Rn <- metric_isomap$rmetric
 cols <- viridis::viridis(24) 
 n.plot <- 50
-plot(metric_isomap$embedding, col = cols, asp=1, pch = 20)
-for(i in sample(1:N, n.plot)){
+plot(metric_isomap$embedding, col = cols, asp = 1, pch = 20)
+for (i in sample(1:N, n.plot)) {
   mat <- Rn[,,i] # pyh_isomap[,,I]
   center <- c(x[i,1], x[i,2])
-  # add <- ifelse(i == 1, F, T)
-  add <- T
+  add <- T # ifelse(i == 1, F, T)
   car::ellipse(center, mat, 
                radius = .1, # controls the size of ellipse, currently set manually
+               # xlim = c(-.2, .25), ylim = c(-.2, .2),
                # col = cols[i], 
                col = blues9[5],
                asp = 1, pty = "s", lwd = 1, center.pch = 19, center.cex = 0,
-               fill = T, fill.alpha = 0.2, add = add, grid = T,
-               # xlim = c(-.2, .25), ylim = c(-.2, .2)
+               fill = T, fill.alpha = 0.2, grid = T, add = add, 
                )
 }
 ```
 
 
-
-# Contour plots
+# Contour plot
 
 ## Variable kernel density estimate
 
-For multivariate data, the variable kernel density estimate is given by $$\hat{f}(x) = n^{-1} \sum_i K_H (x - X_i).$$
+For multivariate data, the variable kernel density estimate is given by $$\hat{f}(x) = n^{-1} \sum_i K_{H_i} (x - X_i).$$
 
 ### Inverse of Riemannian metric as bandwidth matrix
 
 If we use the embedding `x` and the inverse of Riemannian metric `h`, we could produce contour plots based on the density estimates.
 
 ```{r pydensity, eval=T}
+emb_isomap <- feather::read_feather(here::here("data/embedding_isomap_1id336tow.feather"))
+np <- reticulate::import("numpy")
+H_isomap <- np$load(here::here("data/hmatrix_isomap_1id336tow.npy"))
+pyh_isomap <- array(NA, dim = c(s, s, N))
+for(i in 1:N){
+  pyh_isomap[,,i] <- H_isomap[i,,]
+}
+
 x <- cbind(emb_isomap$`0`, emb_isomap$`1`)
 f <- mkde(x = x, h = pyh_isomap)
 summary(f)
 # Top 20 index with the lowest densities
-head(order(f), n=20)
+head(order(f), n = 20)
 ```
 
 ```{r, echo=FALSE, message=FALSE}
@@ -167,46 +178,46 @@ We can check the outliers based on density `f`.
 In R, the outliers are similar to the `megaman` output.
 
 
-### Riemannian metric itself as bandwidth matrix
+<!-- ### Riemannian metric itself as bandwidth matrix -->
 
-```{r pydensity1, eval=T}
-R_isomap <- np$load(here::here("data/rmatrix_isomap_1id336tow.npy"))
-# R_isomap[1,,, drop=TRUE] %>% 
-#   matrixcalc::is.positive.definite() # not necessarily symmetric
-pyr_isomap <- array(NA, dim = c(s, s, N))
-for(i in 1:N){
-  pyr_isomap[,,i] <- R_isomap[i,,]
-}
-pyr_isomap[,,1:3]
+<!-- ```{r pydensity1, eval=T} -->
+<!-- R_isomap <- np$load(here::here("data/rmatrix_isomap_1id336tow.npy")) -->
+<!-- # R_isomap[1,,, drop=TRUE] %>%  -->
+<!-- #   matrixcalc::is.positive.definite() # not necessarily symmetric -->
+<!-- pyr_isomap <- array(NA, dim = c(s, s, N)) -->
+<!-- for(i in 1:N){ -->
+<!--   pyr_isomap[,,i] <- R_isomap[i,,] -->
+<!-- } -->
+<!-- pyr_isomap[,,1:3] -->
 
-x <- cbind(emb_isomap$`0`, emb_isomap$`1`)
-f <- mkde(x = x, h = pyr_isomap)
-summary(f)
-# Top 20 index with the lowest densities
-head(order(f), n=20)
-p_pyr <- plot.contour(x, f, plot.hdr = F)
-```
+<!-- x <- cbind(emb_isomap$`0`, emb_isomap$`1`) -->
+<!-- f <- mkde(x = x, h = pyr_isomap) -->
+<!-- summary(f) -->
+<!-- # Top 20 index with the lowest densities -->
+<!-- head(order(f), n=20) -->
+<!-- p_pyr <- plot.contour(x, f, plot.hdr = F) -->
+<!-- ``` -->
 
-Now apply the `mkde()` function to the output of `metricML()` written in R.
+<!-- Now apply the `mkde()` function to the output of `metricML()` written in R. -->
 
-```{r rdensity1}
-hn <- riemann_metric(Y = as.matrix(emb_isomap), laplacian = Ln, d = s, invert.h = T)
-f <- mkde(x = metric_isomap$embedding, h = hn)
-summary(f)
-head(order(f), n=20)
-p_rr <- plot.contour(x, f, plot.hdr = F)
-```
+<!-- ```{r rdensity1} -->
+<!-- hn <- riemann_metric(Y = as.matrix(emb_isomap), laplacian = Ln, d = s, invert.h = T) -->
+<!-- f <- mkde(x = metric_isomap$embedding, h = hn) -->
+<!-- summary(f) -->
+<!-- head(order(f), n=20) -->
+<!-- p_rr <- plot.contour(x, f, plot.hdr = F) -->
+<!-- ``` -->
 
 
 
 # t-SNE
 
-```{r tsne, message=FALSE}
+```{r tsne, message=FALSE, warning=FALSE}
 metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = "tSNE", annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, invert.h = TRUE)
 summary(metric_tsne)
 ```
 
-```{r}
+```{r, message=FALSE}
 f <- mkde(x = metric_tsne$embedding, h = metric_tsne$rmetric)
 summary(f)
 head(order(f), n=20)
