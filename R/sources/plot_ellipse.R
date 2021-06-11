@@ -91,13 +91,14 @@ calculate_ellipse_cov <- function(data, vars, type, level, segments, n.plot){
   dfd <- nrow(data) - 1
   
   x <- data[, vars]
+  # dfd <- nrow(x) - 1
   center <- x[, 1:2] #%>% cbind(NA, NA)
   shape <- matrix(x$covmat %>% unlist, ncol = 4, byrow = T) %>% as_tibble()
   # purrr::map2_dfc(center, shape, cal_single_ellipse_cov)
 
   ell <- NULL
   for (i in sample(1:(dfd+1), n.plot)) {
-  temp <- cal_single_ellipse_cov(center = center[i, ], shape = shape[i, ], type, level, segments)
+  temp <- cal_single_ellipse_cov(center = center[i, ], shape = shape[i, ], type, level, segments, dfd)
   ell <- rbind(ell, temp)
 } 
 
@@ -106,7 +107,7 @@ calculate_ellipse_cov <- function(data, vars, type, level, segments, n.plot){
 }
 
 cal_single_ellipse_cov <- function(center, shape, type,
-                                   level, segments) {
+                                   level, segments, dfd) {
   dfn <- 2
   # dfd <- nrow(data) - 1
   
