@@ -33,6 +33,7 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
                      distance = c("euclidean", "manhattan"), diag = FALSE,
                      treetype = c("kd", "bd"),
                      searchtype = c("standard", "priority", "radius"),
+                     perplexity = k, theta = 0.5, # t-SNE
                      invert.h = TRUE,
                      ...
                      ){
@@ -125,6 +126,8 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
                      distance = distance,
                      treetype = treetype,
                      searchtype = searchtype,
+                     # perplexity = perplexity,
+                     # theta = theta,
                      .mute = c("output"),
                      ...
 
