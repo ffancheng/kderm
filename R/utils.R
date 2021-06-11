@@ -65,6 +65,27 @@ filled.contour(akima.spl, color.palette = viridis,
 
 
 
+# approx and approxfun
+x <- 1:10
+y <- rnorm(10)
+par(mfrow = c(2,1))
+plot(x, y, main = "approx(.) and approxfun(.)")
+points(approx(x, y), col = 2, pch = "*")
+points(approx(x, y, method = "constant"), col = 4, pch = "*")
+
+f <- approxfun(x, y)
+curve(f(x), 0, 11, col = "green2")
+points(x, y)
+is.function(fc <- approxfun(x, y, method = "const")) # TRUE
+curve(fc(x), 0, 10, col = "darkblue", add = TRUE)
+## different extrapolation on left and right side :
+plot(approxfun(x, y, rule = 2:1), 0, 11,
+     col = "tomato", add = TRUE, lty = 3, lwd = 2)
+
+
+
+
+
 
 # ellipse plot
 # different packages to produce ellipse plot

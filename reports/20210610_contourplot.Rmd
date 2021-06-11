@@ -123,29 +123,64 @@ plot.embedding(metric_isomap) +
 
 Using the Riemannian metric for each point as the 2-d covariance matrix and the 2-d embeddings as the centroid to plot an ellipse for each point.
 
-The underlying requirement is that the Riemannian metric needs to be a square positive definite matrix, i.e. `matrixcalc::is.positive.definite()` returns `TRUE`.
+The underlying requirement is that the Riemannian metric needs to be a square positive definite matrix.
 
 ```{r}
-# TODO: if add = FALSE, fix xlim, ylim, radius for generating ellipse
 # Done: add argument `n.plot` to specify how many ellipse to be added
-x <- metric_isomap$embedding
-Rn <- metric_isomap$rmetric
-cols <- viridis::viridis(24) 
-n.plot <- 50
-plot(metric_isomap$embedding, col = cols, asp = 1, pch = 20)
-for (i in sample(1:N, n.plot)) {
-  mat <- Rn[,,i] # pyh_isomap[,,I]
-  center <- c(x[i,1], x[i,2])
-  add <- T # ifelse(i == 1, F, T)
-  car::ellipse(center, mat, 
-               radius = .1, # controls the size of ellipse, currently set manually
-               # xlim = c(-.2, .25), ylim = c(-.2, .2),
-               # col = cols[i], 
-               col = blues9[5],
-               asp = 1, pty = "s", lwd = 1, center.pch = 19, center.cex = 0,
-               fill = T, fill.alpha = 0.2, grid = T, add = add, 
-               )
+# If add = FALSE, fix xlim, ylim, radius for generating ellipse
+plot.ellipse <- function(x, n.plot = 50) {
+  fn <- x$embedding
+  Rn <- x$rmetric
+  cols <- viridis::viridis(24) 
+  n.plot <- 50
+  plot(fn, col = cols, asp = 1, pch = 20)
+  for (i in sample(1:N, n.plot)) {
+    mat <- Rn[,,i] 
+    center <- c(fn[i,1], fn[i,2])
+    add <- T 
+    car::ellipse(center, mat, 
+                 radius = .1, # controls the size of ellipse, currently set manually
+                 # xlim = c(-.2, .25), ylim = c(-.2, .2),
+                 # col = cols[i],
+                 col = blues9[5],
+                 asp = 1, pty = "s", lwd = 1, center.pch = 19, center.cex = 0,
+                 fill = T, fill.alpha = 0.2, grid = T, add = add, 
+                 )
+  }
 }
+plot.ellipse(metric_isomap)
+```
+
+To plot as an ggplot2 object, the exsiting `stat_ellipse` does not work for variable covariance matrix. I tried to modify the code and create `stat_ellipse_cov()` which takes another aesthetic `covmat`. But all points are connected as one path. 
+
+Also, `purrr:::pmap_dfc()` does not work correctly, so for loop is currently in use. 
+
+```{r}
+fn <- metric_isomap$embedding
+Rn <- metric_isomap$rmetric
+a <- fn %>% 
+  as_tibble() %>% 
+  add_column(covmat = purrr::array_branch(Rn, 3))
+a
+# a$covmat %>% head()
+
+a %>% 
+  cbind(tod = rep(1:48, N / 48)) %>% 
+  ggplot(aes(E1, E2)) + 
+  geom_point() +
+  stat_ellipse()
+  # stat_ellipse(aes(group = tod, color = tod))
+
+# a %>% 
+#   cbind(tod = rep(1:48, N / 48)) %>%
+#   # group_by(tod) %>%
+#   ggplot(aes(x = E1, y = E2, color = tod)) +
+#   geom_point() +
+#   scale_color_viridis() + 
+#   stat_ellipse_cov(aes(covmat = covmat))
+
+plot.embedding(x = fn, embedding = T) + 
+  stat_ellipse_cov(data = cbind(a, tod = rep(1:48, N / 48)), aes(covmat = covmat))
 ```
 
 
@@ -177,6 +212,22 @@ head(order(f), n = 20)
 
 ```{r, echo=FALSE, message=FALSE}
 p_pyh <- plot.contour(x, f, plot.hdr = F)
+```
+
+Try linear interpolation using `approx()`.
+
+```{r, eval=FALSE, echo=TRUE}
+x_interp <- approx(x[,1], x[,2], n = 100, yleft = 0, yright = 1, ties = mean)
+x_int <- cbind(x_interp$x, x_interp$y)
+dim(x_int)
+f_linerinterp <- mkde(x = x_int, h = pyh_isomap)
+f_linerinterp
+plot.contour(x_interp, f_linerinterp)
+hdrscatterplot(x_interp$x, x_interp$y, noutliers = 10)
+p <- filled.contour(akima.spl, color.palette = viridis,
+                 plot.axes = { axis(1); axis(2);
+                   # title("smooth interp(*, linear = FALSE)");
+                   points(embed_den, pch = 3, col= hcl(c=20, l = 10))})
 ```
 
 Now apply the `mkde()` function to the output of `metricML()` written in R.
@@ -231,17 +282,72 @@ In R, the outliers are similar to the `megaman` output.
 
 # t-SNE
 
-```{r tsne, message=FALSE, warning=FALSE}
-metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = "tSNE", annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, invert.h = TRUE)
+```{r tsne, message=FALSE, warning=FALSE, eval=TRUE}
+method <- "tSNE"
+perplexity <- 30
+theta <- 0.5
+metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = perplexity, theta = theta, invert.h = TRUE)
 summary(metric_tsne)
 ```
 
-```{r, message=FALSE}
+```{r, include=FALSE, eval=FALSE}
+perplexity <- 30
+theta <- 0.5
+method <- "tSNE"
+e <- dimRed::embed(x,
+                     .method = method,
+                     knn = k,
+                     ndim = s,
+                     annmethod = annmethod,
+                     radius = radius,
+                     eps = eps,
+                     nt = nt,
+                     nlinks = nlinks,
+                     ef.construction = ef.construction,
+                     distance = distance,
+                     treetype = treetype,
+                     searchtype = searchtype,
+                     perplexity = perplexity,
+                     theta = theta,
+                     .mute = c("output"),
+                     # ...
+
+  )
+  fn <- e@data@data
+plot(metric_tsne$embedding)
+```
+
+```{r, message=FALSE, eval=TRUE}
 f <- mkde(x = metric_tsne$embedding, h = metric_tsne$rmetric)
 summary(f)
 head(order(f), n=20)
 plot.contour(x = metric_tsne$embedding, f, plot.hdr = F)
 ```
+
+
+```{r anntsne, message=FALSE, warning=FALSE, eval=FALSE, echo=FALSE}
+x <- train
+nn2res <- dplyr::case_when(distance=="euclidean" ~ 
+                                 RANN::nn2(data = x, query = x, k = k + 1, 
+                                           treetype = treetype, searchtype = searchtype, eps = eps,
+                                           radius = radius),
+                               distance=="manhattan" ~ 
+                                 RANN.L1::nn2(data = x, query = x, k = k + 1, 
+                                              treetype = treetype, searchtype = searchtype, eps = eps,
+                                              radius = radius),
+    )
+    names(nn2res) <- c("nn.idx", "nn.dists")
+    
+metric_tsne1 <- metricML(x, nn.idx = nn2res$nn.idx, nn.dists = nn2res$nn.dists, s = s, k = k, radius = radius, method = "anntSNE", annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = k-1, theta = 0.5, invert.h = TRUE)
+summary(metric_tsne1)
+
+
+f <- mkde(x = metric_tsne1$embedding, h = metric_tsne1$rmetric)
+summary(f)
+head(order(f), n=20)
+plot.contour(x = metric_tsne1$embedding, f, plot.hdr = F)
+```
+
 
 
 
