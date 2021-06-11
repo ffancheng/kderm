@@ -1,3 +1,4 @@
+# neighborhood graph
 library(reticulate)
 np = import("numpy")
 # adj_matrix <- load("data/adjacency_matrix_1id336tow.npy")
@@ -19,6 +20,9 @@ graph.data.frame(adj_matrix, directed = FALSE)
 
 get.adjacency(g)
 
+
+
+
 # contour plots
 filled.contour(x = 10*1:nrow(volcano),y = 10*1:ncol(volcano),
                z = volcano, color.palette = terrain.colors,
@@ -30,9 +34,21 @@ filled.contour(x = 10*1:nrow(volcano),y = 10*1:ncol(volcano),
                key.axes = axis(4, seq(90, 190, by = 10)))
 
 
+
 embed_den <- as_tibble(cbind(x = x[,1], y = x[,2], z = f)) %>%
   drop_na() # %>% 
-# arrange(x, y)
+
+# contour plots
+filled.contour(x = 10*1:nrow(volcano),y = 10*1:ncol(volcano),
+               z = volcano, color.palette = terrain.colors,
+               plot.title = title(main = "The Topography of Maunga Whau",
+                                  xlab = "Meters North",ylab = "Meters West"),
+               plot.axes = {axis(1, seq(100, 800, by = 100))
+                 axis(2, seq(100, 600, by = 100))},
+               key.title = title(main="Height\n(meters)"),
+               key.axes = axis(4, seq(90, 190, by = 10)))
+
+
 
 embed_den_list <- list(x = embed_den$x, y = embed_den$y, z = embed_den$z)
 
@@ -85,6 +101,55 @@ plot(approxfun(x, y, rule = 2:1), 0, 11,
 
 
 
+## Turn x and y into coordinates, z as cell values
+# coordinates into grids
+
+embed_den <- as_tibble(cbind(x = x[,1], y = x[,2], z = f)) %>%
+  drop_na() # %>% 
+data.df <- embed_den
+
+ji <- function(xy, origin=c(0,0), cellsize=c(1,1)) {
+  t(apply(xy, 1, function(z) cellsize/2+origin+cellsize*(floor((z - origin)/cellsize))))
+}
+JI <- ji(cbind(data.df$x, data.df$y))
+data.df$X <- JI[, 1]
+data.df$Y <- JI[, 2]
+data.df$Cell <- paste(data.df$X, data.df$Y)
+
+counts <- by(data.df, data.df$Cell, function(d) c(d$X[1], d$Y[1], nrow(d)))
+counts.m <- matrix(unlist(counts), nrow=3)
+rownames(counts.m) <- c("X", "Y", "Count")
+# write.csv(as.data.frame(t(counts.m)), "f:/temp/grid.csv")
+
+count.max <- max(counts.m["Count",])
+colors = sapply(counts.m["Count",], function(n) hsv(sqrt(n/count.max), .7, .7, .5))
+plot(counts.m["X",] + 1/2, counts.m["Y",] + 1/2, cex=sqrt(counts.m["Count",]/100),
+     pch = 19, col=colors,
+     xlab="Longitude of cell center", ylab="Latitude of cell center",
+     main="Event counts within one-degree grid cells")
+
+
+
+
+library(sp)
+library(mapview)
+station <- data.frame(lat = c(41.997946, 41.960669, 41.960669, 41.960669,41.909269,41.931841,41.909269,41.910561,41.866129,41.866129), long = c(-87.654561, -87.747456, -87.67459, -87.646438,-87.747456,-87.67459,-87.67459,-87.619112,-87.747456,-87.691617),station = 1:10)
+coordinates(station) = ~ long+lat
+proj4string(station) <- CRS("+proj=longlat +datum=WGS84")
+stp <- spTransform(station, CRSobj = CRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m"))
+
+mapview(stp)
+
+library(raster)
+r <- raster(stp, res=250)
+rr <- setExtent(r, round(extent(r)+10000,-3), keepres=TRUE)
+plot(rr)
+
+data.df <- embed_den
+coordinates(data.df) = ~x+y
+proj4string(data.df) <- CRS("+proj=longlat +datum=WGS84")
+stp <- spTransform(data.df, CRSobj = CRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m"))
+mapview(stp)
 
 
 # ellipse plot
@@ -129,3 +194,41 @@ for(i in 1:N){
                xlim = c(-.2, .25), ylim = c(-.2, .2))
 }
 
+
+
+
+
+# Rtsne
+# https://github.com/jkrijthe/Rtsne/pull/39
+
+set.seed(101)
+library(Rtsne)
+iris_matrix <- matrix(rnorm(150*4), nrow=150) # See note 1
+
+library(FNN)
+NN <- get.knn(iris_matrix, 90)
+D <- as.matrix(dist(iris_matrix))
+re.nn <- NN$nn.dist
+for (i in seq_len(ncol(re.nn))) {
+  re.nn[,i] <- D[cbind(seq_len(nrow(re.nn)), NN$nn.index[,i])] 
+}
+range(re.nn - NN$nn.dist) # check it gives 0 0; no numerical precision problems here.
+
+Y_in <- matrix(runif(nrow(iris_matrix)*2), ncol=2) # See note 2
+
+par(mfrow=c(1,2))
+set.seed(42) 
+out <- Rtsne:::Rtsne_nn_cpp(t(NN$nn.index - 1L), t(NN$nn.dist), 
+                            # origD=ncol(iris_matrix), 
+                            no_dims=2,
+                            Y_in=Y_in, 
+                            init=TRUE, perplexity = 30, theta = 0.5, max_iter = 1000,
+                            verbose = TRUE,
+                            stop_lying_iter = 250L, mom_switch_iter = 250L, 
+                            momentum = 0.5, final_momentum = 0.8, eta = 200, exaggeration_factor = 12, num_threads = 1)
+plot(t(out$Y))
+
+set.seed(42) 
+blah <- Rtsne(D, is_distance=TRUE, verbose=TRUE, max_iter=1000,
+              stop_lying_iter=250L, mom_switch_iter=250L, Y_init=Y_in) # See note 3
+plot(blah$Y)
