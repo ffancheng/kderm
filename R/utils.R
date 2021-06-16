@@ -180,7 +180,23 @@ ellipse(c(0, 0), shape=A, radius=1, col="red", lty=2, draw=T, add=F, fill = T)
 # ellipse(c(x[1,1], x[1,2]), shape = riem_isomap[,,1], radius=5, col="red", lty=2, fill = FALSE, fill.alpha = 0.1)
 # riemannian matrix not positive definite: it has negative eigenvalues and isn't a possible covariance matrix
 
+# Ellipse covariance matrix to semi-major and semi-minor axis length a, b
+x <- c(1.798805,2.402390,2.000000,3.000000,1.000000)
+y <- c(0.3130147,0.4739707,0.2000000,0.8000000,0.1000000)
+d <- cbind( x, y )
+library(cluster)
+r <- ellipsoidhull(d)
+plot( x, y, asp=1, xlim=c(0,4) )
+lines( predict(r) )
+e <- sqrt(eigen(r$cov)$values)
+a <- sqrt(r$d2) * e[1]  # semi-major axis
+b <- sqrt(r$d2) * e[2]  # semi-minor axis
 
+theta <- seq(0, 2*pi, length=200)
+lines( r$loc[1] + a * cos(theta), r$loc[2] + a * sin(theta) )
+lines( r$loc[1] + b * cos(theta), r$loc[2] + b * sin(theta) )
+
+# Works with for loop
 library(ellipse)
 plot(ellipse::ellipse(0), type = "l")
 
@@ -193,6 +209,36 @@ for(i in 1:N){
                fill = T, fill.alpha = 0.2, add = add, grid = T,
                xlim = c(-.2, .25), ylim = c(-.2, .2))
 }
+
+
+
+# Convert covariance matrix to a, b, angle, radius
+library(tibble)
+library(MASS)
+sigma=matrix(c(1.4,-0.5,-.5,0.4), nrow = 2, ncol = 2)
+samples<-mvrnorm(n=100, c(1,2), sigma)
+colnames(samples)<-c("X","Y")
+samples_df = as_tibble(samples)
+
+cov2elipse<-function(my_cov, alpha=0.05) {
+  aa = my_cov[1,1]
+  bb = my_cov[1,2]
+  cc = my_cov[2,2]
+  a = (aa+cc)/2 + sqrt(((aa-cc)/2)^2 + bb^2) 
+  b = (aa+cc)/2 - sqrt(((aa-cc)/2)^2 + bb^2) 
+  # angle = atan(bb/(a-aa))
+  angle = atan((a-aa)/bb)
+  r1=sqrt(qchisq(1 - alpha, 2))
+  return(list(a=sqrt(a)*r1, b=sqrt(b)*r1, angle=angle))
+}
+
+my_cov<-cov(samples_df)
+par_elipsy<-cov2elipse(my_cov)
+
+ggplot(samples_df, aes(x=X, y=Y)) +
+  geom_point() + 
+  geom_ellipse(mapping = aes(x0=1, y0=2, a=par_elipsy$a, b=par_elipsy$b, angle=par_elipsy$angle, fill="red", alpha=0.01))  
+
 
 
 
