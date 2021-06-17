@@ -93,35 +93,39 @@ vkde2d <- function(x, y, h, n = 25, lims = c(range(x), range(y)) ){
   gx <- seq.int(lims[1L], lims[2L], length.out = n[1L])
   gy <- seq.int(lims[3L], lims[4L], length.out = n[2L])
   
-  # bandwidth matrix is a n*2 matrix 
-  h <- if (missing(h)) t(replicate(nx, c(bandwidth.nrd(x), bandwidth.nrd(y)))) else h
+  # bandwidth matrix is a 2*1?
+  # h <- if (missing(h)) t(replicate(nx, c(bandwidth.nrd(x), bandwidth.nrd(y)))) else h
         # else rep(h, length.out = 2L) # for fixed h input in kde2d
           
-  if (any(h <= 0))
-    stop("bandwidths must be strictly positive")
+  # if (any(h <= 0))
+  #   stop("bandwidths must be strictly positive")
   
-  # z <- matrix(0, n[1L], n[2L])
-  # 
-  # for(i in 1:n[1L]) {
-  #   for (j in 1:n[2L]) {
-  #     
-  #     s = 0
-  #     for (k in 1:nx) {
-  #       s <- s + 1 / (2 * pi) * (-1/(2*h[k,1]*h[k,2])) * exp(- 1/2 * t(gx[i] - x[k]) * 1/(h[k, 1]*h[k, 2]) * (gy[j] - y[k]))
-  #     }
-  #     z[i, j] <- s / nx
-  #     
-  #   }
-  # }
+  # if bandwidth is a 2*2*nx array
+  z <- matrix(0, n[1L], n[2L])
+
+  for(i in 1:n[1L]) {
+    for (j in 1:n[2L]) {
+
+      s = 0
+      for (k in 1:nx) {
+        # s <- s + 1 / (2 * pi) * (-1/(2*h[k,1]*h[k,2])) * exp(- 1/2 * t(gx[i] - x[k]) * 1/(h[k, 1]*h[k, 2]) * (gy[j] - y[k]))
+        s <- s + 1 / (2 * pi) * det(h[,,k])^(-1/2) * 
+          exp( - 1/2 * t(c(gx[i], gy[j]) - c(x[k], y[k])) %*% solve(h[,,k]) %*% ( c(gx[i], gy[j]) - c(x[k], y[k]) ) )
+      }
+      z[i, j] <- s / nx
+
+    }
+  }
   
-  h <- h/4                            # for S's bandwidth scale
-  ax <- outer(gx, x, "-" )/h[1L]
-  ay <- outer(gy, y, "-" )/h[2L]
-  z <- tcrossprod( matrix(dnorm(ax), , nx)/h[1L], matrix(dnorm(ay), , nx)/h[2L] ) /
-    nx
-  # z <- tcrossprod(matrix(dnorm(ax), , nx), matrix(dnorm(ay), , nx)) /
-  #   (nx * h[1L] * h[2L])
-  
+  # from MASS:: kde2d()
+  # h <- h/4                            # for S's bandwidth scale
+  # ax <- outer(gx, x, "-" )/h[1L]
+  # ay <- outer(gy, y, "-" )/h[2L]
+  # z <- tcrossprod( matrix(dnorm(ax), , nx)/h[1L], matrix(dnorm(ay), , nx)/h[2L] ) /
+  #   nx
+  # # z <- tcrossprod(matrix(dnorm(ax), , nx), matrix(dnorm(ay), , nx)) /
+  # #   (nx * h[1L] * h[2L])
+
   return(list(x = gx, y = gy, z = z))
 }
 

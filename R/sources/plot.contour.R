@@ -4,8 +4,8 @@ plot.contour <- function(x, n.grid = 50){
   
   fn <- x$embedding
   Rn <- x$rmetric # array
-  h <- t(apply(Rn, 3, diag))
-  f <- vkde2d(x = fn[,1], y = fn[,2], h = h, n = n.grid)
+  # h <- t(apply(Rn, 3, diag))
+  f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
   # str(f)
   # image(f)
   p <- filled.contour(f, color.palette = viridis,
