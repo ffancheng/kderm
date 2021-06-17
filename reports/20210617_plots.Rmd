@@ -155,19 +155,19 @@ plot.ellipse(metric_isomap)
 To plot as an ggplot2 object, the exsiting `stat_ellipse` does not work for variable covariance matrix. I tried to modify the code and create `stat_ellipse_cov()` which takes another aesthetic `covmat`. But all points are connected as one path. 
 
 ```{r ggellipse}
-fn <- metric_isomap$embedding
-Rn <- metric_isomap$rmetric # array
-n.plot <- 50
-e <- riem2ellipse(Rn, scale = 20) %>% 
-  cbind(fn) %>% 
-  as_tibble()
-  
-plot.ellipse(e, add = F, n.plot = n.plot, color = blues9[5], fill = blues9[5], alpha = 0.2)
+plot.ellipse(metric_isomap, add = F, n.plot = 50, scale = 20, 
+             color = blues9[5], fill = blues9[5], alpha = 0.2)
+# fn <- metric_isomap$embedding
+# Rn <- metric_isomap$rmetric # array
+# n.plot <- 50
+# e <- riem2ellipse(Rn, scale = 20) %>% 
+#   cbind(fn) %>% 
+#   as_tibble()
 # OR
-# plot.embedding(e, embedding = T) +
-#   plot.ellipse(e, add = T)
+# plot.embedding(metric_isomap, embedding = F) +
+#   plot.ellipse(metric_isomap, add = T)
 # OR
-# # plot.embedding(e, embedding = T) + 
+# # plot.embedding(fn, embedding = T) + 
 #   ggplot(data = e, aes(E1, E2)) +
 #   geom_point() +
 #   geom_ellipse(data = slice_sample(e, n = n.plot), 
@@ -183,11 +183,11 @@ plot.ellipse(e, add = F, n.plot = n.plot, color = blues9[5], fill = blues9[5], a
 
 For multivariate data, the variable kernel density estimate is given by $$\hat{f}(x) = n^{-1} \sum_i K_{H_i} (x - X_i).$$
 
-### Inverse of Riemannian metric as bandwidth matrix
+å### Inverse of Riemannian metric as bandwidth matrix
 
 If we use the embedding `x` and the inverse of Riemannian metric `h`, we could produce contour plots based on the density estimates.
 
-```{r pydensity, eval=T}
+```{r pydensity, eval=F, include=FALSE}
 emb_isomap <- feather::read_feather(here::here("data/embedding_isomap_1id336tow.feather"))
 np <- reticulate::import("numpy")
 H_isomap <- np$load(here::here("data/hmatrix_isomap_1id336tow.npy"))
@@ -197,79 +197,46 @@ for(i in 1:N){
 }
 
 x <- cbind(emb_isomap$`0`, emb_isomap$`1`)
-f <- mkde(x = x, h = pyh_isomap)
-summary(f)
+# f <- mkde(x = x, h = pyh_isomap)
 # Top 20 index with the lowest densities
 head(order(f), n = 20)
+plot.contour(list(embedding = x, Rn = pyh_isomap), n.grid = 100)
 ```
 
-```{r, echo=FALSE, message=FALSE}
-p_pyh <- plot.contour(x, f, plot.hdr = F)
+
+```{r}
+plot.contour(metric_isomap, n.grid = 200)
+# fn <- metric_isomap$embedding
+# Rn <- metric_isomap$rmetric # array
+# h <- t(apply(Rn, 3, diag))
+# f <- vkde2d(x = fn[,1], y = fn[,2], h = h, n = 100)
+# str(f)
+# # image(f)
+# p <- filled.contour(f, color.palette = viridis,
+#                  plot.axes = { axis(1); axis(2);
+#                    points(fn, pch = 3, col= hcl(c=20, l = 8))})
 ```
 
-Try linear interpolation using `approx()`.
+```{r}
+fn <- metric_isomap$embedding
+# hdrscatterplot(fn[,1], fn[,2], noutliers = 10)
+hdrinfo <- hdr.2d(fn[,1], fn[,2], prob = (1:20)*5)
+plot.hdr2d(hdrinfo)
+```
 
-```{r, eval=FALSE, echo=TRUE}
-x_interp <- approx(x[,1], x[,2], n = 100, yleft = 0, yright = 1, ties = mean)
-x_int <- cbind(x_interp$x, x_interp$y)
-dim(x_int)
-f_linerinterp <- mkde(x = x_int, h = pyh_isomap)
-f_linerinterp
-plot.contour(x_interp, f_linerinterp)
-hdrscatterplot(x_interp$x, x_interp$y, noutliers = 10)
-p <- filled.contour(akima.spl, color.palette = viridis,
+### Riemannian metric itself as bandwidth matrix
+
+```{r rdensity1}
+fn <- metric_isomap$embedding
+hn <- riemann_metric(Y = fn, laplacian = metric_isomap$laplacian, d = s, invert.h = F)
+h <- t(apply(hn, 3, diag))
+f <- vkde2d(x = fn[,1], y = fn[,2], h = h, n = 100)
+str(f)
+# image(f)
+p <- filled.contour(f, color.palette = viridis,
                  plot.axes = { axis(1); axis(2);
-                   # title("smooth interp(*, linear = FALSE)");
-                   points(embed_den, pch = 3, col= hcl(c=20, l = 10))})
+                   points(fn, pch = 3, col= hcl(c=20, l = 8))})
 ```
-
-Now apply the `mkde()` function to the output of `metricML()` written in R.
-
-```{r rdensity}
-x <- metric_isomap$embedding
-riem_isomap <- metric_isomap$rmetric
-f <- mkde(x = x, h = riem_isomap)
-summary(f)
-head(order(f), n=20)
-```
-
-```{r, echo=FALSE, message=FALSE}
-p_rh <- plot.contour(x, f, plot.hdr = F)
-```
-
-We can check the outliers based on density `f`.
-In R, the outliers are similar to the `megaman` output.
-
-
-<!-- ### Riemannian metric itself as bandwidth matrix -->
-
-<!-- ```{r pydensity1, eval=T} -->
-<!-- R_isomap <- np$load(here::here("data/rmatrix_isomap_1id336tow.npy")) -->
-<!-- # R_isomap[1,,, drop=TRUE] %>%  -->
-<!-- #   matrixcalc::is.positive.definite() # not necessarily symmetric -->
-<!-- pyr_isomap <- array(NA, dim = c(s, s, N)) -->
-<!-- for(i in 1:N){ -->
-<!--   pyr_isomap[,,i] <- R_isomap[i,,] -->
-<!-- } -->
-<!-- pyr_isomap[,,1:3] -->
-
-<!-- x <- cbind(emb_isomap$`0`, emb_isomap$`1`) -->
-<!-- f <- mkde(x = x, h = pyr_isomap) -->
-<!-- summary(f) -->
-<!-- # Top 20 index with the lowest densities -->
-<!-- head(order(f), n=20) -->
-<!-- p_pyr <- plot.contour(x, f, plot.hdr = F) -->
-<!-- ``` -->
-
-<!-- Now apply the `mkde()` function to the output of `metricML()` written in R. -->
-
-<!-- ```{r rdensity1} -->
-<!-- hn <- riemann_metric(Y = as.matrix(emb_isomap), laplacian = Ln, d = s, invert.h = T) -->
-<!-- f <- mkde(x = metric_isomap$embedding, h = hn) -->
-<!-- summary(f) -->
-<!-- head(order(f), n=20) -->
-<!-- p_rr <- plot.contour(x, f, plot.hdr = F) -->
-<!-- ``` -->
 
 
 
@@ -311,10 +278,9 @@ plot(metric_tsne$embedding)
 ```
 
 ```{r, message=FALSE, eval=TRUE}
-f <- mkde(x = metric_tsne$embedding, h = metric_tsne$rmetric)
-summary(f)
-head(order(f), n=20)
-plot.contour(x = metric_tsne$embedding, f, plot.hdr = F)
+plot.embedding(metric_tsne)
+plot.ellipse(metric_tsne, n.plot = 50)
+plot.contour(metric_tsne, n.grid = 100)
 ```
 
 
@@ -334,11 +300,7 @@ nn2res <- dplyr::case_when(distance=="euclidean" ~
 metric_tsne1 <- metricML(x, nn.idx = nn2res$nn.idx, nn.dists = nn2res$nn.dists, s = s, k = k, radius = radius, method = "anntSNE", annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = k-1, theta = 0.5, invert.h = TRUE)
 summary(metric_tsne1)
 
-
-f <- mkde(x = metric_tsne1$embedding, h = metric_tsne1$rmetric)
-summary(f)
-head(order(f), n=20)
-plot.contour(x = metric_tsne1$embedding, f, plot.hdr = F)
+plot.contour(metric_tsne1, n.grid = 100)
 ```
 
 
@@ -347,20 +309,7 @@ plot.contour(x = metric_tsne1$embedding, f, plot.hdr = F)
 
 
 
-```{r, echo=FALSE, eval=FALSE}
-# Countour plot for megaman, dual metric
-# x <- cbind(emb_isomap$`0`, emb_isomap$`1`)
-embed_den <- as_tibble(cbind(x = x[,1], y = x[,2], z = f)) %>%
-  drop_na()
-pixel <- 100
-lenbreak <- 5
-akima.spl <- interp(embed_den$x, embed_den$y, embed_den$z, nx=pixel, ny=pixel, linear=FALSE)
-hdrscatterplot(embed_den$x, embed_den$y, noutliers = 10)
-filled.contour(akima.spl, color.palette = viridis,
-               plot.axes = { axis(1); axis(2);
-                 title("smooth interp(*, linear = FALSE)");
-                 points(embed_den, pch = 3, col= hcl(c=20, l = 10))})
-```
+
 
 ```{r, echo=FALSE, include=FALSE, eval=FALSE}
 embed_den <- as_tibble(cbind(x = x[,1], y = x[,2], z = f)) %>%
