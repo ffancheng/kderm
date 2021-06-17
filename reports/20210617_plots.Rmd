@@ -200,16 +200,16 @@ x <- cbind(emb_isomap$`0`, emb_isomap$`1`)
 # f <- mkde(x = x, h = pyh_isomap)
 # Top 20 index with the lowest densities
 head(order(f), n = 20)
-plot.contour(list(embedding = x, Rn = pyh_isomap), n.grid = 100)
+plot.contour(list(embedding = x, rmetric = pyh_isomap), n.grid = 100)
 ```
 
 
 ```{r}
-plot.contour(metric_isomap, n.grid = 200)
+plot.contour(metric_isomap, n.grid = 100)
 # fn <- metric_isomap$embedding
 # Rn <- metric_isomap$rmetric # array
-# h <- t(apply(Rn, 3, diag))
-# f <- vkde2d(x = fn[,1], y = fn[,2], h = h, n = 100)
+# #h <- t(apply(Rn, 3, diag))
+# f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = 100)
 # str(f)
 # # image(f)
 # p <- filled.contour(f, color.palette = viridis,
@@ -219,7 +219,7 @@ plot.contour(metric_isomap, n.grid = 200)
 
 ```{r}
 fn <- metric_isomap$embedding
-# hdrscatterplot(fn[,1], fn[,2], noutliers = 10)
+hdrscatterplot(fn[,1], fn[,2], noutliers = 10)
 hdrinfo <- hdr.2d(fn[,1], fn[,2], prob = (1:20)*5)
 plot.hdr2d(hdrinfo)
 ```
@@ -228,14 +228,15 @@ plot.hdr2d(hdrinfo)
 
 ```{r rdensity1}
 fn <- metric_isomap$embedding
+s <- 2
 hn <- riemann_metric(Y = fn, laplacian = metric_isomap$laplacian, d = s, invert.h = F)
-h <- t(apply(hn, 3, diag))
-f <- vkde2d(x = fn[,1], y = fn[,2], h = h, n = 100)
-str(f)
-# image(f)
-p <- filled.contour(f, color.palette = viridis,
-                 plot.axes = { axis(1); axis(2);
-                   points(fn, pch = 3, col= hcl(c=20, l = 8))})
+# f <- vkde2d(x = fn[,1], y = fn[,2], h = hn, n = 20)
+# str(f)
+# # image(f)
+# p <- filled.contour(f, color.palette = viridis,
+#                  plot.axes = { axis(1); axis(2);
+#                    points(fn, pch = 3, col= hcl(c=20, l = 8))})
+plot.contour(list(embedding = fn, rmetric = hn), n.grid = 100)
 ```
 
 
@@ -300,7 +301,7 @@ nn2res <- dplyr::case_when(distance=="euclidean" ~
 metric_tsne1 <- metricML(x, nn.idx = nn2res$nn.idx, nn.dists = nn2res$nn.dists, s = s, k = k, radius = radius, method = "anntSNE", annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = k-1, theta = 0.5, invert.h = TRUE)
 summary(metric_tsne1)
 
-plot.contour(metric_tsne1, n.grid = 100)
+plot.contour(metric_tsne1, n.grid = 10)
 ```
 
 
