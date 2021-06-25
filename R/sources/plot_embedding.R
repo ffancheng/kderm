@@ -1,5 +1,5 @@
 # Embedding plot of metricML() output for electricity data
-plot.embedding <- function(x, embedding = FALSE) {
+plot_embedding <- function(x, embedding = FALSE) {
   
   if(embedding){
     fn <- x

@@ -48,6 +48,26 @@ filled.contour(x = 10*1:nrow(volcano),y = 10*1:ncol(volcano),
                key.title = title(main="Height\n(meters)"),
                key.axes = axis(4, seq(90, 190, by = 10)))
 
+fn <- metric_isomap$embedding
+Rn <- metric_isomap$rmetric
+# Variable KDE
+library(ks)
+data(worldbank)
+wb <- as.matrix(na.omit(worldbank[,4:5]))
+xmin <- c(-70,-25); xmax <- c(35,70)
+fhat <- kde(x=wb, xmin=xmin, xmax=xmax)
+fhat.sp <- kde.sp(x=wb, xmin=xmin, xmax=xmax)
+vfhat.sp <- ks:::kde.sp.2d(x=wb, xmin=xmin, xmax=xmax, H = Rn[,,1], pre = F)
+plot(fhat, display="persp", box=TRUE, phi=20, zlim=c(0,max(fhat.sp$estimate)))
+plot(fhat.sp, display="persp", box=TRUE, phi=20, zlim=c(0,max(fhat.sp$estimate)))
+plot(vfhat.sp, display="persp", box=TRUE, phi=20, zlim=c(0,max(fhat.sp$estimate)))
+## Not run:
+fhat.ball <- kde.balloon(x=wb, xmin=xmin, xmax=xmax)
+plot(fhat.ball, display="persp", box=TRUE, phi=20, zlim=c(0,max(fhat.sp$estimate)))
+
+
+ks::Hpi.diag(fn,binned=TRUE)
+Hns(fn, deriv.order=4)
 
 
 embed_den_list <- list(x = embed_den$x, y = embed_den$y, z = embed_den$z)
