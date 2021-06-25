@@ -1,18 +1,53 @@
 # takes the output of metricML() as input for contour plot
 # n.grid for grid size
-plot.contour <- function(x, n.grid = 50){
+plot_contour <- function(x, n.grid = 50, f = NULL, scale = 1){
   
   fn <- x$embedding
-  Rn <- x$rmetric # array
+  Rn <- x$rmetric * scale# array
   # h <- t(apply(Rn, 3, diag))
-  f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
+  
+  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
   # str(f)
   # image(f)
-  p <- filled.contour(f, color.palette = viridis,
+  filled.contour(f, color.palette = viridis,
                       plot.axes = { axis(1); axis(2);
-                        points(fn, pch = 3, col= hcl(c=20, l = 8))})
+                        points(fn, pch = 3, col= hcl(c=20, l = 8))}                      )
+ 
 }
 
+
+
+plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(50, 95, 99), noutliers = 20, label = NULL, scale = 1){
+  
+  fn <- x$embedding
+  Rn <- x$rmetric * scale
+  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
+  
+  den <- f
+  # x <- E1; y <- E2
+  E1 = fn[,1]
+  E2 = fn[,2]
+  # Convert prob to coverage percentage if necessary
+  if(max(prob) > 50) {# Assume prob is coverage percentage
+    alpha <- (100-prob)/100
+  } else {# prob is tail probability (for backward compatibility)
+    alpha <- prob}
+  alpha <- sort(alpha)
+  # Calculates falpha needed to compute HDR of bivariate density den.
+  # Also finds approximate mode.
+  fxy <- hdrcde:::interp.2d(den$x,den$y,den$z,E1,E2)
+  falpha <- quantile(fxy, alpha)
+  index <- which.max(fxy)
+  mode <- c(E1[index],E2[index])
+  hdr2d_info <- structure(list(mode=mode,falpha=falpha,fxy=fxy, den=den, alpha=alpha, x=E1, y=E2), class="hdr2d") # list for hdr.2d() output
+  # plot.hdr2d(hdr2d_info, show.points = T, outside.points = T, pointcol = grey(0.5), xlim = round(range(E1)), ylim = round(range(E2)))
+  
+  p_outlier_vkde <- hdrscatterplot(E1, E2, levels = prob, noutliers = noutliers, label = label, den = hdr2d_info)  + 
+    plot_ellipse(x, add = T, n.plot = 50, scale = 20, 
+                 color = blues9[5], fill = blues9[5], alpha = 0.2)
+  
+  return(p_outlier_vkde)
+}
 
 
 # use akima for interpolation

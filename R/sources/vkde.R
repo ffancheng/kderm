@@ -101,21 +101,38 @@ vkde2d <- function(x, y, h, n = 25, lims = c(range(x), range(y)) ){
   #   stop("bandwidths must be strictly positive")
   
   # if bandwidth is a 2*2*nx array
-  z <- matrix(0, n[1L], n[2L])
-
-  for(i in 1:n[1L]) {
-    for (j in 1:n[2L]) {
-
-      s = 0
-      for (k in 1:nx) {
-        # s <- s + 1 / (2 * pi) * (-1/(2*h[k,1]*h[k,2])) * exp(- 1/2 * t(gx[i] - x[k]) * 1/(h[k, 1]*h[k, 2]) * (gy[j] - y[k]))
-        s <- s + 1 / (2 * pi) * det(h[,,k])^(-1/2) * 
-          exp( - 1/2 * t(c(gx[i], gy[j]) - c(x[k], y[k])) %*% solve(h[,,k]) %*% ( c(gx[i], gy[j]) - c(x[k], y[k]) ) )
+  s <- array(0, c(n[1L], n[2L], nx))
+  
+  for (k in 1:nx) {
+    
+    hkd <- 1 / (2 * pi) * det(h[,,k])^(-1/2)
+    hks <- solve(h[,,k])
+    xyk <- c(x[k], y[k])
+    
+    for(i in 1:n[1L]) {
+      for (j in 1:n[2L]) {
+       
+        gxy <- c(gx[i], gy[j])
+        s[i, j, k] <- hkd * exp( - 1/2 * t(gxy - xyk) %*% hks %*% (gxy - xyk))
       }
-      z[i, j] <- s / nx
-
     }
   }
+  
+  z <- rowMeans(s, dims = 2)
+
+  # for(i in 1:n[1L]) {
+  #   for (j in 1:n[2L]) {
+  # 
+  #     s = 0
+  #     for (k in 1:nx) {
+  #       # s <- s + 1 / (2 * pi) * (-1/(2*h[k,1]*h[k,2])) * exp(- 1/2 * t(gx[i] - x[k]) * 1/(h[k, 1]*h[k, 2]) * (gy[j] - y[k]))
+  #       s <- s + 1 / (2 * pi) * det(h[,,k])^(-1/2) * 
+  #         exp( - 1/2 * t(c(gx[i], gy[j]) - c(x[k], y[k])) %*% solve(h[,,k]) %*% ( c(gx[i], gy[j]) - c(x[k], y[k]) ) )
+  #     }
+  #     z[i, j] <- s / nx
+  # 
+  #   }
+  # }
   
   # from MASS:: kde2d()
   # h <- h/4                            # for S's bandwidth scale
