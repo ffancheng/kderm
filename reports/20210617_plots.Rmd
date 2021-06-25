@@ -27,6 +27,7 @@ library(matrixcalc)
 library(akima)
 library(car)
 library(ggforce)
+library(ks)
 Jmisc::sourceAll(here::here("R/sources"))
 set.seed(123)
 ```
@@ -84,9 +85,9 @@ The function `metricML()` returns a list of
 
 # Embedding plot
 
-```{r embedplot, eval=FALSE}
+```{r embedplot, eval=FALSE, include=FALSE}
 # Embedding plot of metricML() output for electricity data
-plot.embedding <- function(x) {
+plot_embedding <- function(x) {
   fn <- x$embedding
   
   todcolor <- colorspace::scale_color_continuous_sequential(
@@ -114,7 +115,7 @@ plot.embedding <- function(x) {
 # fn <- metric_isomap$embedding
 # head(fn)
 # plot(fn, col = viridis::viridis(24), asp = 1)
-plot.embedding(metric_isomap) +
+plot_embedding(metric_isomap) +
   labs(x = "ISO1", y = "ISO2")
 ```
 
@@ -152,10 +153,8 @@ plot.ellipse <- function(x, n.plot = 50) {
 plot.ellipse(metric_isomap)
 ```
 
-To plot as an ggplot2 object, the exsiting `stat_ellipse` does not work for variable covariance matrix. I tried to modify the code and create `stat_ellipse_cov()` which takes another aesthetic `covmat`. But all points are connected as one path. 
-
 ```{r ggellipse}
-plot.ellipse(metric_isomap, add = F, n.plot = 50, scale = 20, 
+plot_ellipse(metric_isomap, add = F, n.plot = 50, scale = 20, 
              color = blues9[5], fill = blues9[5], alpha = 0.2)
 # fn <- metric_isomap$embedding
 # Rn <- metric_isomap$rmetric # array
@@ -164,10 +163,10 @@ plot.ellipse(metric_isomap, add = F, n.plot = 50, scale = 20,
 #   cbind(fn) %>% 
 #   as_tibble()
 # OR
-# plot.embedding(metric_isomap, embedding = F) +
-#   plot.ellipse(metric_isomap, add = T)
+# plot_embedding(metric_isomap, embedding = F) +
+#   plot_ellipse(metric_isomap, add = T)
 # OR
-# # plot.embedding(fn, embedding = T) + 
+# # plot_embedding(fn, embedding = T) + 
 #   ggplot(data = e, aes(E1, E2)) +
 #   geom_point() +
 #   geom_ellipse(data = slice_sample(e, n = n.plot), 
@@ -175,81 +174,250 @@ plot.ellipse(metric_isomap, add = F, n.plot = 50, scale = 20,
 #                color = blues9[5], fill = blues9[5], alpha = 0.2)
 ```
 
-
-
-# Contour plot
-
-## Variable kernel density estimate
+# Variable kernel density estimate
 
 For multivariate data, the variable kernel density estimate is given by $$\hat{f}(x) = n^{-1} \sum_i K_{H_i} (x - X_i).$$
 
-å### Inverse of Riemannian metric as bandwidth matrix
 
-If we use the embedding `x` and the inverse of Riemannian metric `h`, we could produce contour plots based on the density estimates.
+## Outlier plot based on density estimates
 
-```{r pydensity, eval=F, include=FALSE}
-emb_isomap <- feather::read_feather(here::here("data/embedding_isomap_1id336tow.feather"))
-np <- reticulate::import("numpy")
-H_isomap <- np$load(here::here("data/hmatrix_isomap_1id336tow.npy"))
-pyh_isomap <- array(NA, dim = c(s, s, N))
-for(i in 1:N){
-  pyh_isomap[,,i] <- H_isomap[i,,]
-}
+### Fixed bandwidth
 
-x <- cbind(emb_isomap$`0`, emb_isomap$`1`)
-# f <- mkde(x = x, h = pyh_isomap)
-# Top 20 index with the lowest densities
-head(order(f), n = 20)
-plot.contour(list(embedding = x, rmetric = pyh_isomap), n.grid = 100)
+```{r}
+# fixed bandwidth
+fn <- metric_isomap$embedding
+E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
+E2 <- fn[,2]
+prob <- c(1, 50, 99)
+p_outlier <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NULL) + 
+  plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 20, 
+             color = blues9[5], fill = blues9[5], alpha = 0.2)
+p_outlier
+```
+
+### Pointwise adaptive bandwidth
+
+```{r outliers}
+Rn <- metric_isomap$rmetric # array
+n.grid <- 10
+f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
+plot_contour(metric_isomap, n.grid = n.grid, scale = 1)
+```
+
+```{r hdroutliers}
+source(here::here("R/sources/hdrplotting.R"))
+p_outlier_vkde <- plot_outlier(x = metric_isomap, n.grid = 50, prob = prob)
+# den <- f
+# x <- E1; y <- E2
+#  <-  = c(50, 95, 99)
+# # prob = (1:10)*10
+# # Convert prob to coverage percentage if necessary
+# if(max(prob) > 50) {# Assume prob is coverage percentage
+#   alpha <- (100-prob)/100
+# } else {# prob is tail probability (for backward compatibility)
+#   alpha <- prob}
+# alpha <- sort(alpha)
+# # Calculates falpha needed to compute HDR of bivariate density den.
+# # Also finds approximate mode.
+# fxy <- hdrcde:::interp.2d(den$x,den$y,den$z,x,y)
+# falpha <- quantile(fxy, alpha)
+# index <- which.max(fxy)
+# mode <- c(x[index],y[index])
+# hdr2d_info <- structure(list(mode=mode,falpha=falpha,fxy=fxy, den=den, alpha=alpha, x=x, y=y), class="hdr2d") # list for hdr.2d() output
+# # plot.hdr2d(hdr2d_info, show.points = T, outside.points = T, pointcol = grey(0.5), xlim = round(range(x)), ylim = round(range(y)))
+# 
+# p_outlier_vkde <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NULL, den = hdr2d_info)  + 
+#   plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 20, 
+#              color = blues9[5], fill = blues9[5], alpha = 0.2)
+```
+
+```{r compoutlier}
+library(patchwork)
+(p_outlier + p_outlier_vkde ) + coord_fixed()
 ```
 
 
-```{r}
-plot.contour(metric_isomap, n.grid = 100)
-# fn <- metric_isomap$embedding
-# Rn <- metric_isomap$rmetric # array
-# #h <- t(apply(Rn, 3, diag))
-# f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = 100)
-# str(f)
-# # image(f)
-# p <- filled.contour(f, color.palette = viridis,
-#                  plot.axes = { axis(1); axis(2);
-#                    points(fn, pch = 3, col= hcl(c=20, l = 8))})
+
+```{r, include=FALSE}
+# todcolor <- colorspace::scale_color_continuous_sequential(
+#   palette = "viridis",
+#   # breaks = c(0, 12, 24, 36, 48),
+#   # labels=c("00:00", "06:00", "12:00", "18:00", "24:00"),
+#   name="Density",
+#   guide=guide_colorbar(barwidth = 10))
+# 
+# p <- fn %>% 
+#   # cbind(tod = rep(1:48, N / 48)) %>%
+#   as_tibble() %>% 
+#   ggplot(aes(x = E1, y = E2)) + 
+#   geom_point() + 
+#   # labs(x = "ISO1", y = "ISO2") +
+#   coord_fixed(ratio = 1) + 
+#   # todcolor + 
+#   theme(legend.position = 'bottom')
+#   
+# p + 
+#   plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 20, 
+#              color = blues9[5], fill = blues9[5], alpha = 0.2)
 ```
 
-```{r}
+
+
+```{r, include=FALSE, eval=FALSE}
 fn <- metric_isomap$embedding
 hdrscatterplot(fn[,1], fn[,2], noutliers = 10)
-hdrinfo <- hdr.2d(fn[,1], fn[,2], prob = (1:20)*5)
+hdrinfo <- hdr.2d(fn[,1], fn[,2], prob = prob)
 plot.hdr2d(hdrinfo)
+
+# f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = 20)
+# # modified
+# f1 <- den.estimate.2d(x = fn[,1], y = fn[,2], kde.package = "ks", h = Rn[,,1], xextend =0.15, yextend=0.15)  # only one bandwidth at a time
+# hdrinfo_h <- hdr.2d(fn[,1], fn[,2], prob = (1:20)*5, den = f1)
+# plot.hdr2d(hdrinfo_h)
+
+Rh <- apply(Rn, 3, det)
+vfhat.sp <- ks:::kde.sp.2d(x=fn, H=Rh)
+plot(vfhat.sp, display="persp", box=TRUE, phi=20, zlim=c(0,max(vfhat.sp$estimate)))
+
+# den <- den.estimate.2d(x=fn[,1], y=fn[,2], kde.package="ks", h=Rh)
+x=fn[,1]; y=fn[,2]
+den <- vfhat.sp
+den <- list(x=den$eval.points[[1]],y=den$eval.points[[2]],z=den$estimate)
+
+prob = c(50, 95, 99)
+prob = (1:10)*10
+# Convert prob to coverage percentage if necessary
+if(max(prob) > 50) {# Assume prob is coverage percentage
+  alpha <- (100-prob)/100
+} else {# prob is tail probability (for backward compatibility)
+  alpha <- prob}
+alpha <- sort(alpha)
+# Calculates falpha needed to compute HDR of bivariate density den.
+# Also finds approximate mode.
+fxy <- hdrcde:::interp.2d(den$x,den$y,den$z,x,y)
+falpha <- quantile(fxy, alpha)
+index <- which.max(fxy)
+mode <- c(x[index],y[index])
+hdr2d_info <- structure(list(mode=mode,falpha=falpha,fxy=fxy, den=den, alpha=alpha, x=x, y=y), class="hdr2d") # list for hdr.2d() output
+plot.hdr2d(hdr2d_info, show.points = F, outside.points = T, pointcol = grey(0.5), xlim = round(range(x)), ylim = round(range(y)))
+
+filled.contour(den, color.palette = viridis,
+                      plot.axes = { axis(1); axis(2);
+                        points(fn, pch = 3, col= hcl(c=20, l = 8))})
 ```
 
-### Riemannian metric itself as bandwidth matrix
-
-```{r rdensity1}
+```{r, eval=FALSE, include=FALSE}
 fn <- metric_isomap$embedding
-s <- 2
-hn <- riemann_metric(Y = fn, laplacian = metric_isomap$laplacian, d = s, invert.h = F)
-# f <- vkde2d(x = fn[,1], y = fn[,2], h = hn, n = 20)
-# str(f)
-# # image(f)
-# p <- filled.contour(f, color.palette = viridis,
-#                  plot.axes = { axis(1); axis(2);
-#                    points(fn, pch = 3, col= hcl(c=20, l = 8))})
-plot.contour(list(embedding = fn, rmetric = hn), n.grid = 100)
+Rn <- metric_isomap$rmetric
+# Variable KDE
+data(worldbank)
+wb <- as.matrix(na.omit(worldbank[,4:5]))
+xmin <- c(-70,-25); xmax <- c(35,70)
+fhat <- kde(x=wb, xmin=xmin, xmax=xmax)
+fhat.sp <- kde.sp(x=wb, xmin=xmin, xmax=xmax)
+vfhat.sp <- ks:::kde.sp.2d(x=wb, xmin=xmin, xmax=xmax, H = fhat.sp$H)
+plot(fhat, display="persp", box=TRUE, phi=20, zlim=c(0,max(fhat$estimate)))
+plot(fhat.sp, display="persp", box=TRUE, phi=20, zlim=c(0,max(fhat.sp$estimate)))
+plot(vfhat.sp, display="persp", box=TRUE, phi=20, zlim=c(0,max(vfhat.sp$estimate)))
+## Not run:
+fhat.ball <- kde.balloon(x=wb, xmin=xmin, xmax=xmax)
+plot(fhat.ball, display="persp", box=TRUE, phi=20, zlim=c(0,max(fhat.sp$estimate)))
+
+
+ks::Hpi.diag(fn,binned=TRUE)
+Hns(fn, deriv.order=4)
+
+fhat.sp$H # vector of grid point length, not matrices
 ```
+
+
+
+<!-- # Contour plot -->
+
+<!-- ### Inverse of Riemannian metric as bandwidth matrix -->
+
+<!-- If we use the embedding `x` and the inverse of Riemannian metric `h`, we could produce contour plots based on the density estimates. -->
+
+<!-- ```{r pydensity, eval=F, include=FALSE} -->
+<!-- emb_isomap <- feather::read_feather(here::here("data/embedding_isomap_1id336tow.feather")) -->
+<!-- np <- reticulate::import("numpy") -->
+<!-- H_isomap <- np$load(here::here("data/hmatrix_isomap_1id336tow.npy")) -->
+<!-- pyh_isomap <- array(NA, dim = c(s, s, N)) -->
+<!-- for(i in 1:N){ -->
+<!--   pyh_isomap[,,i] <- H_isomap[i,,] -->
+<!-- } -->
+<!-- x <- cbind(emb_isomap$`0`, emb_isomap$`1`) -->
+<!-- # f <- mkde(x = x, h = pyh_isomap) -->
+<!-- # Top 20 index with the lowest densities -->
+<!-- # head(order(f), n = 20) -->
+<!-- plot_contour(list(embedding = x, rmetric = pyh_isomap), n.grid = 10) -->
+<!-- ``` -->
+
+
+<!-- ```{r contour} -->
+<!-- plot_contour(metric_isomap, n.grid = 20) -->
+<!-- # fn <- metric_isomap$embedding -->
+<!-- # Rn <- metric_isomap$rmetric # array -->
+<!-- # #h <- t(apply(Rn, 3, diag)) -->
+<!-- # f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = 100) -->
+<!-- # str(f) -->
+<!-- # # image(f) -->
+<!-- # p <- filled.contour(f, color.palette = viridis, -->
+<!-- #                  plot.axes = { axis(1); axis(2); -->
+<!-- #                    points(fn, pch = 3, col= hcl(c=20, l = 8))}) -->
+<!-- ``` -->
+
+
+<!-- ### Riemannian metric itself as bandwidth matrix -->
+
+<!-- ```{r rdensity1} -->
+<!-- fn <- metric_isomap$embedding -->
+<!-- s <- 2 -->
+<!-- hn <- riemann_metric(Y = fn, laplacian = metric_isomap$laplacian, d = s, invert.h = F) -->
+<!-- # f <- vkde2d(x = fn[,1], y = fn[,2], h = hn, n = 20) -->
+<!-- # str(f) -->
+<!-- # # image(f) -->
+<!-- # p <- filled.contour(f, color.palette = viridis, -->
+<!-- #                  plot.axes = { axis(1); axis(2); -->
+<!-- #                    points(fn, pch = 3, col= hcl(c=20, l = 8))}) -->
+<!-- plot_contour(list(embedding = fn, rmetric = hn), n.grid = 100) -->
+<!-- ``` -->
 
 
 
 # t-SNE
 
 ```{r tsne, message=FALSE, warning=FALSE, eval=TRUE}
+x <- train
 method <- "tSNE"
 perplexity <- 30
 theta <- 0.5
 metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = perplexity, theta = theta, invert.h = TRUE)
 summary(metric_tsne)
 ```
+
+
+```{r, message=FALSE, eval=TRUE}
+ftsne <- metric_tsne$embedding
+E1 <- ftsne[,1]; E2 <- ftsne[,2]
+# plot_embedding(metric_tsne)
+plot_ellipse(metric_tsne, n.plot = 50)
+plot_contour(metric_tsne, n.grid = 20, scale = 1/8)
+p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/8)
+p_tsne
+hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20) + 
+  plot_ellipse(metric_tsne, n.plot = 50, add = T)
+p_outlier_vkde + p_tsne
+```
+
+
+
+
+
+
+
+
+
 
 ```{r, include=FALSE, eval=FALSE}
 perplexity <- 30
@@ -276,12 +444,6 @@ e <- dimRed::embed(x,
   )
   fn <- e@data@data
 plot(metric_tsne$embedding)
-```
-
-```{r, message=FALSE, eval=TRUE}
-plot.embedding(metric_tsne)
-plot.ellipse(metric_tsne, n.plot = 50)
-plot.contour(metric_tsne, n.grid = 100)
 ```
 
 
