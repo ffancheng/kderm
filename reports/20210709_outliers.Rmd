@@ -1,0 +1,153 @@
+---
+title: "Plotting for metric learning output"
+author: "Fan Cheng"
+date: "2021-06-17"
+output: 
+  # prettydoc::html_pretty:
+    # theme: cayman
+    # theme: flatly
+    rmdformats::readthedown:
+    toc: true
+    float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, message=FALSE, echo=TRUE, results='hide'}
+library(tidyverse)
+library(dimRed)
+library(reticulate)
+library(here)
+library(viridis)
+library(hdrcde)
+library(igraph)
+library(matrixcalc)
+library(akima)
+library(car)
+library(ggforce)
+library(ks)
+Jmisc::sourceAll(here::here("R/sources"))
+set.seed(123)
+```
+
+# Metric learning
+
+## Radius searching with k-d trees
+
+```{r parameters}
+train <- readRDS(here::here("data/spdemand_1id336tow_train.rds"))
+# Parameters fixed
+x <- train
+N <- nrow(train)
+s <- 2
+k <- 20
+method <- "annIsomap"
+annmethod <- "kdtree"
+distance <- "euclidean"
+treetype <- "kd"
+searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
+radius <- .4 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm
+```
+
+## The metric learning algorithm
+
+```{r, message=FALSE}
+metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, invert.h = TRUE)
+summary(metric_isomap)
+```
+
+```{r ggellipse, include=FALSE, eval=FALSE}
+# plot_embedding(metric_isomap) +
+#   labs(x = "ISO1", y = "ISO2")
+# plot_ellipse(metric_isomap, add = F, n.plot = 50, scale = 20, 
+#              color = blues9[5], fill = blues9[5], alpha = 0.2)
+```
+
+# Variable kernel density estimate
+
+For multivariate data, the variable kernel density estimate is given by $$\hat{f}(x) = n^{-1} \sum_i K_{H_i} (x - X_i).$$
+
+
+## Outlier plot based on density estimates
+
+### Fixed bandwidth
+
+```{r}
+# fixed bandwidth
+fn <- metric_isomap$embedding
+E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
+E2 <- fn[,2]
+prob <- c(1, 50, 99)
+p_outlier <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NULL) + 
+  plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 20, 
+             color = blues9[5], fill = blues9[5], alpha = 0.2)
+p_outlier
+```
+
+### Pointwise adaptive bandwidth
+
+```{r outliers}
+Rn <- metric_isomap$rmetric # array
+n.grid <- 10
+f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
+plot_contour(metric_isomap, n.grid = n.grid, scale = 0.1)
+```
+
+```{r hdroutliers}
+source(here::here("R/sources/hdrplotting.R"))
+p_outlier_vkde <- plot_outlier(x = metric_isomap, n.grid = 50, prob = prob)
+```
+
+```{r compoutlier}
+library(patchwork)
+(p_outlier + p_outlier_vkde ) + coord_fixed()
+```
+
+
+
+
+
+# t-SNE
+
+```{r tsne, message=FALSE, warning=FALSE, eval=TRUE}
+x <- train
+method <- "tSNE"
+perplexity <- 30
+theta <- 0.5
+metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = perplexity, theta = theta, invert.h = TRUE)
+summary(metric_tsne)
+```
+
+
+```{r, message=FALSE, eval=TRUE}
+ftsne <- metric_tsne$embedding
+E1 <- ftsne[,1]; E2 <- ftsne[,2]
+# plot_embedding(metric_tsne)
+plot_ellipse(metric_tsne, n.plot = 50)
+plot_contour(metric_tsne, n.grid = 20, scale = 1/8)
+p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/8)
+p_tsne
+hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20) + 
+  plot_ellipse(metric_tsne, n.plot = 50, add = T)
+p_outlier_vkde + p_tsne
+```
+
+
+
+# Compare outliers from Isomap and t-SNE
+
+To compare two manifold learning methods, we calculate the overlap among outliers. To do so, we first rank the outliers from highest to lowest densities. Then calculate the correlation of ranks for both methods. 
+
+To show our methods performs better, we expect a higher correlation of ranks. This shows robustness in finding outliers using different manifold learning methods.
+
+
+
+
+# Compare high density regions
+
+Similarly, we compare the highest density regions from both methods and expect a similar output in detecing most typical observations. 
+
+
+
