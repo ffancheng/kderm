@@ -201,7 +201,7 @@ p_outlier
 Rn <- metric_isomap$rmetric # array
 n.grid <- 10
 f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
-plot_contour(metric_isomap, n.grid = n.grid, scale = 1)
+plot_contour(metric_isomap, n.grid = n.grid, scale = 0.1)
 ```
 
 ```{r hdroutliers}
