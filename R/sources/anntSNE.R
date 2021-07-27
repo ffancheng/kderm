@@ -38,14 +38,10 @@
 #' @examples
 #' \dontrun{
 #' dat <- loadDataSet("3D S Curve", n = 300)
-#' emb <- embed(dat, "tSNE", perplexity = 80)
+#' emb <- embed(dat, "anntSNE", perplexity = 80)
 #' plot(emb, type = "2vars")
 #' }
-#' @include dimRedResult-class.R
-#' @include dimRedMethod-class.R
-#' @family dimensionality reduction methods
-#' @export anntSNE
-#' @exportClass anntSNE
+
 anntSNE <- setClass(
   "anntSNE",
   contains = "dimRedMethod",
@@ -53,7 +49,7 @@ anntSNE <- setClass(
     stdpars = list(nn.idx = NULL,
                    nn.dists = NULL,
                    knn = 30,
-                   perplexity = 30, 
+                   perplexity = 30,
                    theta = 0.5,
                    ndim = 2,
                    annmethod = "kdtree", 
@@ -70,11 +66,11 @@ anntSNE <- setClass(
     fun = function (data, pars,
                     keep.org.data = TRUE) {
       # chckpkg("Rtsne")
-      require(tidyverse)
+      # chcpkg(tidyverse)
       
       meta <- data@meta
-      orgdata <- if (keep.org.data) data@data else NULL
       indata <- data@data
+      orgdata <- if (keep.org.data) indata else NULL
       
       if (is.null(pars$eps))      pars$eps <- 0
       # if (is.null(pars$get_geod)) pars$get_geod <- FALSE
@@ -82,12 +78,13 @@ anntSNE <- setClass(
       if (length(pars$distance) > 1) pars$distance <- pars$distance[1]
       if(!is.null(pars$knn) & !is.null(pars$perplexity)) {
         pars$knn <- floor(3 * pars$perplexity)
-        message("The number of NN is set as three-fold the given perplexity, ", pars$knn)
+        # message("The number of NN is set as three-fold the given perplexity, ", pars$knn)
       }
       
       if (!is.null(pars$nn.idx) & !is.null(pars$nn.dists)) {
         nn2res <- list(nn.idx = pars$nn.idx, nn.dists = pars$nn.dists)
       } else {
+
         nn2res <- find_ann(x = indata, 
                            knn = pars$knn,
                            annmethod = pars$annmethod, 
@@ -104,10 +101,11 @@ anntSNE <- setClass(
       }
       
       # Convert RANN::nn2() output as N*N adjacency matrix
-      Kn <- nn2dist(nn2res, sparse = FALSE)
+      Kn <- nn2dist(nn2res, type = "lower", sparse = FALSE)
+      Kn[Kn == 0 & (row(Kn)!=col(Kn))] <- 1e+5 # fill off-diagnol zeros with large values
       
-      outdata <- Rtsne::Rtsne(X = Kn,
-                              is_distance = TRUE,
+      outdata <- Rtsne::Rtsne(X = as.dist(Kn),
+                              # is_distance = TRUE,
                               dims = pars$ndim,
                               perplexity = pars$perplexity,
                               theta = pars$theta, 
