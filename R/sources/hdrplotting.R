@@ -75,7 +75,8 @@ hdrscatterplot <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "
   data <- data[ord, ]
   
   if (noutliers > 0) {
-    outliers <- order(den$fxy[ord])[seq(noutliers)]
+    outlier_rank <- order(den$fxy[ord])
+    outliers <- outlier_rank[seq(noutliers)]
   }
   
   p <- ggplot2::ggplot(data, ggplot2::aes_string(vnames[1], vnames[2])) +
@@ -99,7 +100,8 @@ hdrscatterplot <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "
                                label = label, col = "blue", cex = 2.5
     )
   }
-  return(p)
+  # return(p)
+  return(list(p=p, outlier= rownames(data)[outlier_rank]))
 }
 
 
