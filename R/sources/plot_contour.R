@@ -17,16 +17,16 @@ plot_contour <- function(x, n.grid = 50, f = NULL, scale = 1){
 
 
 
-plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(50, 95, 99), noutliers = 20, label = NULL, scale = 1){
+plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(1, 50, 99), noutliers = 20, label = NULL, scales = 1){
   
   fn <- x$embedding
-  Rn <- x$rmetric * scale
+  Rn <- x$rmetric * scales
   if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
   
   den <- f
   # x <- E1; y <- E2
-  E1 = fn[,1]
-  E2 = fn[,2]
+  E1 <- fn[,1]
+  E2 <- fn[,2]
   # Convert prob to coverage percentage if necessary
   if(max(prob) > 50) {# Assume prob is coverage percentage
     alpha <- (100-prob)/100
@@ -42,11 +42,12 @@ plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(50, 95, 99), noutlie
   hdr2d_info <- structure(list(mode=mode,falpha=falpha,fxy=fxy, den=den, alpha=alpha, x=E1, y=E2), class="hdr2d") # list for hdr.2d() output
   # plot.hdr2d(hdr2d_info, show.points = T, outside.points = T, pointcol = grey(0.5), xlim = round(range(E1)), ylim = round(range(E2)))
   
-  p_outlier_vkde <- hdrscatterplot(E1, E2, levels = prob, noutliers = noutliers, label = label, den = hdr2d_info)  + 
+  p_hdr <- hdrscatterplot(E1, E2, levels = prob, noutliers = noutliers, label = label, den = hdr2d_info)
+  p_outlier_vkde <- p_hdr$p + 
     plot_ellipse(x, add = T, n.plot = 50, scale = 20, 
                  color = blues9[5], fill = blues9[5], alpha = 0.2)
   
-  return(p_outlier_vkde)
+  return(list(p = p_outlier_vkde, outlier = p_hdr$outlier))
 }
 
 
