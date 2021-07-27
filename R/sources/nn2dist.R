@@ -3,16 +3,18 @@
 #' @param nn A list of nearest neighbor index and distances. 
 #' @param sparse Whether a sparse distance matrix should be returned, TRUE by default. 
 #'
-#' @return
+#' @return A square matrix of distances
 #' @export
 #'
 #' @examples
-nn2dist <- function(nn, sparse = TRUE) {
+nn2dist <- function(nn, N = NULL, k = NULL, sparse = TRUE, keep_graph = FALSE, ...) {
 
-  index <- nn$nn.idx
-  N <- nrow(index)
-  k <- ncol(index) - 1
-  
+  if(is.null(N) & is.null(k)) {
+      index <- nn$nn.idx
+      N <- nrow(index)
+      k <- ncol(index) - 1
+  }
+
   closest <- 
     sapply(nn, cbind) %>%
     as_tibble() %>% 
@@ -30,7 +32,8 @@ nn2dist <- function(nn, sparse = TRUE) {
   if(!is.connected(g)) stop("Neighborhood graph not connected. Please select a larger k/radius. ")
   
   # Distance matrix of dimension N*N
-  Kn <- igraph::as_adjacency_matrix(g, attr = "weight", sparse = sparse) # dgCMatrix, or g[]
+  Kn <- igraph::as_adjacency_matrix(g, attr = "weight", sparse = sparse, ...) # dgCMatrix, or g[]
   
   return(Kn)
+
 }
