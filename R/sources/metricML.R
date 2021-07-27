@@ -29,14 +29,14 @@
 metricML <- function(x, s, k = min(10, nrow(x)), radius = 0, 
                      adjacency = NULL, affinity = NULL,
                      method, annmethod = c("kdtree", "annoy", "hnsw"), 
-                     eps = 0, nt = 50, nlinks = 16, ef.construction = 200,
+                     eps = 0, nt = 50, nlinks = 16, ef.construction = 200, ef.search = 10,
                      distance = c("euclidean", "manhattan"), diag = FALSE,
                      treetype = c("kd", "bd"),
                      searchtype = c("standard", "priority", "radius"),
-                     perplexity = k, theta = 0.5, # t-SNE
+                     perplexity = round(k/3), theta = 0.5, # t-SNE
                      invert.h = TRUE,
                      ...
-                     ){
+                     ) {
   
   # input as the adjacency/affinity matrix, skip Step1
   if(is.null(x)){
@@ -52,10 +52,12 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
       Kn <- affinity
     } 
     
+    x <- Kn
     if(is.null(affinity) & is.null(adjacency)) stop("Please specify one of the data matrix, the adjacency matrix, and the affinity matrix along with the searching radius as the inputs.")
     
-  } else{ # use data matrix input
+  } else { # use data matrix input
     
+
     N <- nrow(x)
     
     # if(is.null(k) == is.null(radius)) stop("Please specify either k or radius for k-d trees to find nearest neighbors, but not both. ")
@@ -78,27 +80,9 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
                                               radius = radius),
     )
     names(nn2res) <- c("nn.idx", "nn.dists")
-    
-    # Convert RANN::nn2() output as N*N adjacency matrix
-    # Kn <- Matrix::Matrix(0, N, N, sparse = TRUE)
-    closest <- 
-      sapply(nn2res, cbind) %>%
-      as_tibble() %>% 
-      mutate(row.idx = rep(1:N, times = k+1)) %>% 
-      filter(nn.idx!=0) %>% 
-      mutate(weights = exp(- (nn.dists / radius) ^ 2)) %>%  # the weights
-      arrange(row.idx)
-    # View(closest)
-    
-    # Now construct the graph
-    g <- igraph::make_empty_graph(N, directed = TRUE)
-    g[from = closest$row.idx,
-      to   = closest$nn.idx,
-      attr = "weight"] <-
-      closest$weights # k_radius(p,p')
-    if(!is.connected(g)) stop("Neighborhood graph not connected. Please select a larger k/radius. ")
-    
-    Kn <- igraph::as_adjacency_matrix(g, attr = "weight", sparse = TRUE) # dgCMatrix, or g[]
+
+    Kn <- nn2dist(nn2res, N = N, k = k, sparse = TRUE)
+    g <- igraph::graph_from_adjacency_matrix(Kn)
     
   }
       
@@ -123,13 +107,14 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
                      nt = nt,
                      nlinks = nlinks,
                      ef.construction = ef.construction,
+                     ef.search = ef.search,
                      distance = distance,
                      treetype = treetype,
                      searchtype = searchtype,
-                     # perplexity = perplexity,
-                     # theta = theta,
+                     perplexity = perplexity,
+                     theta = theta,
                      .mute = c("output"),
-                     ...
+                     # ...
 
   )
   fn <- e@data@data
