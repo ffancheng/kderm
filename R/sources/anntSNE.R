@@ -62,12 +62,15 @@ anntSNE <- setClass(
                    nt = 50, 
                    nlinks = 16, 
                    ef.construction = 200,
+                   ef.search = 10,
                    distance = c("euclidean", "manhattan"),
                    treetype = c("kd", "bd"), 
-                   searchtype = c("standard", "priority", "radius")),
+                   searchtype = c("standard", "priority", "radius")
+                   ),
     fun = function (data, pars,
                     keep.org.data = TRUE) {
       # chckpkg("Rtsne")
+      require(tidyverse)
       
       meta <- data@meta
       orgdata <- if (keep.org.data) data@data else NULL
@@ -77,48 +80,38 @@ anntSNE <- setClass(
       # if (is.null(pars$get_geod)) pars$get_geod <- FALSE
       if (is.null(pars$distance)) pars$distance <- "euclidean"
       if (length(pars$distance) > 1) pars$distance <- pars$distance[1]
+      if(!is.null(pars$knn) & !is.null(pars$perplexity)) {
+        pars$knn <- floor(3 * pars$perplexity)
+        message("The number of NN is set as three-fold the given perplexity, ", pars$knn)
+      }
       
       if (!is.null(pars$nn.idx) & !is.null(pars$nn.dists)) {
         nn2res <- list(nn.idx = pars$nn.idx, nn.dists = pars$nn.dists)
       } else {
-        nn2res <- dplyr::case_when(pars$distance=="euclidean" ~ 
-                                     RANN::nn2(data = indata, query = indata, k = pars$knn + 1, 
-                                               treetype = pars$treetype, searchtype = pars$searchtype, eps = pars$eps,
-                                               radius = pars$radius),
-                                   pars$distance=="manhattan" ~ 
-                                     RANN.L1::nn2(data = indata, query = indata, k = pars$knn + 1, 
-                                                  treetype = pars$treetype, searchtype = pars$searchtype, eps = pars$eps,
-                                                  radius = pars$radius),
-        )
-        names(nn2res) <- c("nn.idx", "nn.dists")
+        nn2res <- find_ann(x = indata, 
+                           knn = pars$knn,
+                           annmethod = pars$annmethod, 
+                           eps = pars$eps, 
+                           radius = pars$radius,
+                           nt = pars$nt, 
+                           nlinks = pars$nlinks, 
+                           ef.construction = pars$ef.construction,
+                           ef.search = pars$ef.search,
+                           distance = pars$distance,
+                           treetype = pars$treetype,
+                           searchtype = pars$searchtype)
+        
       }
       
+      # Convert RANN::nn2() output as N*N adjacency matrix
+      Kn <- nn2dist(nn2res, sparse = FALSE)
       
-      Y_in <- matrix(runif(nrow(indata)*2), ncol = pars$ndim) # See note 2
-      
-      outdata <- Rtsne:::Rtsne_nn_cpp(t(nn2res$nn.index[,-1] - 1L), t(nn2res$nn.dist[,-1]), 
-                           # origD=ncol(iris_matrix), 
-                           no_dims = pars$ndim,
-                           Y_in = Y_in,
-                           init = TRUE, 
-                           perplexity = pars$perplexity,
-                           theta = pars$theta, 
-                           max_iter = 1000,
-                           verbose = TRUE,
-                           stop_lying_iter = 250L, mom_switch_iter = 250L, 
-                           momentum = 0.5, final_momentum = 0.8, eta = 200, exaggeration_factor = 12, num_threads = 1)$Y %>% t()
-      
-      
-      # outdata <- Rtsne::Rtsne_neighbors(index = t(nn2res$nn.idx[,-1] - 1), 
-      #                                   distance = t(nn2res$nn.dists[,-1]), 
-      #                                   dims = pars$ndim, 
-      #                                   perplexity = pars$perplexity,
-      #                                   theta = pars$theta)$Y
-      
-      # outdata <- Rtsne::Rtsne(pars$d(indata),
-      #                         perplexity = pars$perplexity,
-      #                         theta = pars$theta,
-      #                         dims = pars$ndim)$Y
+      outdata <- Rtsne::Rtsne(X = Kn,
+                              is_distance = TRUE,
+                              dims = pars$ndim,
+                              perplexity = pars$perplexity,
+                              theta = pars$theta, 
+                             )$Y
       
       colnames(outdata) <- paste0("tSNE", 1:ncol(outdata))
       
@@ -129,7 +122,7 @@ anntSNE <- setClass(
                            meta = meta),
         org.data     = orgdata,
         has.org.data = keep.org.data,
-        method       = "tsne",
+        method       = "anntSNE",
         pars         = pars,
         running.time = c(0, 0, 0)
       ))
