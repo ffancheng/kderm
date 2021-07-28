@@ -29,7 +29,7 @@ nn2dist <- function(nn, N = NULL, k = NULL, sparse = TRUE, keep_graph = FALSE, .
     to   = closest$nn.idx,
     attr = "weight"] <-
     closest$weights # k_radius(p,p')
-  if(!is.connected(g)) stop("Neighborhood graph not connected. Please select a larger k/radius. ")
+  if(!igraph::is.connected(g)) stop("Neighborhood graph not connected. Please select a larger k/radius. ")
   
   # Distance matrix of dimension N*N
   Kn <- igraph::as_adjacency_matrix(g, attr = "weight", sparse = sparse, ...) # dgCMatrix, or g[]

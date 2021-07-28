@@ -48,6 +48,7 @@ anntSNE <- setClass(
   prototype = list(
     stdpars = list(nn.idx = NULL,
                    nn.dists = NULL,
+                   get_geod = FALSE,
                    knn = 30,
                    perplexity = 30,
                    theta = 0.5,
@@ -62,7 +63,7 @@ anntSNE <- setClass(
                    distance = c("euclidean", "manhattan"),
                    treetype = c("kd", "bd"), 
                    searchtype = c("standard", "priority", "radius")
-                   ),
+    ),
     fun = function (data, pars,
                     keep.org.data = TRUE) {
       # chckpkg("Rtsne")
@@ -84,34 +85,50 @@ anntSNE <- setClass(
       if (!is.null(pars$nn.idx) & !is.null(pars$nn.dists)) {
         nn2res <- list(nn.idx = pars$nn.idx, nn.dists = pars$nn.dists)
       } else {
-
-        nn2res <- find_ann(x = indata, 
-                           knn = pars$knn,
-                           annmethod = pars$annmethod, 
-                           eps = pars$eps, 
-                           radius = pars$radius,
-                           nt = pars$nt, 
-                           nlinks = pars$nlinks, 
-                           ef.construction = pars$ef.construction,
-                           ef.search = pars$ef.search,
-                           distance = pars$distance,
-                           treetype = pars$treetype,
-                           searchtype = pars$searchtype)
+        
+        knn_time <- microbenchmark::microbenchmark(
+          nn2res <- find_ann(x = indata, 
+                             knn = pars$knn,
+                             get_geod = FALSE,
+                             annmethod = pars$annmethod, 
+                             eps = pars$eps, 
+                             radius = pars$radius,
+                             nt = pars$nt, 
+                             nlinks = pars$nlinks, 
+                             ef.construction = pars$ef.construction,
+                             ef.search = pars$ef.search,
+                             distance = pars$distance,
+                             treetype = pars$treetype,
+                             searchtype = pars$searchtype),
+          times = 1,
+          unit = "s"
+        )#$time * 1e-9
+        knn_time <- summary(knn_time)$median
         
       }
       
-      # Convert RANN::nn2() output as N*N adjacency matrix
-      Kn <- nn2dist(nn2res, type = "lower", sparse = FALSE)
-      Kn[Kn == 0 & (row(Kn)!=col(Kn))] <- 1e+5 # fill off-diagnol zeros with large values
       
-      outdata <- Rtsne::Rtsne(X = as.dist(Kn),
-                              # is_distance = TRUE,
-                              dims = pars$ndim,
-                              perplexity = pars$perplexity,
-                              theta = pars$theta, 
-                             )$Y
       
-      colnames(outdata) <- paste0("tSNE", 1:ncol(outdata))
+      embed_time <- microbenchmark::microbenchmark( {
+        
+        # Convert RANN::nn2() output as N*N adjacency matrix
+        Kn <- nn2dist(nn2res, type = "lower", sparse = FALSE)
+        Kn[Kn == 0 & (row(Kn)!=col(Kn))] <- 1e+5 # fill off-diagnol zeros with large values
+        
+        outdata <- Rtsne::Rtsne(X = as.dist(Kn),
+                                # is_distance = TRUE,
+                                dims = pars$ndim,
+                                perplexity = pars$perplexity,
+                                theta = pars$theta, 
+        )$Y
+        
+        colnames(outdata) <- paste0("tSNE", 1:ncol(outdata))
+      },
+      times = 1,
+      unit = "s"
+      )#$time * 1e-9
+      embed_time <- summary(embed_time)$median
+      
       
       return(new(
         "dimRedResult",
@@ -122,7 +139,12 @@ anntSNE <- setClass(
         has.org.data = keep.org.data,
         method       = "anntSNE",
         pars         = pars,
-        running.time = c(0, 0, 0)
-      ))
+        running.time = c(knn_time, 0, embed_time),
+        nn.idx       = nn2res$nn.idx,
+        # nn.dists     = nn2res$nn.dists,
+        has.apply    = TRUE,
+        other.data   = ifelse (pars$get_geod, list(geod = as.dist(Kn)), list())
+        ))
+      
     })
 )
