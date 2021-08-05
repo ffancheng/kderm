@@ -35,7 +35,7 @@ set.seed(123)
 
 # Metric learning
 
-## Radius searching with k-d trees
+## Setup
 
 ```{r parameters}
 train <- readRDS(here::here("data/spdemand_1id336tow_train.rds"))
@@ -83,7 +83,7 @@ E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
 E2 <- fn[,2]
 prob <- c(1, 50, 99)
 p_hdr_isomap <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NULL)
-p_hdr_isomap_p <- p_hdr_isomap$p + 
+p_hdr_isomap_p <- p_hdr_isomap + 
   plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 20, 
              color = blues9[5], fill = blues9[5], alpha = 0.2)
 # p_hdr_isomap_p
@@ -118,10 +118,10 @@ x <- train
 method <- "anntSNE"
 perplexity <- round(k / 3) # 30 by default
 theta <- 0 # for exact tSNE in the C++ tSNE Barnes-Hut implementation
-tictoc::tic()
+# tictoc::tic()
 metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = perplexity, theta = theta, invert.h = TRUE)
 # summary(metric_tsne)
-tictoc::toc()
+# tictoc::toc()
 ```
 
 
@@ -130,11 +130,11 @@ ftsne <- metric_tsne$embedding
 E1 <- ftsne[,1]; E2 <- ftsne[,2]
 plot_embedding(metric_tsne)
 plot_ellipse(metric_tsne, n.plot = 50)
-plot_contour(metric_tsne, n.grid = 20, scale = 1/10)
+plot_contour(metric_tsne, n.grid = 50, scale = 1/10)
 ```
 
 ```{r}
-p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/10)
+p_tsne <- plot_outlier(x = metric_tsne, n.grid = 50, prob = prob, noutliers = 20, scale = 1/10)
 p_hdr_tsne <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
 p_hdr_tsne_p <- p_hdr_tsne$p + 
   plot_ellipse(metric_tsne, n.plot = 50, add = T)
@@ -160,10 +160,13 @@ To show our methods performs better, we expect a higher correlation of ranks. Th
 The ranking of outliers can be compared as follows. 
 
 ```{r}
-head(p_isomap$outlier, n = 20)
-head(p_tsne$outlier, n = 20)
-outlier_isomap <- order(as.numeric(p_isomap$outlier))
-outlier_tsne <- order(as.numeric(p_tsne$outlier))
+p_isomap_all <- plot_outlier(x = metric_isomap, n.grid = 50, prob = prob, noutliers = N, scale = 1/8)
+p_tsne_all <- plot_outlier(x = metric_tsne, n.grid = 50, prob = prob, noutliers =N, scale = 1/10)
+
+head(p_isomap_all$outlier, n = 20)
+head(p_tsne_all$outlier, n = 20)
+outlier_isomap <- order(as.numeric(p_isomap_all$outlier))
+outlier_tsne <- order(as.numeric(p_tsne_all$outlier))
 # outliers <- cbind(outlier_isomap, outlier_tsne)
 cor(outlier_isomap, outlier_tsne)
 ```
@@ -180,8 +183,8 @@ b <- sample(letters)
 rank_rank_plot(a,b, n=20)
 ```
 
-## Outlier ranking comaprison using fixed bandwidth
 
+## Outlier ranking comaprison using fixed bandwidth
 
 ```{r}
 head(p_hdr_isomap$outlier, n = 20)
@@ -202,10 +205,11 @@ Similarly, we compare the highest density regions from both methods and expect a
 ## Variable bandwidth
 
 ```{r}
-tail(p_isomap$outlier, n = 20)
-tail(p_tsne$outlier, n = 20)
+tail(p_isomap_all$outlier, n = 20)
+tail(p_tsne_all$outlier, n = 20)
 cor(outlier_isomap %>% tail(50), outlier_tsne %>% tail(50))
 ```
+
 ## Fixed bandwidth
 
 ```{r}

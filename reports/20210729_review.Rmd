@@ -1,0 +1,91 @@
+---
+title: "July Summary"
+author: "Fan Cheng"
+date: "2021-07-28"
+output: 
+  # prettydoc::html_pretty:
+    # theme: cayman
+    # theme: flatly
+    rmdformats::readthedown:
+    toc: true
+    float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Supervision form
+
+- External supervisor form needed
+
+- Second Monash supervisor
+
+# July summary
+
+Below is a summary of some events I attended with some feedback.
+
+## ANZSC 2021
+
+Machine learning session; 10min talk + 5min Q&A.
+
+- How to define anomalies?
+
+- Anomalies sensitivity to manifold learning methods.  
+
+- Examine distributions of nearby typical instead of anomalous households. 
+
+
+## AMSI winter school
+
+### Lectures
+
+- More insights about dimension reduction from Tas. 
+
+- A lot of Bayesian statistics. 
+
+### Runner-up for the participants talks
+
+- Two rounds: 8 people group, 13 finalist; vote for top 3 talks; 
+- 10min talk, no live questions;
+
+- skipped manifold learning and quality measures after the lectures
+
+### Possible collaborations
+
+ABS: Victoria smart meter data project, detailed to be discussed.
+
+> Brian Chan: Ohh interesting, is the Vic data publicly available? The reason why I mention it is because I know we are doing some very interesting work with Smart Meter Data (not my team so I don't know the details) - perhaps there might be some collaboration opportunities here, I can definitely follow-up if you are interested
+
+> Owen Forbes: how I might use manifold learning with my EEG/neuroscience data for my PhD. 
+One approach I am considering for my future work is representing each EEG frequency spectrogram as a curve - could potentially use functional PCA where each channel’s spectrogram is a curve. But seeing your application to electrical usage patterns, it seems comparable not necessarily to the EEG time series but to the power as a function of frequency for each electrode
+
+<!-- , kind of like this https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.researchgate.net%2Ffigure%2FPS[…]e=images&cd=vfe&ved=0CAsQjRxqFwoTCODswZzE7vECFQAAAAAdAAAAABAF -->
+
+
+## ECSSC 2021
+
+A 20min talk scheduled at Friday 11:20 am. 
+
+More time on manifold learning, quality measures and the result plots. 
+
+
+## MLANN paper revision
+
+- Added t-SNE and UMAP implementation. 
+
+- Introduction: add references for t-SNE and UMAP; more explanations on why embedding quality matters more than recall rate; add references on t-SNE variations and UMAP using NN-Descent for fast NN and their limitation [?].  
+
+- Manifold learning: explain parameter settings for $K$ and $d$; t-SNE and UMAP; UMAP algorithm pointed to the paper [?]. 
+
+- Quality measures: recall rate definition and why high recall rate is not enough for preserving accurate local structure [any insights?]. 
+
+- Unify embedding dimension as $d=2$ for a better-visualization reason. Plus, t-SNE only works for $d=1,2,3$ since it's designed mainly for high-dimensional data visualization with scatterplots.
+
+- MNIST experiments: list ML parameter settings; Update $d=2$ result. 
+
+- Smart meter data application: clarify dimension $p=200$ and N for different scenarios. 
+
+- Conclusions: extension is possible for other methods (ML & ANN) to avoid adding other methods later; add intrinsic dimension reference from Chris [?]. 
+
+
