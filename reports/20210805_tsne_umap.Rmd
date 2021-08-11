@@ -179,7 +179,7 @@ UMAP extends a raidus outwards at each point until overlap with the nearest neig
 
 Below are some figures to illustrate the steps in UMAP from the same book.
 
-```{r umap, fig.align = 'center', out.width = "80%", echo = FALSE, fig.cap = "", eval=TRUE}
+```{r umap, fig.align = 'center', out.width = "75%", echo = FALSE, fig.cap = "", eval=TRUE}
 knitr::include_graphics(here::here("reports/figures/umap.png"))
 ```
 
