@@ -114,7 +114,7 @@ UMAP [Uniform Manifold Approximation and Projection; @McInnes2018-xo] is a compe
 UMAP extends a raidus outwards at each point until overlap with the nearest neighbors, with a $min_dist$ as a desired seperation between nearby embedded points to control global structure. Finally, similar to t-SNE, stochastic gradient descent is used for the optimization of object function. The algorithm and hyperparameters are detailed in Section 4 of @McInnes2018-xo. 
 
 
-\begin{algorithm}[!htb]
+<!-- \begin{algorithm}[!htb]
   \caption{UMAP}
   \label{alg:umap}
   \DontPrintSemicolon
@@ -159,7 +159,7 @@ UMAP extends a raidus outwards at each point until overlap with the nearest neig
 
   \end{algorithmic}
 \end{algorithm}
-
+ -->
 
 
 ## Parameters
@@ -171,11 +171,22 @@ UMAP extends a raidus outwards at each point until overlap with the nearest neig
     This parameter controls how tightly UMAP clumps points together, with low values leading to more tightly packed embeddings. Larger values of min_dist will make UMAP pack points together more loosely, focusing instead on the preservation of the broad topological structure.
 
 
+## Illustration
+
+Below are some figures to illustrate the steps in UMAP from the same book.
+
+```{r umap, fig.align = 'center', out.width = "80%", echo = FALSE, fig.cap = "", eval=TRUE}
+knitr::include_graphics(here::here("reports/figures/umap.png"))
+```
+
+
 # Compare
 
 The biggest difference between the the output of UMAP when compared with t-SNE is this balance between local and global structure - UMAP is often better at preserving global structure.
 
 ## Visualization examples
+
+The following blog contains visualization examples for comparing t-SNE and UMAP, as well as the effect of hyperparameters on the embedding.
 
 https://pair-code.github.io/understanding-umap/
 
@@ -228,3 +239,5 @@ https://kisungyou.com/Rdimtools/reference/index.html#section--dimension-estimati
 - How to deal with the implementation of t-SNE then?
 
 - How to unify this in the paper?
+
+TODO: run simulations for both dimension 2 and 12 on MNIST and check if the conclusion holds. For electricity dataset, since the goal is to find anomalies, we could choose dimension 2 for simplicity. (otherwise compute densities for high-dimensional embedding)
