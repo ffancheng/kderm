@@ -2,6 +2,8 @@
 title: "Comparison between t-SNE and UMAP"
 author: "Fan Cheng"
 date: "2021-08-05"
+bibliography: references.bib
+biblio-style: authoryear-comp
 output: 
   # prettydoc::html_pretty:
     # theme: cayman
@@ -10,10 +12,11 @@ output:
     # toc: true
     # float: true
   bookdown::pdf_document2:
-    keep_tex: true
+    keep_tex: false
     toc: false
     includes:
       in_header: preamble.tex
+
 ---
 
 ```{r setup, include=FALSE}
@@ -205,17 +208,17 @@ https://pair-code.github.io/understanding-umap/
 
 ## Takeaways from the blog 
 
-  1. Hyperparameters really matter
+- Hyperparameters really matter
 
-  2. Cluster sizes in a UMAP plot mean nothing
+- Cluster sizes in a UMAP plot mean nothing
 
-  3. Distances between clusters might not mean anything
+- Distances between clusters might not mean anything
 
-  4. Random noise doesn’t always look random
+- Random noise doesn’t always look random
 
   Especially at low values of n_neighbors, spurious clustering can be observed.
 
-  5. You may need more than one plot
+- You may need more than one plot
 
 
 # Things related to our paper
@@ -240,4 +243,11 @@ https://kisungyou.com/Rdimtools/reference/index.html#section--dimension-estimati
 
 - How to unify this in the paper?
 
-TODO: run simulations for both dimension 2 and 12 on MNIST and check if the conclusion holds. For electricity dataset, since the goal is to find anomalies, we could choose dimension 2 for simplicity. (otherwise compute densities for high-dimensional embedding)
+# TODO
+
+- Run simulations for both dimension 2 and 12 on MNIST and check if the conclusion holds. 
+
+- For electricity dataset, since the goal is to find anomalies, we could choose dimension 2 for simplicity. (otherwise compute densities for high-dimensional embedding)
+
+
+# References
