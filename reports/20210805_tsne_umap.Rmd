@@ -56,36 +56,37 @@ To better capture the local data structure and solve the crowding problem, a nor
   \label{alg:tsne}
   \DontPrintSemicolon
   \SetAlgoLined
-  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}
+  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}\SetKwInOut{OptParameter}{optimization parameter}
   \Input{ high-dimensional data $x_i$ for all $i=1,\ldots,N$ }
   \Output{ low-dimensional embedding $y_i$ for all $i=1,\ldots,N$ }
-  \Parameter{ perplexity, number of iterations $T$, learning rate $\eta$, momentum $\alpha(t)$}
+  \Parameter{ \textit{perplexity} }
+  \OptParameter{ number of iterations $T$, learning rate $\eta$, momentum $\alpha(t)$ }
   \BlankLine
   \begin{algorithmic}[1]
 
-  \STATE Compute the Gaussian probability of distances between $x_i$ and $x_j$ as $p_{j \mid i}$ using
+  \STATE Compute the Gaussian conditional probability of distances for $x_i$ and $x_j$ as $p_{j \mid i}$ using
   $$
-    p_{j \mid i}=\frac{\exp \left(-\left\|x_{i}-x_{j}\right\|^{2} / 2 \sigma_{i}^{2}\right)}{\sum_{k \neq i} \exp \left(-\left\|x_{i}-x_{k}\right\|^{2} / 2 \sigma_{i}^{2}\right)};
+    p_{j \mid i}=\frac{\exp \left(-\left\|x_{i}-x_{j}\right\|^{2} / 2 \sigma_{i}^{2}\right)}{\sum_{k \neq i} \exp \left(-\left\|x_{i}-x_{k}\right\|^{2} / 2 \sigma_{i}^{2}\right)}
   $$
-  with the variance $\sigma_{i}$ is optimized by a constraint, $\text{perplexity} = 2 ^ {-\sum_j{p_{j \mid i} \log_2{p_{j \mid i}}}}$; 
+  where the variance $\sigma_{i}$ for each $x_i$ optimized with the perplexity parameter by $ 2 ^ {-\sum_j{p_{j \mid i} \log_2{p_{j \mid i}}}} = \textit{perplexity} $, and set $p_{i \mid i}=0$;
 
   \STATE Set the probability as $p_{i j}=(p_{j \mid i}+p_{i \mid j}) / (2 N)$;
 
-  \STATE Initialize the optimization solution as $\mathcal{Y}^{(0)} = \{ y_1, \dots, y_N \}$ sampled from normal distribution $\mathcal{N}(0, 10^{-4} \boldsymbol{I})$;
+  \STATE Initialize the optimization solution as $\mathcal{Y}^{(0)} = \{ y_1, \dots, y_N \}$ and $\mathcal{Y}^{(1)}$ sampled from normal distribution $\mathcal{N}(0, 10^{-4} \boldsymbol{I})$;
 
-  \FOR{$t = 1,\dots,N$}
+  \FOR{$t = 1,\dots,T$}
 
   \STATE Compute the Student t-distribution of distances between $y_i$ and $y_j$ as 
   $$
     q_{i j}=\frac{\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}}{\sum_{k \neq l}\left(1+\left\|y_{k}-y_{l}\right\|^{2}\right)^{-1}};
   $$
 
-  \STATE Compute the gradient of the Kullback-Leibler divergence loss function as
+  \STATE Compute the gradient of the Kullback-Leibler divergence loss function for all $i=1,\ldots,N$ as
   $$
     \frac{\delta KL}{\delta y_{i}}=4 \sum_{j}\left(p_{i j}-q_{i j}\right)\left(y_{i}-y_{j}\right)\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1} ;
   $$
 
-  \STATE Update $ \mathcal{Y}^{(t)}=\mathcal{Y}^{(t-1)}+\eta \frac{\delta KL}{\delta \gamma}+\alpha(t)\left(\mathcal{Y}^{(t-1)}-\mathcal{Y}^{(t-2)}\right). $
+  \STATE Update $ \mathcal{Y}^{(t)}=\mathcal{Y}^{(t-1)} + \eta \frac{\delta KL}{\delta \mathcal{Y}} + \alpha(t)\left(\mathcal{Y}^{(t-1)}-\mathcal{Y}^{(t-2)}\right). $
 
   \ENDFOR
 
