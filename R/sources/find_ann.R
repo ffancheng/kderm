@@ -30,6 +30,7 @@ find_ann <- function(x,
                      distance = c("euclidean", "manhattan"),
                      treetype = c("kd", "bd"),
                      searchtype = c("standard", "priority", "radius"),
+                     get_geod = FALSE,
                      ...) {
   
   base::switch(annmethod,
@@ -44,15 +45,15 @@ find_ann <- function(x,
                "annoy"   = {
                  message(Sys.time(), ": Finding ANN using ", annmethod, sep = "")
                  nn2res <- base::switch(distance,
-                                       "euclidean" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = AnnoyParam(ntrees = nt, distance = "Euclidean"), ...)},
-                                       "manhattan" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = AnnoyParam(ntrees = nt, distance = "Manhattan"), ...)})
+                                       "euclidean" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::AnnoyParam(ntrees = nt, distance = "Euclidean"), ...)},
+                                       "manhattan" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::AnnoyParam(ntrees = nt, distance = "Manhattan"), ...)})
                }, 
                
                "hnsw"    = {
                  message(Sys.time(), ": Finding ANN using ", annmethod, sep = "")
                  nn2res <- base::switch(distance,
-                                       "euclidean" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Euclidean"), ...)},
-                                       "manhattan" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Manhattan"), ...)})
+                                       "euclidean" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Euclidean"), ...)},
+                                       "manhattan" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Manhattan"), ...)})
                }
   )
   names(nn2res) <- c("nn.idx", "nn.dists")              

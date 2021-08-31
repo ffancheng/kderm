@@ -6,14 +6,10 @@
                                        ndim = 2,
                                        get_geod = FALSE,
                                        annmethod = "kdtree", 
-                                       radius = 1,
                                        nt = 50, 
                                        nlinks = 16, 
                                        ef.construction = 200,
-                                       ef.search = 10, 
-                                       distance = c("euclidean", "manhattan"),
-                                       treetype = c("kd", "bd"), 
-                                       searchtype = c("standard", "priority", "radius")),
+                                       distance = c("euclidean", "manhattan")),
                         fun = function (data, pars,
                                         keep.org.data = TRUE) {
                           # chckpkg("RSpectra")
@@ -38,13 +34,9 @@
                           knn_time <- microbenchmark::microbenchmark(
                             knng <- makeKNNgraph(x = indata, k = pars$knn, eps = pars$eps, 
                                                  annmethod = pars$annmethod, 
-                                                 radius = pars$radius,
                                                  nt = pars$nt, nlinks = pars$nlinks, 
                                                  ef.construction = pars$ef.construction,
-                                                 ef.search = pars$ef.search,
-                                                 distance = pars$distance,
-                                                 treetype = pars$treetype, 
-                                                 searchtype = pars$searchtype),
+                                                 distance = pars$distance),
                             times = 1,
                             unit = "s"
                           )#$time * 1e-9
@@ -66,11 +58,7 @@
                               ## TODO: add regularization
                               k <- geodist ^ 2
                               k <- .Call(stats:::C_DoubleCentre, k)
-                              # k <- multivariance:::double.center(k, normalize = T)
-                              # k <- energy::D_center(k)
                               k <- - k / 2
-                              # k[1:5,1:5]
-                              
                               ## TODO: explicit symmetrizing
                               ## TODO: return eigenvectors?
                               e <- RSpectra::eigs_sym(k, pars$ndim, which = "LA",
@@ -129,7 +117,6 @@
                             org.data     = orgdata,
                             running.time = c(knn_time, dijkstra_time, eigen_time),
                             nn.idx       = knng$nn2res$nn.idx,
-                            # nn.dists     = knng$nn2res$nn.dists,
                             has.org.data = keep.org.data,
                             # apply        = appl,
                             has.apply    = TRUE,
