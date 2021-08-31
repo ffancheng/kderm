@@ -6,7 +6,7 @@
 ## points and checking would neutralize the performance gain, so bd
 ## trees are not really usable.
 
-makeKNNgraph <- function (x, k = min(10,nrow(x)), annmethod = c("kdtree", "annoy", "hnsw"), eps = 0, radius = 0, nt = 50, search.k = 500, nlinks = 16, ef.construction = 200, ef.search = 10, diag = FALSE, distance = c("euclidean", "manhattan"), treetype = c("kd", "bd"), searchtype = c("standard", "priority", "radius")){
+makeKNNgraph <- function (x, k, eps = 0, annmethod = c("kdtree", "annoy", "hnsw"), radius = NULL, nt = 50, search.k = 500, nlinks = 16, ef.construction = 200, diag = FALSE, distance = c("euclidean", "manhattan"), ...){
   ## requireNamespace("RANN")
   ## requireNamespace("igraph")
   require(BiocNeighbors)
@@ -56,62 +56,54 @@ makeKNNgraph <- function (x, k = min(10,nrow(x)), annmethod = c("kdtree", "annoy
     #                    searchtype = searchtype, eps = eps)
   # }
   
-  switch(annmethod,
-         "kdtree" = {
-           # treetype <- "kd"                
-           # searchtype <- "priority"
-           # if(is.null(k) == is.null(radius)) stop("Please specify either k or radius for k-d trees to find nearest neighbors, but not both. ")
-           if(searchtype == "radius"){
-             if(radius <= 0) stop("Please specify a positive value for `radius` when using radius search. ")
-             k <- nrow(x) - 1
-           }
-           
-           nn2res <- dplyr::case_when(distance=="euclidean" ~ RANN::nn2(data = x, query = x, k = k + 1, treetype = treetype, searchtype = searchtype, eps = eps, radius = radius),
-                                      distance=="manhattan" ~ RANN.L1::nn2(data = x, query = x, k = k + 1, treetype = treetype, searchtype = searchtype, eps = eps, radius = radius),
-           )
-           names(nn2res) <- c("nn.idx", "nn.dists")
-           
-         },
-         "annoy"   = {
-           nn2res <- dplyr::case_when(distance=="euclidean" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = AnnoyParam(ntrees = nt, search.mult = search.k, distance = "Euclidean")),
-                                      distance=="manhattan" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = AnnoyParam(ntrees = nt, search.mult = search.k, distance = "Manhattan")),
-           )
-           names(nn2res) <- c("nn.idx", "nn.dists")
-         }, 
-         "hnsw"    = {
-           nn2res <- dplyr::case_when(distance=="euclidean" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, distance = "Euclidean")),
-                                      distance=="manhattan" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, distance = "Manhattan")),
-           )
-           names(nn2res) <- c("nn.idx", "nn.dists")
-         }
-         )
   
-  # ## create graph: the first ny nodes will be y, the last nx nodes
-  # ## will be x, if x != y
-  # ## it is not really pretty to create a
-  # ## directed graph first and then make it undirected.
-  # g <- igraph::make_empty_graph(M, directed = TRUE)
-  # g[from = if (diag) rep(seq_len(M), times = k + 1) else      rep(seq_len(M), times = k),
-  #   to   = if (diag) as.vector(nn2res$nn.idx)  else      as.vector(nn2res$nn.idx[, -1]),
-  #   attr = "weight"] <-
-  #   if (diag)  as.vector(nn2res$nn.dists) else as.vector(nn2res$nn.dists[, -1])
+  # Built into a function find_ann()
+  # switch(annmethod,
+  #        "kdtree" = {
+  #          treetype <- "kd"                
+  #          searchtype <- "priority"
+  #          nn2res <- dplyr::case_when(distance=="euclidean" ~ RANN::nn2(data = x, query = x, k = k + 1, treetype = treetype, searchtype = searchtype, eps = eps),
+  #                                     distance=="manhattan" ~ RANN.L1::nn2(data = x, query = x, k = k + 1, treetype = treetype, searchtype = searchtype, eps = eps),
+  #          )
+  #          names(nn2res) <- c("nn.idx", "nn.dists")
+  #          
+  #        },
+  #        "annoy"   = {
+  #          nn2res <- dplyr::case_when(distance=="euclidean" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = AnnoyParam(ntrees = nt, search.mult = search.k, distance = "Euclidean")),
+  #                                     distance=="manhattan" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = AnnoyParam(ntrees = nt, search.mult = search.k, distance = "Manhattan")),
+  #          )
+  #          names(nn2res) <- c("nn.idx", "nn.dists")
+  #        }, 
+  #        "hnsw"    = {
+  #          nn2res <- dplyr::case_when(distance=="euclidean" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, distance = "Euclidean")),
+  #                                     distance=="manhattan" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, distance = "Manhattan")),
+  #          )
+  #          names(nn2res) <- c("nn.idx", "nn.dists")
+  #        }
+  #        )
   
-  # Convert RANN::nn2() output as N*N adjacency matrix
-  closest <- 
-    sapply(nn2res, cbind) %>%
-    as_tibble() %>% 
-    mutate(row.idx = rep(1:N, times = k+1)) %>% 
-    filter(nn.idx!=0) %>% 
-    mutate(weights = exp(- (nn.dists / radius)^2)) %>% 
-    arrange(row.idx)
+  nn2res <- find_ann(x = x, 
+                     knn = k,
+                     get_geod = FALSE,
+                     annmethod = annmethod, 
+                     eps = eps, 
+                     radius = radius,
+                     nt = nt, 
+                     nlinks = nlinks, 
+                     ef.construction = ef.construction,
+                     ef.search = search.k,
+                     distance = distance,
+                     ...)
   
-  # Now construct the graph
-  g <- igraph::make_empty_graph(N, directed = TRUE)
-  g[from = closest$row.idx,
-    to   = closest$nn.idx,
+  ## create graph: the first ny nodes will be y, the last nx nodes
+  ## will be x, if x != y
+  ## it is not really pretty to create a
+  ## directed graph first and then make it undirected.
+  g <- igraph::make_empty_graph(M, directed = TRUE)
+  g[from = if (diag) rep(seq_len(M), times = k + 1) else      rep(seq_len(M), times = k),
+    to   = if (diag) as.vector(nn2res$nn.idx)  else      as.vector(nn2res$nn.idx[, -1]),
     attr = "weight"] <-
-    closest$weights # k_radius(p,p')
-  # is.connected(g)
+    if (diag)  as.vector(nn2res$nn.dists) else as.vector(nn2res$nn.dists[, -1])
   
   return(list(g = igraph::as.undirected(g, mode = "collapse", edge.attr.comb = "first"),
               nn2res = nn2res))

@@ -64,8 +64,10 @@ annUMAP <- setClass(
       knn = 15,
       ndim = 2,
       d = "euclidean", # multiple options supported by umap-learn
-      method = "umap-learn",
+      method = "naive",  # "umap-learn",
       input = "data", # or "dist"
+      min_dist = 0.1,
+      n_epochs = 200,
       annmethod = "kdtree", 
       eps = 0,
       radius = 1,
@@ -102,7 +104,9 @@ annUMAP <- setClass(
       umap_call_pars$metric       <- pars$d
       umap_call_pars$method <- pars$method
       umap_call_pars$d      <- indata # input data for umap can be "data" or "dist"
-      umap_call_pars$input <- pars$input
+      umap_call_pars$input <- pars$input # input is the full "data" by default
+      umap_call_pars$min_dist <- pars$min_dist
+      umap_call_pars$n_epochs <- pars$n_epochs
       
       pars_2 <- pars
       pars_2$knn <- NULL # precomputed NNs, list of `indexes` and `distances`
@@ -135,7 +139,13 @@ annUMAP <- setClass(
         )#$time * 1e-9
         knn_time <- summary(knn_time)$median
         names(nn2res) <- c("indexes", "distances") # to match umap-learn args knn
+        class(nn2res) <- "umap.knn"
+        
         umap_call_pars$knn <- nn2res
+        umap_call_pars$input <- "dist" # now use "dist" as input knn for umap::umap
+        
+      } else {
+        knn_time <- 0 # all process within the embed_time
       }
       
       
@@ -179,7 +189,7 @@ annUMAP <- setClass(
         method = "annUMAP",
         pars = pars,
         running.time = c(knn_time, 0, embed_time),
-        nn.idx       = nn2res$indexes,
+        nn.idx       = umap_call_pars$knn$indexes,
         # nn.dists     = nn2res$distances,
         other.data   = list()
       ))

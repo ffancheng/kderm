@@ -47,7 +47,7 @@ plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(1, 50, 99), noutlier
     plot_ellipse(x, add = T, n.plot = 50, scale = 20, 
                  color = blues9[5], fill = blues9[5], alpha = 0.2)
   
-  return(list(p = p_outlier_vkde, outlier = p_hdr$outlier))
+  return(list(p = p_outlier_vkde, outlier = p_hdr$outlier, hdr2d_info = hdr2d_info))
 }
 
 

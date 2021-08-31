@@ -29,7 +29,7 @@
 #' larger neighborhoods into account.
 #'
 #' @references
-#' Maaten, L. van der, 2014. Accelerating t-SNE using Tree-Based
+#' van der Maaten, L., 2014. Accelerating t-SNE using Tree-Based
 #' Algorithms. Journal of Machine Learning Research 15, 3221-3245.
 #'
 #' van der Maaten, L., Hinton, G., 2008. Visualizing Data using
@@ -37,6 +37,7 @@
 #'
 #' @examples
 #' \dontrun{
+#' library(dimRed)
 #' dat <- loadDataSet("3D S Curve", n = 300)
 #' emb <- embed(dat, "anntSNE", perplexity = 80)
 #' plot(emb, type = "2vars")
@@ -111,12 +112,11 @@ anntSNE <- setClass(
       
       embed_time <- microbenchmark::microbenchmark( {
         
-        # Convert RANN::nn2() output as N*N adjacency matrix
-        Kn <- nn2dist(nn2res, type = "lower", sparse = FALSE)
-        Kn[Kn == 0 & (row(Kn)!=col(Kn))] <- 1e+5 # fill off-diagnol zeros with large values
+        # Convert RANN::nn2() output as N*N distance matrix, non-NN distances are set as 1e+05
+        Kn <- nn2dist(nn2res)
         
-        outdata <- Rtsne::Rtsne(X = as.dist(Kn),
-                                # is_distance = TRUE,
+        outdata <- Rtsne::Rtsne(X = Kn,
+                                is_distance = TRUE,
                                 dims = pars$ndim,
                                 perplexity = pars$perplexity,
                                 theta = pars$theta, 
