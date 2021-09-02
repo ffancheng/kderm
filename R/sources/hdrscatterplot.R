@@ -30,7 +30,7 @@
 #' hdrscatterplot(x, y)
 #' hdrscatterplot(x, y, label = paste0("p", 1:length(x)))
 #' @export hdrscatterplot
-hdrscatterplot <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "ks"), noutliers = NULL, label = NULL) {
+hdrscatterplot <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "ks"), noutliers = NULL, label = NULL, den = NULL) {
   levels <- sort(levels)
   if (missing(y)) {
     data <- x
@@ -41,7 +41,7 @@ hdrscatterplot <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "
 
   vnames <- names(data)
 
-  den <- hdr.2d(data[, 1], data[, 2], prob = levels, kde.package = kde.package)
+  if(is.null(den)) den <- hdr.2d(data[, 1], data[, 2], prob = levels, kde.package = kde.package)
 
   region <- numeric(NROW(data)) + 100
   for (i in seq_along(levels))

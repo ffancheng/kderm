@@ -19,7 +19,7 @@ nn2dist <- function(nn, N = NULL) { # , k = NULL, sparse = TRUE, keep_graph = FA
   
   Kn <- matrix(1e+5, N, N)
   for(i in 1:N) {
-    Kn[i, index[i,]] <- distances[i, ]
+    Kn[i, index[i,]] <- distances[i, index[i,] != 0]
   }
   
   return(Kn)

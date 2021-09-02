@@ -28,7 +28,8 @@
 #' 
 metricML <- function(x, s, k = min(10, nrow(x)), radius = 0, 
                      adjacency = NULL, affinity = NULL,
-                     method, annmethod = c("kdtree", "annoy", "hnsw"), 
+                     method, 
+                     annmethod = c("kdtree", "annoy", "hnsw"),
                      eps = 0, nt = 50, nlinks = 16, ef.construction = 200, ef.search = 10,
                      distance = c("euclidean", "manhattan"), diag = FALSE,
                      treetype = c("kd", "bd"),
@@ -81,7 +82,8 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
     )
     names(nn2res) <- c("nn.idx", "nn.dists")
 
-    Kn <- nn2dist(nn2res, N = N, k = k, sparse = TRUE)
+    Kn <- nn2dist(nn2res, N = N)
+    Kn[Kn == 1e+05] <- 0
     g <- igraph::graph_from_adjacency_matrix(Kn)
     
   }
@@ -101,18 +103,18 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
                      .method = method,
                      knn = k,
                      ndim = s,
-                     annmethod = annmethod,
-                     radius = radius,
-                     eps = eps,
-                     nt = nt,
-                     nlinks = nlinks,
-                     ef.construction = ef.construction,
-                     ef.search = ef.search,
-                     distance = distance,
-                     treetype = treetype,
-                     searchtype = searchtype,
-                     perplexity = perplexity,
-                     theta = theta,
+                     # annmethod = annmethod,
+                     # radius = radius,
+                     # eps = eps,
+                     # nt = nt,
+                     # nlinks = nlinks,
+                     # ef.construction = ef.construction,
+                     # ef.search = ef.search,
+                     # distance = distance,
+                     # treetype = treetype,
+                     # searchtype = searchtype,
+                     # perplexity = perplexity,
+                     # theta = theta,
                      .mute = c("output"),
                      # ...
 
