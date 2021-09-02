@@ -168,7 +168,8 @@ head(p_tsne_all$outlier, n = 20)
 outlier_isomap <- order(as.numeric(p_isomap_all$outlier))
 outlier_tsne <- order(as.numeric(p_tsne_all$outlier))
 # outliers <- cbind(outlier_isomap, outlier_tsne)
-cor(outlier_isomap, outlier_tsne)
+plot(outlier_isomap, outlier_tsne)
+
 ```
 
 ```{r, include=FALSE, eval=FALSE}
