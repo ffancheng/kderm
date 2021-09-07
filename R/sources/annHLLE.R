@@ -6,11 +6,14 @@ annHLLE <- setClass(
                    eps = 0, 
                    ndim = 2,
                    get_geod = FALSE,
-                   annmethod = "kdtree", 
+                   radius = 1,
                    nt = 50, 
                    nlinks = 16, 
                    ef.construction = 200,
-                   distance = c("euclidean", "manhattan")),
+                   ef.search = 10,
+                   distance = c("euclidean", "manhattan"),
+                   treetype = c("kd", "bd"), 
+                   searchtype = c("standard", "priority", "radius")),
     fun = function(data, pars,
                    keep.org.data = TRUE) {
       
