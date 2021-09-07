@@ -6,7 +6,19 @@
 ## points and checking would neutralize the performance gain, so bd
 ## trees are not really usable.
 
-makeKNNgraph <- function (x, k, eps = 0, annmethod = c("kdtree", "annoy", "hnsw"), radius = NULL, nt = 50, search.k = 500, nlinks = 16, ef.construction = 200, diag = FALSE, distance = c("euclidean", "manhattan"), ...){
+makeKNNgraph <- function (x, 
+                          k, 
+                          eps = 0, 
+                          annmethod = c("kdtree", "annoy", "hnsw"), 
+                          radius = NULL, 
+                          nt = 50, 
+                          search.k = 500, nlinks = 16, 
+                          ef.construction = 200, ef.search = 10,
+                          diag = FALSE, 
+                          distance = c("euclidean", "manhattan"), 
+                          treetype = c("kd", "bd"),
+                          searchtype = c("standard", "priority", "radius"),
+                          ...){
   ## requireNamespace("RANN")
   ## requireNamespace("igraph")
   require(BiocNeighbors)

@@ -6,10 +6,14 @@
                                        ndim = 2,
                                        get_geod = FALSE,
                                        annmethod = "kdtree", 
+                                       radius = 1,
                                        nt = 50, 
                                        nlinks = 16, 
                                        ef.construction = 200,
-                                       distance = c("euclidean", "manhattan")),
+                                       ef.search = 10,
+                                       distance = c("euclidean", "manhattan"),
+                                       treetype = c("kd", "bd"), 
+                                       searchtype = c("standard", "priority", "radius")),
                         fun = function (data, pars,
                                         keep.org.data = TRUE) {
                           # chckpkg("RSpectra")
@@ -34,9 +38,14 @@
                           knn_time <- microbenchmark::microbenchmark(
                             knng <- makeKNNgraph(x = indata, k = pars$knn, eps = pars$eps, 
                                                  annmethod = pars$annmethod, 
-                                                 nt = pars$nt, nlinks = pars$nlinks, 
+                                                 radius = pars$radius,
+                                                 nt = pars$nt, 
+                                                 nlinks = pars$nlinks, 
                                                  ef.construction = pars$ef.construction,
-                                                 distance = pars$distance),
+                                                 ef.search = pars$ef.search,
+                                                 distance = pars$distance,
+                                                 treetype = pars$treetype,
+                                                 searchtype = pars$searchtype),
                             times = 1,
                             unit = "s"
                           )#$time * 1e-9
