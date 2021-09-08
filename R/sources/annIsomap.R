@@ -31,6 +31,7 @@
                           if (is.null(pars$get_geod)) pars$get_geod <- FALSE
                           if (is.null(pars$distance)) pars$distance <- "euclidean"
                           if (length(pars$distance) > 1) pars$distance <- pars$distance[1]
+                          if (length(pars$treetype) > 1) pars$treetype <- pars$treetype[1]
                           
                           ## geodesic distances
                           message(Sys.time(), ": constructing knn graph")

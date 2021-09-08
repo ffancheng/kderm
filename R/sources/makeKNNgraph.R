@@ -7,7 +7,7 @@
 ## trees are not really usable.
 
 makeKNNgraph <- function (x, 
-                          k, 
+                          k = min(10, nrow(x)), 
                           eps = 0, 
                           annmethod = c("kdtree", "annoy", "hnsw"), 
                           radius = NULL, 
@@ -87,8 +87,8 @@ makeKNNgraph <- function (x,
   #          names(nn2res) <- c("nn.idx", "nn.dists")
   #        }, 
   #        "hnsw"    = {
-  #          nn2res <- dplyr::case_when(distance=="euclidean" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, distance = "Euclidean")),
-  #                                     distance=="manhattan" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, distance = "Manhattan")),
+  #          nn2res <- dplyr::case_when(distance=="euclidean" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Euclidean")),
+  #                                     distance=="manhattan" ~ BiocNeighbors::queryKNN(X = x, query = x, k = k + 1, BNPARAM = HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Manhattan")),
   #          )
   #          names(nn2res) <- c("nn.idx", "nn.dists")
   #        }
@@ -100,11 +100,13 @@ makeKNNgraph <- function (x,
                      annmethod = annmethod, 
                      eps = eps, 
                      radius = radius,
-                     nt = nt, 
+                     nt = nt,
                      nlinks = nlinks, 
                      ef.construction = ef.construction,
-                     ef.search = search.k,
+                     ef.search = ef.search,
                      distance = distance,
+                     treetype = treetype,
+                     searchtype = searchtype,
                      ...)
   
   ## create graph: the first ny nodes will be y, the last nx nodes
@@ -117,7 +119,7 @@ makeKNNgraph <- function (x,
     attr = "weight"] <-
     if (diag)  as.vector(nn2res$nn.dists) else as.vector(nn2res$nn.dists[, -1])
   
-  return(list(g = igraph::as.undirected(g, mode = "collapse", edge.attr.comb = "first"),
+   return(list(g = igraph::as.undirected(g, mode = "collapse", edge.attr.comb = "first"),
               nn2res = nn2res))
 }
 

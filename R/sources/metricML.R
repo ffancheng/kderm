@@ -26,7 +26,7 @@
 #' metricML(x, s = 2, k = 5, radius = .4, method = "annIsomap", annmethod = "kdtree", epsilon = 0, distance = "euclidean", treetype = "kd", searchtype = "radius")
 #' metricML(x, s = 3, k = 10, method = "annLLE", annmethod = "annoy", nt = 50, distance = "manhattan")
 #' 
-metricML <- function(x, s, k = min(10, nrow(x)), radius = 0, 
+metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0, 
                      adjacency = NULL, affinity = NULL,
                      method, 
                      annmethod = c("kdtree", "annoy", "hnsw"),
@@ -57,15 +57,45 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
     if(is.null(affinity) & is.null(adjacency)) stop("Please specify one of the data matrix, the adjacency matrix, and the affinity matrix along with the searching radius as the inputs.")
     
   } else { # use data matrix input
-    
 
-    N <- nrow(x)
-    
     # if(is.null(k) == is.null(radius)) stop("Please specify either k or radius for k-d trees to find nearest neighbors, but not both. ")
     # When there are more than `k` NNs found using radius search, print k NNs instead of 10. RANN::nn2() only prints `k` NNs
-    if(searchtype == "radius"){
+    if(searchtype == "radius") {
       if(radius <= 0) stop("Please specify a positive value for `radius` when using radius search. ")
-      k <- N - 1
+    }
+      
+    ##--------------------------
+    # Step3: embedding coordinates fn
+    ##--------------------------
+    e <- dimRed::embed(x,
+                       .method = method,
+                       knn = k,
+                       ndim = s,
+                       annmethod = annmethod,
+                       radius = radius,
+                       eps = eps,
+                       nt = nt,
+                       nlinks = nlinks,
+                       ef.construction = ef.construction,
+                       ef.search = ef.search,
+                       distance = distance,
+                       treetype = treetype,
+                       searchtype = searchtype,
+                       perplexity = perplexity,
+                       theta = theta,
+                       .mute = c("output"),
+                       # ...
+                       
+    )
+    fn <- e@data@data
+    
+    # geodist <- igraph::distances(g, algorithm = "dijkstra")
+    # fn <- cmdscale(geodist, k = 2)
+    colnames(fn) <- paste0("E", 1:s)  
+    
+    N <- nrow(x)
+    if (searchtype == "radius") {  
+      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges
     }
     
     ###--------------------------
@@ -96,35 +126,6 @@ metricML <- function(x, s, k = min(10, nrow(x)), radius = 0,
   Ln <- Laplacian(W = Kn, radius = radius, lambda = 1)
   
 
-  ##--------------------------
-  # Step3: embedding coordinates fn
-  ##--------------------------
-  e <- dimRed::embed(x,
-                     .method = method,
-                     knn = k,
-                     ndim = s,
-                     # annmethod = annmethod,
-                     # radius = radius,
-                     # eps = eps,
-                     # nt = nt,
-                     # nlinks = nlinks,
-                     # ef.construction = ef.construction,
-                     # ef.search = ef.search,
-                     # distance = distance,
-                     # treetype = treetype,
-                     # searchtype = searchtype,
-                     # perplexity = perplexity,
-                     # theta = theta,
-                     .mute = c("output"),
-                     # ...
-
-  )
-  fn <- e@data@data
-  
-  # geodist <- igraph::distances(g, algorithm = "dijkstra")
-  # fn <- cmdscale(geodist, k = 2)
-  colnames(fn) <- paste0("E", 1:s)
-  
   ###--------------------------
   # Step4: embedding metric hn, inverse of the Riemannian matrix, symmetric
   ###--------------------------
