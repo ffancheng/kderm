@@ -33,6 +33,9 @@ find_ann <- function(x,
                      get_geod = FALSE,
                      ...) {
   
+  if (is.null(distance)) distance <- "euclidean"
+  if (length(distance) > 1) distance <- distance[1]
+  
   base::switch(annmethod,
                "kdtree" = {
                  if(is.null(treetype)) treetype <- "kd"                
