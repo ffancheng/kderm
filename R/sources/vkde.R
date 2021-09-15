@@ -72,6 +72,7 @@ mkde <- function (x, h) {
 
 # multivariate variable density estimate
 # https://www.mathworks.com/matlabcentral/fileexchange/68762-2d-kernal-density-estimation
+# https://www.originlab.com/doc/Origin-Help/Create-2D-Kernel-Density#Exact_Estimation
 # https://github.com/cran/MASS/blob/master/man/kde2d.Rd
 
 # Refer to both the R and MATLAB code about multivariate kernel density estimate
@@ -87,6 +88,8 @@ vkde2d <- function(x, y, h, n = 25, lims = c(range(x), range(y)) ){
     stop("missing or infinite values in the data are not allowed")
   if(any(!is.finite(lims)))
     stop("only finite values are allowed in 'lims'")
+  
+  if(is.vector(h)) return(MASS::kde2d(x, y, h, n, lims))
 
   # grid points
   n <- rep(n, length.out = 2L)  # number of grids for all dimensions
@@ -95,30 +98,41 @@ vkde2d <- function(x, y, h, n = 25, lims = c(range(x), range(y)) ){
   
   # bandwidth matrix is a 2*1?
   # h <- if (missing(h)) t(replicate(nx, c(bandwidth.nrd(x), bandwidth.nrd(y)))) else h
-        # else rep(h, length.out = 2L) # for fixed h input in kde2d
+  # else rep(h, length.out = 2L) # for fixed h input in kde2d
           
   # if (any(h <= 0))
   #   stop("bandwidths must be strictly positive")
   
-  # if bandwidth is a 2*2*nx array
-  s <- array(0, c(n[1L], n[2L], nx))
+  # # if bandwidth is a 2*2*nx array
+  z <- array(NA, c(n[1L], n[2L], nx))
+
+  g <- expand.grid(gx, gy)
+  xi <- cbind(x, y)
   
   for (k in 1:nx) {
-    
-    hkd <- 1 / (2 * pi) * det(h[,,k])^(-1/2)
-    hks <- solve(h[,,k])
-    xyk <- c(x[k], y[k])
-    
-    for(i in 1:n[1L]) {
-      for (j in 1:n[2L]) {
-       
-        gxy <- c(gx[i], gy[j])
-        s[i, j, k] <- hkd * exp( - 1/2 * t(gxy - xyk) %*% hks %*% (gxy - xyk))
-      }
-    }
+    hk <- h[,,k]
+    z[,,k] <- det(hk) ^ (-1/2) * matrix(dmvnorm(x = g, mean = xi[k,], sigma = hk), nrow = n[1], byrow = FALSE) # scalar
   }
   
-  z <- rowMeans(s, dims = 2)
+  z <- rowMeans(z, dims = 2)
+  
+  
+  
+    
+    # hkd <- 1 / (2 * pi) * det(h[,,k])^(-1/2)
+    # hks <- solve(h[,,k])
+    # xyk <- c(x[k], y[k])
+    # 
+    # for(i in 1:n[1L]) {
+    #   for (j in 1:n[2L]) {
+    #    
+    #     gxy <- c(gx[i], gy[j])
+    #     s[i, j, k] <- hkd * exp( - 1/2 * t(gxy - xyk) %*% hks %*% (gxy - xyk))
+    #   }
+    # }
+  # }
+  
+  # z <- rowMeans(s, dims = 2)
 
   # for(i in 1:n[1L]) {
   #   for (j in 1:n[2L]) {
