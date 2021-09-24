@@ -33,7 +33,7 @@ den.estimate.2d <- function(x, y, kde.package=c("ash","ks"), h=NULL, xextend=0.1
 
 # add argument h
 # https://github.com/robjhyndman/hdrcde/blob/f767b441e4338043258bcbcf8a60b281d1fd22c9/R/hdrscatterplot.R#L43
-hdrscatterplot <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "ks"), noutliers = NULL, label = NULL, h = NULL, den = NULL, ...) {
+hdrscatterplot_new <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "ks"), noutliers = NULL, label = NULL, h = NULL, den = NULL, ...) {
   levels <- sort(levels)
   if (missing(y)) {
     data <- x
@@ -72,11 +72,11 @@ hdrscatterplot <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "
   k <- region
   k[region == 100] <- 0
   ord <- order(k, decreasing = TRUE)
-  data <- data[ord, ]
+  data <- data[ord, ] # data is reordered by ord
   
   if (noutliers > 0) {
-    outlier_rank <- order(den$fxy[ord])
-    outliers <- outlier_rank[seq(noutliers)]
+    outlier_rank <- order(den$fxy[ord])  # order den$fxy as well to match the new data
+    outliers <- outlier_rank[seq(noutliers)] # take top noutliers labels for annotation
   }
   
   p <- ggplot2::ggplot(data, ggplot2::aes_string(vnames[1], vnames[2])) +
@@ -101,7 +101,12 @@ hdrscatterplot <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "
     )
   }
   # return(p)
-  return(list(p=p, outlier= rownames(data)[outlier_rank], densities = den$fxy))
+  return(list(p=p, 
+              # outlier= rownames(data)[outlier_rank], densities = den$fxy[ord]
+              outlier = order(den$fxy, decreasing = FALSE),  # densities ascending, top anomalous to typical
+              densities = den$fxy # density order matching the data inpput
+              )
+         ) ## TODO: check outlier/density order
 }
 
 

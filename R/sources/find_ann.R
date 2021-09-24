@@ -27,19 +27,20 @@ find_ann <- function(x,
                      nlinks = 16, 
                      ef.construction = 200,
                      ef.search = 10,
-                     distance = c("euclidean", "manhattan"),
-                     treetype = c("kd", "bd"),
-                     searchtype = c("standard", "priority", "radius"),
-                     get_geod = FALSE,
-                     ...) {
+                     distance = c("euclidean", "manhattan")[1],
+                     treetype = c("kd", "bd")[1],
+                     searchtype = c("standard", "priority", "radius")[3],
+                     get_geod = FALSE
+                     #...
+                     ) {
   
-  if (is.null(distance)) distance <- "euclidean"
-  if (length(distance) > 1) distance <- distance[1]
+  # if (is.null(distance)) distance <- "euclidean"
+  # if (length(distance) > 1) distance <- distance[1]
+  # if (is.null(treetype)) treetype <- "kd"                
+  # if (is.null(searchtype)) searchtype <- "priority"
   
   base::switch(annmethod,
                "kdtree" = {
-                 if(is.null(treetype)) treetype <- "kd"                
-                 if(is.null(searchtype)) searchtype <- "priority"
                  nn2res <- base::switch(distance,
                                        "euclidean" = {RANN::nn2(data = x, query = x, k = knn + 1, treetype = treetype, searchtype = searchtype, eps = eps, radius = radius)},
                                        "manhattan" = {RANN.L1::nn2(data = x, query = x, k = knn + 1, treetype = treetype, searchtype = searchtype, eps = eps, radius = radius)})
@@ -48,15 +49,15 @@ find_ann <- function(x,
                "annoy"   = {
                  message(Sys.time(), ": Finding ANN using ", annmethod, sep = "")
                  nn2res <- base::switch(distance,
-                                       "euclidean" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::AnnoyParam(ntrees = nt, distance = "Euclidean"), ...)},
-                                       "manhattan" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::AnnoyParam(ntrees = nt, distance = "Manhattan"), ...)})
+                                       "euclidean" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::AnnoyParam(ntrees = nt, distance = "Euclidean"))},
+                                       "manhattan" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::AnnoyParam(ntrees = nt, distance = "Manhattan"))})
                }, 
                
                "hnsw"    = {
                  message(Sys.time(), ": Finding ANN using ", annmethod, sep = "")
                  nn2res <- base::switch(distance,
-                                       "euclidean" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Euclidean"), ...)},
-                                       "manhattan" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Manhattan"), ...)})
+                                       "euclidean" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Euclidean"))},
+                                       "manhattan" = {BiocNeighbors::queryKNN(X = x, query = x, k = knn + 1, BNPARAM = BiocNeighbors::HnswParam(nlinks = nlinks, ef.construction = ef.construction, ef.search = ef.search, distance = "Manhattan"))})
                }
   )
   names(nn2res) <- c("nn.idx", "nn.dists")              
