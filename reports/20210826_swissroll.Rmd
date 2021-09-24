@@ -35,13 +35,15 @@ Jmisc::sourceAll(here::here("R/sources"))
 set.seed(123)
 ```
 
+```{r}
+# data size and meta data dimension
+N <- 2000
+p <- 2
+```
+
 # Swiss roll from copula
 
 ```{r simu, echo=TRUE}
-# data size
-N <- 2000
-p <- 2
-
 # ----Swiss roll from copula-----------------------------------------
 # ## a 3-dimensional normal copula
 # norm.cop <- normalCopula(0.5, dim = p)
@@ -59,10 +61,14 @@ co <- rCopula(N, cl3)
 # pairs(u)
 claytonden <- dCopula(co, cl3) # true density
 
-# Swiss roll mapping
-u_sr <- (1.5 * pi) * (1 + 2 * co) # U(1.5pi, 4.5pi)
-a <- u_sr[,1]
-claytonsr <- tibble(x = a * cos(a), y = u_sr[,2], z = a * sin(a))
+# swiss roll mapping
+swissRollMapping <- function (x, y) { # U(1.5pi, 4.5pi)
+    cbind(x = x * cos(x),
+          y = y,
+          z = x * sin(x))
+}
+u_sr <- (1.5 * pi) * (1 + 2 * co) 
+claytonsr <- swissRollMapping(u_sr[,1], u_sr[,2])
 
 # semi-sphere mapping
 sphereMapping <- function (phi, psi) { # x~U(0,2pi); y~U(-1,1)
@@ -96,16 +102,17 @@ claytonsc <- sCurveMapping(u_sc[,1], u_sc[,2])
 
 ```{r copulaplot}
 claytondata <- as_tibble(claytonsr)
-u <- u_sr
+u <- u_sp
 # highlight true density of u: red for high densities and black for low ones
 col <- rep("grey", N)
-col[head(order(claytonden), n=20)] <- "red"
-col[tail(order(claytonden), n=20)] <- "black"
+col[head(order(claytonden), n=20)] <- "black"
+col[tail(order(claytonden), n=20)] <- "gold"
 par(mfrow=c(1,2))
-plot(u[,1:2], xlab = expression(italic(u)[1]*"'"), ylab = expression(italic(u)[2]*"'"), col = col, cex = 0.4)
+plot(u[,1:2], xlab = expression(italic(u)[1]*"'"), ylab = expression(italic(u)[2]*"'"), 
+     col = col, cex = 0.4)
 scatterplot3d::scatterplot3d(claytondata, color = col)
 plot_ly(data = claytondata, x = ~ x, y = ~ y, z = ~ z, color = col,
-        type = "scatter3d", mode = "markers", size = 1, text = paste("density:", claytonden))
+        type = "scatter3d", mode = "markers", size = 1, text = paste("density:", round(claytonden, 4)))
 ```
 
 # Swiss roll from a Gaussian Mixture Model
@@ -113,58 +120,82 @@ plot_ly(data = claytondata, x = ~ x, y = ~ y, z = ~ z, color = col,
 ```{r gaussian}
 # randomly sampling from a Gaussian Mixture Model with centers/means at (7.5,7.5), (7.5,12.5), (12.5,7.5) and (12.5,12.5). The covariance for each gaussian was the 2x2 identity matrix
 # 400 points in each of the four clusters
-
-## read data from online resource http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.html
+## Option 1. read data from online resource http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.html
 # preswissroll <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/preswissroll.dat", col_names = FALSE)
 # preswissroll_label <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/preswissroll_labels.dat", col_names = FALSE)$X1 %>% as.factor()
 # swissroll <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.dat", col_names = c("x", "y", "z"))
-# 
 # preswissroll %>% 
 #   add_column(label = preswissroll_label) %>% 
 #   ggplot(aes(X1, X2, col = label)) + 
 #   geom_point()
 
-## manually generate multivariate normal random numbers
+## Option 2. manually generate multivariate normal random numbers
 n <- round(N/4)
 R <- matrix(c(1, 0,
               0, 1), 
             nrow = 2, ncol = 2)
-mu1 <- c(7.5, 7.5)
-mu2 <- c(7.5, 12.5)
-mu3 <- c(12.5, 7.5)
-mu4 <- c(12.5, 12.5)
+# mu1 <- c(7.5, 7.5)
+# mu2 <- c(7.5, 12.5)
+# mu3 <- c(12.5, 7.5)
+# mu4 <- c(12.5, 12.5)
+mu <- tribble(
+  ~mu1, ~mu2,
+  7.5, 7.5,
+  7.5, 12.5,
+  12.5, 7.5,
+  12.5, 12.5)
+
 # mvtnorm::rmvnorm(n, mean = mu, sigma = R)
 # MASS::mvrnorm(n, mu = mu1, Sigma = R)
 preswissroll <- NULL
 for(i in 1:4) {
-  mui <- get(paste0("mu", i))
-  a <- MASS::mvrnorm(n, mu = mui, Sigma = R)
-  den <- mclust::dmvnorm(a, mean = mui, sigma = R)
+  # mui <- get(paste0("mu", i))
+  mui <- as.matrix(mu[i,])
+  a <- mvtnorm::rmvnorm(n, mean = mui, sigma = R)
+  den <- mvtnorm::dmvnorm(a, mean = mui, sigma = R)
   a <- cbind(a, i, den)
   preswissroll <- rbind(preswissroll, a)
 }
-colnames(preswissroll) <- c("X1", "X2", "label", "den")
+colnames(preswissroll) <- c("x", "y", "label", "den")
 preswissroll <- preswissroll %>%
   as_tibble() %>% 
-  mutate(label = as.factor(label)) 
-
-# Swiss Roll mapping (x,y) -> (x cos x, y, x sin x)
-a <- preswissroll$X1
-swissroll <- tibble(x = a * cos(a), y = preswissroll$X2, z = a * sin(a))
-
-# plotting
+  mutate(label = as.factor(label),
+         x = (x - 5)/10, y = (y - 5)/10,
+         den = den * 10 # y = h(x) = (x-5)/10; x = 10*y + 5; dx/dy = 10; f_Y(y) = f_X(x) * 10
+         ) 
 preswissroll %>%
-  as_tibble() %>% 
-  mutate(label = as.factor(label)) %>% 
-  ggplot(aes(X1, X2, col = den)) + 
+  ggplot(aes(x, y, col = den)) + 
   geom_point() + 
   scale_color_viridis()
-# plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = preswissroll$label,
-#         type = "scatter3d", mode = "markers", size = 1)
-plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = preswissroll$den,
-        type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
 ```
 
+
+```{r gaussianmap, echo=FALSE, eval=TRUE}
+# meta data co \in [0,1]
+co <- as.matrix(preswissroll[,1:2])
+# Swiss Roll mapping
+u_sr <- (1.5 * pi) * (1 + 2 * co) 
+gaussiansr <- swissRollMapping(u_sr[,1], u_sr[,2])
+# semi-sphere mapping
+u_sp <- tibble(x = co[,1], y = co[,2]) %>% 
+  mutate(x = 2 * pi * x, y = 2 * y - 1)
+gaussiansp <- sphereMapping(u_sp$x, u_sp$y)
+# twin peak mapping
+u_tp <- 2 * co - 1
+gaussiantp <- twinPeaksMapping(u_tp[,1], u_tp[,2])
+# S curve mapping
+u_sc <- cbind(1.5 * pi * (2 * co[,1] - 1), 2 * co[,2])
+gaussiansc <- sCurveMapping(u_sc[,1], u_sc[,2])
+```
+
+```{r gaussinplot}
+gaussiandata <- as_tibble(gaussiansr)
+u <- u_sr
+plot_ly(data = gaussiandata, x = ~ x, y = ~ y, z = ~ z, color = preswissroll$den,
+        type = "scatter3d", mode = "markers", size = 1, 
+        text = paste("density:", round(preswissroll$den, 5))
+        )
+```
 
 
 # Isomap 
@@ -177,8 +208,8 @@ load("swissroll/gaussiansr_metric4methods.rda")
 
 
 ```{r parameters}
-# train <- swissroll; claytonden <- preswissroll$den
-train <- claytondata
+# train <- claytondata
+train <- gaussiandata
 # Parameters fixed
 x <- train
 N <- nrow(x)
@@ -189,7 +220,7 @@ annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 5 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 ```
 
 
@@ -204,9 +235,10 @@ summary(metric_isomap)
 
 ```{r ggellipse, include=FALSE, eval=FALSE}
 plot_embedding(metric_isomap) +
-  labs(x = "ISO1", y = "ISO2")
-plot_ellipse(metric_isomap, add = F, n.plot = 50, scales = 20,
-             color = blues9[5], fill = blues9[5], alpha = 0.2)
+  labs(x = "ISO1", y = "ISO2") +
+  plot_ellipse(metric_isomap, add = T, n.plot = 50,
+             color = blues9[5], fill = blues9[5], alpha = 0.1,
+             ell_size = .3)
 ```
 
 
@@ -221,10 +253,10 @@ fn <- metric_isomap$embedding
 E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
 E2 <- fn[,2]
 prob <- c(1, 50, 99)
-ell_size <- 0.2
-p_hdr_isomap <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NULL)
-p_hdr_isomap_p <- p_hdr_isomap + 
-  plot_ellipse(metric_isomap, add = T, n.plot = 50, scales = 1, 
+ell_size <- 0 # ellipse size for plotting
+p_hdr_isomap <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = 20, label = NULL)
+p_hdr_isomap_p <- p_hdr_isomap$p + 
+  plot_ellipse(metric_isomap, add = T, n.plot = 50, 
              color = blues9[5], fill = blues9[5], alpha = 0.2, ell_size = ell_size)
 ```
 
@@ -239,10 +271,15 @@ fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = 
 ```
 
 ```{r hdroutliers}
-source(here::here("R/sources/hdrplotting.R"))
-p_isomap <- plot_outlier(x = metric_isomap, n.grid = n.grid, prob = prob, scales = 1, ell_size = ell_size, f = fisomap)
-p_isomap$p
-(p_hdr_isomap_p + p_isomap$p ) + coord_fixed()
+# source(here::here("R/sources/hdrplotting.R"))
+p_isomap <- plot_outlier(x = metric_isomap, n.grid = n.grid, prob = prob, scales = 1, ell_size = ell_size, 
+                         f = fisomap
+                         )
+# p_isomap$p
+# p_isomap$outlier # top outliers first
+# p_isomap$densities # ascending densities matching $outlier order
+(p_hdr_isomap_p / p_isomap$p ) + # coord_fixed()
+  plot_layout(guides = 'collect')
 ```
 
 
@@ -269,10 +306,11 @@ fxy_lle <- hdrcde:::interp.2d(flle$x, flle$y, flle$z, x0 = E1, y0 = E2)
 # plot_ellipse(metric_lle, n.plot = 50)
 # plot_contour(metric_lle, n.grid = 20, scales = 1/20)
 
-p_lle <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = 20, scales = 1, f = flle, ell_size = ell_size)
+p_lle <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = 20, scales = 1, ell_size = ell_size,
+                      f = flle)
 p_hdr_lle <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
-p_hdr_lle_p <- p_hdr_lle + 
-  plot_ellipse(metric_lle, n.plot = 50, add = T)
+p_hdr_lle_p <- p_hdr_lle$p + 
+  plot_ellipse(metric_lle, n.plot = 50, add = T, ell_size = ell_size)
 (p_hdr_lle_p + p_lle$p) + coord_fixed()
 ```
 
@@ -280,7 +318,7 @@ p_hdr_lle_p <- p_hdr_lle +
 
 # t-SNE
 
-```{r tsne, message=FALSE, warning=FALSE, eval=FALSE}
+```{r tsne, message=FALSE, warning=FALSE, eval=TRUE}
 ## ----tsne, message=FALSE, warning=FALSE, eval=TRUE------------------------------
 x <- train
 method <- "anntSNE"
@@ -304,11 +342,11 @@ fxy_tsne <- hdrcde:::interp.2d(ftsne$x, ftsne$y, ftsne$z, x0 = E1, y0 = E2)
 ```
 
 ```{r, echo = F}
-source(here::here("R/sources/hdrplotting.R"))
+# source(here::here("R/sources/hdrplotting.R"))
 p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scales = 1, f = ftsne, ell_size = ell_size)
-p_hdr_tsne <- hdrcde::hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
-p_hdr_tsne_p <- p_hdr_tsne + 
-  plot_ellipse(metric_tsne, n.plot = 50, add = T)
+p_hdr_tsne <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
+p_hdr_tsne_p <- p_hdr_tsne$p + 
+  plot_ellipse(metric_tsne, n.plot = 50, add = T, ell_size = ell_size)
 (p_hdr_tsne_p + p_tsne$p) + coord_fixed()
 ```
 
@@ -336,8 +374,8 @@ fxy_umap <- hdrcde:::interp.2d(fumap$x, fumap$y, fumap$z, x0 = E1, y0 = E2)
 # plot_contour(metric_umap, n.grid = 20, scales = 1/20)
 
 p_umap <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers = 20, scales = 1, ell_size = ell_size)
-p_hdr_umap <- hdrcde::hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
-p_hdr_umap_p <- p_hdr_umap +
+p_hdr_umap <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
+p_hdr_umap_p <- p_hdr_umap$p +
   plot_ellipse(metric_umap, n.plot = 50, add = T)
 (p_hdr_umap_p + p_umap$p) + coord_fixed()
 ```
@@ -348,6 +386,7 @@ p_hdr_umap_p <- p_hdr_umap +
 
 ```{r trueden}
 fxy <- claytonden # True densities
+fxy <- preswissroll$den
 # Calculates falpha needed to compute HDR of bivariate density den.
 # Also finds approximate mode.
 if(max(prob) > 50) {# Assume prob is coverage percentage
@@ -428,22 +467,31 @@ for(i in 1:4) {
 
 ```{r}
 i <- 1
-for(i in 2){
+for(i in 1:4){
   methods <- c("isomap", "lle", "tsne", "umap")[i]
   fxy_ml <- get(paste0("fxy_", methods))
+  fxy_hdr <- get(paste0("p_hdr_", methods))
+  fxy_hdr <- fxy_hdr$densities
   cor(fxy, fxy_ml, method = "spearman") %>% print() # change hdrscatterplot() output
-  cor(fxy, p_hdr_lle$densities, method = "spearman") %>% print()
+  cor(fxy, fxy_hdr, method = "spearman") %>% print() # hdr densities
+  
+  p1 <- cbind(fxy, fxy_ml) %>% 
+    as_tibble() %>% 
+    ggplot(aes(fxy, fxy_ml)) + 
+    geom_point(col = col) +
+    scale_x_log10() + 
+    scale_y_log10() + 
+    ggtitle("Variable bandwidth")
+  p2 <- cbind(fxy, fxy_hdr) %>% 
+    as_tibble() %>% 
+    ggplot(aes(fxy, fxy_hdr)) + 
+    geom_point(col = col) +
+    scale_x_log10() + 
+    scale_y_log10() + 
+    ggtitle("Fixed bandwidth")
+  
+  print(p1 + p2)
 }
-
-p <- cbind(fxy, fxy_ml) %>% 
-  as_tibble() %>% 
-  ggplot(aes(fxy, fxy_ml)) + 
-  geom_point(col = col) +
-  scale_x_log10() + 
-  scale_y_log10()
-ggplotly(p)
-p + xlim(0, 1)
-
 ```
 
 ```{r}
