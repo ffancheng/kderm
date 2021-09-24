@@ -111,7 +111,7 @@ vkde2d <- function(x, y, h, n = 25, lims = c(range(x), range(y)) ){
   
   for (k in 1:nx) {
     hk <- h[,,k]
-    z[,,k] <- det(hk) ^ (-1/2) * matrix(dmvnorm(x = g, mean = xi[k,], sigma = hk), nrow = n[1], byrow = FALSE) # scalar
+    z[,,k] <- det(hk) ^ (-1/2) * matrix(mvtnorm::dmvnorm(x = g, mean = xi[k,], sigma = hk), nrow = n[1], byrow = FALSE) # scalar
   }
   
   z <- rowMeans(z, dims = 2)

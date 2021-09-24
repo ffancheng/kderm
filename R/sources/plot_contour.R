@@ -21,7 +21,7 @@ plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(1, 50, 99), noutlier
   
   fn <- x$embedding
   Rn <- x$rmetric * scales
-  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
+  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid) # if precomputed f, then scales is not used
   
   den <- f
   # x <- E1; y <- E2
@@ -42,12 +42,12 @@ plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(1, 50, 99), noutlier
   hdr2d_info <- structure(list(mode=mode,falpha=falpha,fxy=fxy, den=den, alpha=alpha, x=E1, y=E2), class="hdr2d") # list for hdr.2d() output
   # plot.hdr2d(hdr2d_info, show.points = T, outside.points = T, pointcol = grey(0.5), xlim = round(range(E1)), ylim = round(range(E2)))
   
-  p_hdr <- hdrscatterplot(E1, E2, levels = prob, noutliers = noutliers, label = label, den = hdr2d_info)
+  p_hdr <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = noutliers, label = label, den = hdr2d_info)
   p_outlier_vkde <- p_hdr$p + 
     plot_ellipse(x, add = T, n.plot = 50, ell_size = ell_size, 
                  color = blues9[5], fill = blues9[5], alpha = 0.2, ...)
   
-  return(list(p = p_outlier_vkde, outlier = p_hdr$outlier, hdr2d_info = hdr2d_info))
+  return(list(p = p_outlier_vkde, outlier = p_hdr$outlier, densities = p_hdr$densities, hdr2d_info = hdr2d_info))
 }
 
 

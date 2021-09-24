@@ -60,9 +60,9 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
 
     # if(is.null(k) == is.null(radius)) stop("Please specify either k or radius for k-d trees to find nearest neighbors, but not both. ")
     # When there are more than `k` NNs found using radius search, print k NNs instead of 10. RANN::nn2() only prints `k` NNs
-    if(searchtype == "radius") {
-      if(radius <= 0) stop("Please specify a positive value for `radius` when using radius search. ")
-    }
+    # if(searchtype == "radius") {
+    #   if(radius <= 0) stop("Please specify a positive value for `radius` when using radius search. ")
+    # }
       
     ##--------------------------
     # Step3: embedding coordinates fn
