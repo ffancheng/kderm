@@ -7,7 +7,7 @@ library(dimRed)
 # library(reticulate)
 # library(here)
 library(viridis)
-# library(hdrcde)
+library(hdrcde)
 library(igraph)
 library(matrixcalc)
 # library(akima)
@@ -20,62 +20,62 @@ Jmisc::sourceAll(here::here("R/sources"))
 set.seed(123)
 
 
-dr_demo <- function(sim_data, algor, k, d, kernel = 'rbfdot') {
-  if (is.null(algor) | is.null(sim_data) | is.null(k) | is.null(d)) return(NULL)
-  if (is.na(algor)) return(NULL)
-  algor <- toupper(algor)
-  if (algor == "PCA") {
-    # PCA (on centered and scaled data)
-    run_time <- system.time({
-      pca_dr <- sim_data$data %>% center_and_standardise() %>% prcomp()
-      proj_data <- sim_data$data %*% pca_dr$rotation[,1:2]
-    })
-  }
+# dr_demo <- function(sim_data, algor, k, d, kernel = 'rbfdot') {
+#   if (is.null(algor) | is.null(sim_data) | is.null(k) | is.null(d)) return(NULL)
+#   if (is.na(algor)) return(NULL)
+#   algor <- toupper(algor)
+#   if (algor == "PCA") {
+#     # PCA (on centered and scaled data)
+#     run_time <- system.time({
+#       pca_dr <- sim_data$data %>% center_and_standardise() %>% prcomp()
+#       proj_data <- sim_data$data %*% pca_dr$rotation[,1:2]
+#     })
+#   }
 
-  # MDS
-  if (algor == "MDS")
-    run_time <- system.time({ proj_data <- cmdscale(dist(sim_data$data), k = d) })
+#   # MDS
+#   if (algor == "MDS")
+#     run_time <- system.time({ proj_data <- cmdscale(dist(sim_data$data), k = d) })
 
-  # Isomap
-  if (algor == "ISOMAP")
-    run_time <- system.time({ proj_data <- RDRToolbox::Isomap(sim_data$data, dims = d, k = k)$dim2 })
+#   # Isomap
+#   if (algor == "ISOMAP")
+#     run_time <- system.time({ proj_data <- RDRToolbox::Isomap(sim_data$data, dims = d, k = k)$dim2 })
 
-  # LLE
-  if (algor == "LLE")
-    run_time <- system.time({ proj_data <- LLE2(sim_data$data, dim = d, k = k) })
+#   # LLE
+#   if (algor == "LLE")
+#     run_time <- system.time({ proj_data <- LLE2(sim_data$data, dim = d, k = k) })
 
-  if (algor == "DIFFUSIONMAP")
-    run_time <- system.time({ proj_data <- diffusionMap::diffuse(dist(sim_data$data), neigen = d)$X })
+#   if (algor == "DIFFUSIONMAP")
+#     run_time <- system.time({ proj_data <- diffusionMap::diffuse(dist(sim_data$data), neigen = d)$X })
 
-  # t-SNE
-  if (algor == "TSNE")
-    run_time <- system.time({ proj_data <- tsne::tsne(sim_data$data, k = d) })
+#   # t-SNE
+#   if (algor == "TSNE")
+#     run_time <- system.time({ proj_data <- tsne::tsne(sim_data$data, k = d) })
 
-  # KernelPCA
-  if (algor == "KPCA")
-    run_time <- system.time({ proj_data <- kernlab::kpca(sim_data$data, kernel = kernel, features = d)@pcv })
+#   # KernelPCA
+#   if (algor == "KPCA")
+#     run_time <- system.time({ proj_data <- kernlab::kpca(sim_data$data, kernel = kernel, features = d)@pcv })
 
-  # SPE
-  if (algor == "SPE")
-    run_time <- system.time({ proj_data <- spe::spe(sim_data$data, edim = d)$x })
+#   # SPE
+#   if (algor == "SPE")
+#     run_time <- system.time({ proj_data <- spe::spe(sim_data$data, edim = d)$x })
 
-  # Laplacian Eigenmaps
-  if (algor == "LE")
-    run_time <- system.time({ proj_data <- Laplacian_Eigenmaps(sim_data$data, k = k, d = d)$eigenvectors })
+#   # Laplacian Eigenmaps
+#   if (algor == "LE")
+#     run_time <- system.time({ proj_data <- Laplacian_Eigenmaps(sim_data$data, k = k, d = d)$eigenvectors })
 
-  # HessianLLE
-  if (algor == 'HLLE')
-    run_time <- system.time({ proj_data <- Hessian_LLE(sim_data$data, k = k, d = d)$projection })
+#   # HessianLLE
+#   if (algor == 'HLLE')
+#     run_time <- system.time({ proj_data <- Hessian_LLE(sim_data$data, k = k, d = d)$projection })
 
-  # LTSA
-  if (algor == 'LTSA')
-    run_time <- system.time({ proj_data <- Local_TSA(sim_data$data, k = k, d = d) })
+#   # LTSA
+#   if (algor == 'LTSA')
+#     run_time <- system.time({ proj_data <- Local_TSA(sim_data$data, k = k, d = d) })
 
-  p1 <- plotly_2D(proj_data, sim_data$colors)
-  plot_title <- paste(algor, "embedding. Time taken: ", round(run_time[[1]], 3), "s.", sep = "")
-  p1 <- layout(p1, title = plot_title)
-  list(p1, run_time)
-}
+#   p1 <- plotly_2D(proj_data, sim_data$colors)
+#   plot_title <- paste(algor, "embedding. Time taken: ", round(run_time[[1]], 3), "s.", sep = "")
+#   p1 <- layout(p1, title = plot_title)
+#   list(p1, run_time)
+# }
 
 
 
@@ -91,46 +91,50 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
                        perplexity = round(k/3), theta = 0.5, # t-SNE
                        invert.h = TRUE,
                        n.plot = 10, ell_size = 1, n.grid = 10, noutliers = 10,
+                       prob = c(1, 50, 99),
                        ...) {
   
   if (is.null(x) | is.null(method)) return(NULL)
+  if(is.null(x$colors)) x$colors <- x$data[,3] # use 3rd column as colors
   
   run_time <- system.time(
-    metriclearn <- metricML(x, s, k, radius,
+    metriclearn <- metricML(x$data, s, k, radius,
                             method = method, 
                             invert.h = invert.h, eps = eps, nt = nt, nlinks = nlinks,
                             annmethod = annmethod, distance = distance, 
                             treetype = treetype,
                             searchtype = searchtype)
-  )
-  # metriclearn_data$metric <- metriclearn
-  # total_time$time_taken <- run_time # reactiveValues
+  )[[1]]
   
   p_emb <- plot_embedding(metriclearn, color = x$colors) +
-    labs(x = "", y = "") +
+    labs(x = "", y = "", color = "") +
     plot_ellipse(metriclearn, add = TRUE, n.plot = n.plot,
                  color = blues9[5], fill = blues9[5], alpha = 0.1,
                  ell_size = ell_size) +
-    ggtitle(paste(method, " embedding. Time taken: ", round(run_time[[1]], 3), "s.", sep = "")) +
+    ggtitle(paste0(substring(method, 4), " 2D embedding. Time taken: ", round(run_time, 3), "s.", sep = "")) +
     theme(plot.title = element_text(hjust = 0.5))
 
   fn <- metriclearn$embedding
   Rn <- metriclearn$rmetric
   E1 <- fn[,1]; E2 <- fn[,2]
-  prob <- c(1, 50, 99)
+  # prob <- c(1, 50, 99)
   f_vkde <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid) # estimated densities with variable bandwidth
   fxy <- hdrcde:::interp.2d(f_vkde$x, f_vkde$y, f_vkde$z, x0 = E1, y0 = E2) # linear interpolation
   
   p_vkde <- plot_outlier(x = metriclearn, n.grid = n.grid, prob = prob, noutliers = noutliers, scales = 1, ell_size = ell_size)
   p_hdr <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers)
-  p_hdr_p <- p_hdr$p +
+  p_hdr$p <- p_hdr$p +
     plot_ellipse(metriclearn, n.plot = n.plot, add = TRUE, ell_size = ell_size)
   
-  return(list(metriclearn = metriclearn, p_emb = p_emb, p_vkde = p_vkde, p_hdr = p_hdr_p, run_time))
+  return(list(metriclearn = metriclearn, p_emb = p_emb, p_vkde = p_vkde, p_hdr = p_hdr, run_time))
   
 }
 
 
+t1 <- list(
+  family = "Times New Roman",
+  size = 16,
+  color = "Black")
 
 
 # Define UI for application that plot 2d metadata, 3d dataset, and 2d embedding
@@ -164,14 +168,15 @@ ui <- dashboardPage(
                  ),
                  br(),
                  fluidRow(
-                   # column(6, plotlyOutput("plot_ml")),
-                   column(6, plotOutput("plot_embed"))
-                 ),  
+                   column(4, plotlyOutput("plot_embed")),
+                   column(4, plotlyOutput("plot_outlier")),
+                   column(4, plotlyOutput("plot_vkde"))
+                 ) 
           ),
           
           column(4,
                  wellPanel(
-                   style = "background-color: #ff6666;",
+                   style = "background-color: #00CC96;",
                    h4("Manifold"),
                    ## Load manifold from files
                    # fluidRow(
@@ -250,11 +255,11 @@ ui <- dashboardPage(
                                                  "UMAP" = "annUMAP"),
                                   inline = TRUE)
                    ),
-                   textOutput("plot_text")
+                   # textOutput("plot_text")  ## TODO: not showing the number
                  ),
                  
                  wellPanel(
-                   style = "background-color: #00CC96;",
+                   style = "background-color: #ff6666;",
                    h4("Embedding and outlier plot parameters"),
                    fluidRow(
                      column(3, numericInput("n.plot", "Number of ellipses", 10, min = 0, step = 1)),
@@ -264,9 +269,9 @@ ui <- dashboardPage(
                    )
                  ),
                  
-                 wellPanel(
-                   textOutput("metric.learn")
-                 )
+                 # wellPanel(
+                 #   textOutput("metric.learn")
+                 # )
           )       
         )
       ),
@@ -276,6 +281,7 @@ ui <- dashboardPage(
       tabItem(
         tabName = "comparison",
         fluidRow(
+          column(12, offset = 0,
           checkboxGroupInput("algor_group", label = h3("Algorithms"),
                              choices = list("ISOMAP" = "annIsomap",
                                             "Locally Linear Embedding (LLE)" = "annLLE",
@@ -284,29 +290,23 @@ ui <- dashboardPage(
                                             "t-SNE" = "anntSNE",
                                             "UMAP" = "annUMAP"),
                              inline = TRUE)
-        ),
+        )),
         fluidRow(
           column(1, actionButton("button", "Update")),
           column(11, textOutput("info_text"))
         ),
-        fluidRow(
-          column(4, plotlyOutput("c_plot_1")),
-          column(8, uiOutput("plot_first_row"))
-        ),
-        fluidRow(
-          uiOutput("plot_second_row")
-        ),
-        fluidRow(
-          uiOutput("plot_third_row")
-        ),
-        fluidRow(
-          uiOutput("plot_fourth_row")
-        )
+        br(),
+        
+        fluidRow( uiOutput("plot_first_row") ),
+        fluidRow( uiOutput("plot_second_row") ),
+        fluidRow( uiOutput("plot_third_row") ),
+        fluidRow( uiOutput("plot_fourth_row") ),
+        fluidRow( uiOutput("plot_fifth_row") ),
+        fluidRow( uiOutput("plot_sixth_row") )
       )
-    )
-                
-  )
 
+    )
+  )
 )
 
 
@@ -314,51 +314,68 @@ ui <- dashboardPage(
 
 server <- shinyServer(function(input, output, session) {
   
-  # read data from input file and assign colors
-  data_from_file <- reactive({
-    inFile <- input$file_input
-    if (is.null(inFile)) return(NULL)
-    sim_data <- read.csv( inFile$datapath, header = input$header,
-                          sep = input$sep, quote = input$quote )
-    if (ncol(sim_data) >= 4) {
-      colors <- sim_data[,4]
-    } else {
-      colors <- z # use 3rd dimension as colors
-    }
-    list(data = as.matrix(sim_data), colors = colors)
+  # # read data from input file and assign colors
+  # data_from_file <- reactive({
+  #   inFile <- input$file_input
+  #   if (is.null(inFile)) return（NULL）
+  #   sim_data <- read.csv( inFile$datapath, header = input$header,
+  #                         sep = input$sep, quote = input$quote )
+  #   if (ncol(sim_data) >= 4) {
+  #     colors <- sim_data[,4]
+  #   } else {
+  #     colors <- z # sim_data[,3], use 3rd dimension as colors  ## TODO, check z
+  #   }
+  #   list(data = as.matrix(sim_data), colors = colors)
+  # })
+  
+  # reduce_to_3d <- reactive({
+  #   sim_data <- data_from_file()
+  #   sim_data$data <- sim_data$data[,1:3]
+  #   sim_data
+  # })
+  
+  sim_data <- reactive({ mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input) })
+
+  # DR_data <- reactiveValues(simulation = sim_data())
+  # total_time <- reactiveValues(time_taken = NULL)
+  metriclearn_data <- reactive({
+    ml_outlier(x = sim_data(), s = input$d, 
+              k = input$searchtype_parameter,
+              radius = input$searchtype_parameter,
+              method = input$algor, 
+              invert.h = TRUE, eps = input$ann_parameter,
+              nt = input$ann_parameter, nlinks = input$ann_parameter,
+              annmethod = input$ann, distance = input$distance, 
+              treetype = "kd",
+              searchtype = input$searchtype,
+              n.plot = input$n.plot,
+              n.grid = input$n.grid,
+              noutliers = input$noutliers, 
+              ell_size = input$ell_size)
   })
   
-  reduce_to_3d <- reactive({
-    sim_data <- data_from_file()
-    sim_data$data <- sim_data$data[,1:3]
-    sim_data
-  })
-  
-  DR_data <- reactiveValues(simulation = NULL)
-  total_time <- reactiveValues(time_taken = NULL)
-  metriclearn_data <- reactiveValues(metric = NULL)
-  
-  output$data_par <- renderUI({
-    data_param_label <- switch(input$data_input,
-                               "Swiss Roll" = "Height",
-                               "Swiss Hole" = "Height",
-                               "Corner Planes" = "Angles",
-                               "Punctured Sphere" = "Z scale",
-                               "Twin Peaks" = "Z scale",
-                               "Clusters" = "Number of clusters",
-                               "Toroidal Helix" = "Sample rate",
-                               "Gaussian" = "Sigma")
-    initial_value <- switch(input$data_input,
-                            "Swiss Roll" = 1,
-                            "Swiss Hole" = 1,
-                            "Corner Planes" = 45,
-                            "Punctured Sphere" = 1,
-                            "Twin Peaks" = 1,
-                            "Clusters" = 3,
-                            "Toroidal Helix" = 1,
-                            "Gaussian" = 1)
-    numericInput("data_parameter", data_param_label, value = initial_value)
-  })
+  ## Used for maniTools package to simulate data
+  # output$data_par <- renderUI({
+  #   data_param_label <- switch(input$data_input,
+  #                              "Swiss Roll" = "Height",
+  #                              "Swiss Hole" = "Height",
+  #                              "Corner Planes" = "Angles",
+  #                              "Punctured Sphere" = "Z scale",
+  #                              "Twin Peaks" = "Z scale",
+  #                              "Clusters" = "Number of clusters",
+  #                              "Toroidal Helix" = "Sample rate",
+  #                              "Gaussian" = "Sigma")
+  #   initial_value <- switch(input$data_input,
+  #                           "Swiss Roll" = 1,
+  #                           "Swiss Hole" = 1,
+  #                           "Corner Planes" = 45,
+  #                           "Punctured Sphere" = 1,
+  #                           "Twin Peaks" = 1,
+  #                           "Clusters" = 3,
+  #                           "Toroidal Helix" = 1,
+  #                           "Gaussian" = 1)
+  #   numericInput("data_parameter", data_param_label, value = initial_value)
+  # })
 
   output$annpar <- renderUI({
     ann_param_label <- switch(input$ann,
@@ -384,58 +401,63 @@ server <- shinyServer(function(input, output, session) {
   
   # First tab ================================================================================
   output$plot_3d <- renderPlotly({
-    if (!is.null(data_from_file())) {
-      sim_data <- reduce_to_3d()
-    } else {
-      sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
-      DR_data$simulation <- sim_data
-    }
-    if (is.null(sim_data$data) | (ncol(sim_data$data) < 3)) {
+    # if (!is.null(data_from_file())) {
+    #   sim_data <- reduce_to_3d()
+    # } else {
+      # sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
+      # DR_data$simulation <- sim_data
+    # }
+    if (is.null(sim_data()$data) | (ncol(sim_data()$data) < 3)) {
       plotly_empty(type = "scatter", mode = "markers")
     } else {
-      plotly_3D(sim_data) %>% layout(title = paste("3D", input$data_input, "mapping data"))
+      # plotly_3D(sim_data()) %>% layout(title = paste("3D", input$data_input, "mapping data"))
+      plot_ly( data.frame(sim_data()$data), x = ~ x, y = ~ y, z = ~ z, color = sim_data()$colors, colors = scales::hue_pal()(4),
+               type = "scatter3d", mode = "markers", marker = list(size = 4) ) %>% 
+        layout( title = list(text = paste("3D", input$data_input, "mapping data"), font = t1) )
     }
   })
   
   output$plot_2d <- renderPlot({
-    if (!is.null(data_from_file())) {
-      sim_data <- reduce_to_3d()
-    } else {
-      sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
-      DR_data$simulation <- sim_data
-    }
-    # if (is.null(sim_data$data) | (ncol(sim_data$data) < 3)) {
-    #   plotly_empty(type = "scatter", mode = "markers")
+    # if (!is.null(data_from_file())) {
+    #   sim_data <- reduce_to_3d()
     # } else {
+      # sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
+      # DR_data$simulation <- sim_data
+    # }
+    if (is.null(sim_data()$data) | (ncol(sim_data()$data) < 3)) {
+      # plotly_empty(type = "scatter", mode = "markers")
+      ggplot()
+    } else {
       viridis_color <- if(input$meta_input != "gaussian") scale_color_viridis(direction = 1) else NULL # scale_color_manual(values = c('#00CC96', '#EF553B', '#636EFA', '#AB63FA')) # Not matching the default plotly colors
-      sim_data$metadata %>%
+      sim_data()$metadata %>%
         as_tibble() %>% 
-        ggplot(aes(x, y, color = sim_data$colors)) +
+        ggplot(aes(x, y, color = sim_data()$colors)) +
         geom_point(alpha = 0.8) +
         viridis_color + # use four gaussian index for colors
         # scale_color_viridis() +
-        labs(color = "", title = paste("Meta data for", input$data_input, "mapping")) +
+        labs(color = "", title = paste("Meta data for", input$data_input, "mapping"), color = "") +
         theme(plot.title = element_text(hjust = 0.5))
-      # plotly_2D(sim_data$metadata, colors = sim_data$colors) # if change to plotlyOutput and renderPlotly
-    # }
+      # plotly_2D(sim_data()$metadata, colors = sim_data()$colors) # if change to plotlyOutput and renderPlotly
+    }
   })
   
-  output$plot_embed <- renderPlot({
-    if (!is.null(data_from_file())) {
-      sim_data <- reduce_to_3d()
+  output$plot_outlier <- renderPlot({
+    # if (!is.null(data_from_file())) {
+    #   sim_data <- reduce_to_3d()
+    # } else {
+    #   sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
+    #   DR_data$simulation <- sim_data
+    # }
+    if (is.null(sim_data()$data) | (ncol(sim_data()$data) < 3)) {
+      # plotly_empty(type = "scatter", mode = "markers")
+      ggplot()
     } else {
-      sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
-      DR_data$simulation <- sim_data
-    }
-    if (is.null(DR_data$simulation) | (ncol(DR_data$simulation$data) < 3)) {
-      plotly_empty(type = "scatter", mode = "markers")
-    } else {
-    res <- dr_demo(sim_data = DR_data$simulation, algor = "isomap",    # TODO
-                   k = input$searchtype_parameter, d = input$d, kernel = input$kernel)
-    total_time$time_taken <- res[[2]]
-    res[[1]]
+    # res <- dr_demo(sim_data = DR_data$simulation, algor = "isomap",    # TODO
+    #                k = input$searchtype_parameter, d = input$d, kernel = input$kernel)
+    # total_time$time_taken <- res[[2]]
+    # res[[1]]
     
-    # res <- ml_outlier(x = sim_data$data, s = input$d, 
+    # res <- ml_outlier(x = sim_data(), s = input$d, 
     #                   k = input$searchtype_parameter,
     #                   radius = input$searchtype_parameter,
     #                   method = input$algor, 
@@ -448,73 +470,52 @@ server <- shinyServer(function(input, output, session) {
     #                   n.grid = input$n.grid,
     #                   noutliers = input$noutliers, 
     #                   ell_size = input$ell_size)
-    # 
+    
     # metriclearn_data$metric <- res$metriclearn
     # total_time$time_taken <- res$run_time # reactiveValues
-    # 
-      # time_taken <- system.time(
-      #   metriclearn <- metricML(x = sim_data$data, s = input$d, 
-      #                 k = input$searchtype_parameter,
-      #                 radius = input$searchtype_parameter,
-      #                 method = input$algor, 
-      #                 invert.h = TRUE, eps = input$ann_parameter,
-      #                 annmethod = input$ann, distance = input$distance, 
-      #                 treetype = "kd",
-      #                 searchtype = input$searchtype)
-      # )
-      # metriclearn_data$metric <- metriclearn
-      # total_time$time_taken <- time_taken # reactiveValues
-      # 
-      # # p_emb <- plot_embedding(metriclearn, color = sim_data$colors) +
-      # #   labs(x = "", y = "") +
-      # #   plot_ellipse(metriclearn, add = TRUE, n.plot = input$n.plot,
-      # #                color = blues9[5], fill = blues9[5], alpha = 0.1,
-      # #                ell_size = input$ell_size) +
-      # #   ggtitle(paste(input$algor, " embedding. Time taken: ", round(time_taken[[1]], 3), "s.", sep = "")) +
-      # #   theme(plot.title = element_text(hjust = 0.5))
-      # 
-      # fn <- metriclearn$embedding
-      # Rn <- metriclearn$rmetric
-      # E1 <- fn[,1]; E2 <- fn[,2]
-      # # prob <- c(1, 50, 99)
-      # f_vkde <- vkde2d(x = E1, y = E2, h = Rn, n = input$n.grid) # estimated densities with variable bandwidth
-      # fxy <- hdrcde:::interp.2d(f_vkde$x, f_vkde$y, f_vkde$z, x0 = E1, y0 = E2) # linear interpolation
-      # 
-      # p_vkde <- plot_outlier(x = metriclearn, n.grid = input$n.grid, prob = c(1, 50, 99), noutliers = input$noutliers, scales = 1, ell_size = input$ell_size)
-      # p_hdr <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = input$noutliers)
-      # p_hdr_p <- p_hdr$p +
-      #   plot_ellipse(metriclearn, n.plot = input$n.plot, add = TRUE, ell_size = input$ell_size)
-      # 
-      # p_vkde$p
-    
-    # (res$p_hdr$p + res$p_vkde$p) + coord_fixed()
-    # res$p_hdr$p + coord_fixed()
+
+    # ((res$p_hdr$p + res$p_vkde$p) + coord_fixed()) + plot_layout(guides = 'collect')
     
     }
   })
-  
+
+  output$plot_embed <- renderPlotly({
+    ggplotly(metriclearn_data()$p_emb) %>%
+      layout(title = list(font = t1) )
+  })
+
+  output$plot_outlier <- renderPlotly({
+    ggplotly(metriclearn_data()$p_hdr$p) %>%
+      layout(title = list(text = "Outliers with fixed bandwidth", font = t1) )
+  })
+
+  output$plot_vkde <- renderPlotly({
+    ggplotly(metriclearn_data()$p_vkde$p) %>%
+      layout(title = list(text = "Outliers with variable bandwidth", font = t1) )
+  })
   
 
   # output$file_text <- renderText({"Plot first 3 dimensions only.
   #    Use the 4th dimension as colors if any; otherwise, the 3rd dimension is used."})
   # output$comment_text <- renderText({"The target dimension is fixed at 2."})
   output$plot_text <- renderPrint({
-    cat("Time taken:", total_time$time_taken[[1]], "s. \n")
+    cat("Time taken:", metriclearn_data()$run_time, "s. \n")
   })
   
   
   # Second tab ================================================================================
   output$info_text <- renderText({"(Note: some algorithms may take long to run (e.g. Isomap and t-SNE),
      please avoid clicking the 'Update' button while the calculation is being performed.)"})
-  output$c_plot_1 <- renderPlotly({
-    if (!is.null(data_from_file())) {
-      sim_data <- reduce_to_3d()
-    } else {
-      sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
-      DR_data$simulation <- sim_data
-    }
-    plotly_3D(sim_data)
-  })
+  # output$c_plot_1 <- renderPlotly({
+  #   # if (!is.null(data_from_file())) {
+  #   #   sim_data <- reduce_to_3d()
+  #   # } else {
+  #   #   sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
+  #   #   DR_data$simulation <- sim_data
+  #   # }
+  #   plotly_3D(sim_data())
+  # })
+  
   output$plot_first_row <- renderUI({
     plot_output_list <- lapply(1:2, function(i) {
       column(6, plotlyOutput(paste0("c_plot_", i + 1)))
@@ -543,19 +544,33 @@ server <- shinyServer(function(input, output, session) {
 
   observeEvent(input$button, {
     algor_list <- input$algor_group
-    for (i in 1:11) {
+    for (i in 1:6) {
       local({
         local_i <- i + 1
         output[[paste0("c_plot_", local_i)]] <-
           renderPlotly({
             if ((local_i - 1) %in% seq_along(algor_list)) {
-              if (!is.null(data_from_file())) {
-                DR_data$simulation <- data_from_file()
-              }
-              res <- dr_demo(DR_data$simulation, algor = algor_list[local_i - 1],
-                             k = input$k, d = input$d, kernel = input$kernel)
-              total_time$time_taken <- res[[2]]
-              res[[1]]
+              # if (!is.null(data_from_file())) {
+              #   DR_data$simulation <- data_from_file()
+              # }
+              # res <- dr_demo(sim_data(), algor = algor_list[local_i - 1],
+              #                k = input$k, d = input$d, kernel = input$kernel)
+              # total_time$time_taken <- res[[2]]
+              # res[[1]]
+              res <- ml_outlier(x = sim_data(), s = input$d, 
+                                k = input$searchtype_parameter,
+                                radius = input$searchtype_parameter,
+                                method = algor_list[local_i - 1], #input$algor, 
+                                invert.h = TRUE, eps = input$ann_parameter,
+                                nt = input$ann_parameter, nlinks = input$ann_parameter,
+                                annmethod = input$ann, distance = input$distance, 
+                                treetype = "kd",
+                                searchtype = input$searchtype,
+                                n.plot = input$n.plot,
+                                n.grid = input$n.grid,
+                                noutliers = input$noutliers, 
+                                ell_size = input$ell_size)
+
             } else {
               plotly_empty(type = "scatter", mode = "markers")
             }
