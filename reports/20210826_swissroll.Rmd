@@ -494,10 +494,6 @@ for(i in 1:4){
 }
 ```
 
-```{r}
-
-```
-
 
 # Compare the rank of outliers with the true density
 
