@@ -130,14 +130,14 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   
 }
 
-
+# Plotly title font and size
 t1 <- list(
   family = "Times New Roman",
   size = 16,
   color = "Black")
 
 
-# Define UI for application that plot 2d metadata, 3d dataset, and 2d embedding
+# Define UI for application that plot 2d metadata, 3d dataset, and 2d embedding, HDR plot for outliers
 ui <- dashboardPage(
 
   dashboardHeader(title = "Outlier detection via manifold learning",
@@ -250,7 +250,7 @@ ui <- dashboardPage(
                                   choices = list("ISOMAP" = "annIsomap",
                                                  "Locally Linear Embedding (LLE)" = "annLLE",
                                                  "Laplacian Eigenmaps" = "annLaplacianEigenmaps",
-                                                 "Hessian LLE" = "annHLLE", 
+                                                 # "Hessian LLE" = "annHLLE",  ## TODO: Not working
                                                  "t-SNE" = "anntSNE",
                                                  "UMAP" = "annUMAP"),
                                   inline = TRUE)
@@ -267,11 +267,8 @@ ui <- dashboardPage(
                      column(3, numericInput("noutliers", "Number of outliers", 10, min = 1, max = 1e8, step = 1)),
                      column(3, numericInput("n.grid", "Number of grid points for KDE", 10, min = 1, max = 500, step = 5)),
                    )
-                 ),
+                 )
                  
-                 # wellPanel(
-                 #   textOutput("metric.learn")
-                 # )
           )       
         )
       ),
@@ -286,7 +283,7 @@ ui <- dashboardPage(
                              choices = list("ISOMAP" = "annIsomap",
                                             "Locally Linear Embedding (LLE)" = "annLLE",
                                             "Laplacian Eigenmaps" = "annLaplacianEigenmaps",
-                                            "Hessian LLE" = "annHLLE", 
+                                            # "Hessian LLE" = "annHLLE", 
                                             "t-SNE" = "anntSNE",
                                             "UMAP" = "annUMAP"),
                              inline = TRUE)
@@ -297,12 +294,7 @@ ui <- dashboardPage(
         ),
         br(),
         
-        fluidRow( uiOutput("plot_first_row") ),
-        fluidRow( uiOutput("plot_second_row") ),
-        fluidRow( uiOutput("plot_third_row") ),
-        fluidRow( uiOutput("plot_fourth_row") ),
-        fluidRow( uiOutput("plot_fifth_row") ),
-        fluidRow( uiOutput("plot_sixth_row") )
+        fluidRow( uiOutput("plot_first_row") )
       )
 
     )
@@ -440,44 +432,6 @@ server <- shinyServer(function(input, output, session) {
       # plotly_2D(sim_data()$metadata, colors = sim_data()$colors) # if change to plotlyOutput and renderPlotly
     }
   })
-  
-  output$plot_outlier <- renderPlot({
-    # if (!is.null(data_from_file())) {
-    #   sim_data <- reduce_to_3d()
-    # } else {
-    #   sim_data <- mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input)
-    #   DR_data$simulation <- sim_data
-    # }
-    if (is.null(sim_data()$data) | (ncol(sim_data()$data) < 3)) {
-      # plotly_empty(type = "scatter", mode = "markers")
-      ggplot()
-    } else {
-    # res <- dr_demo(sim_data = DR_data$simulation, algor = "isomap",    # TODO
-    #                k = input$searchtype_parameter, d = input$d, kernel = input$kernel)
-    # total_time$time_taken <- res[[2]]
-    # res[[1]]
-    
-    # res <- ml_outlier(x = sim_data(), s = input$d, 
-    #                   k = input$searchtype_parameter,
-    #                   radius = input$searchtype_parameter,
-    #                   method = input$algor, 
-    #                   invert.h = TRUE, eps = input$ann_parameter,
-    #                   nt = input$ann_parameter, nlinks = input$ann_parameter,
-    #                   annmethod = input$ann, distance = input$distance, 
-    #                   treetype = "kd",
-    #                   searchtype = input$searchtype,
-    #                   n.plot = input$n.plot,
-    #                   n.grid = input$n.grid,
-    #                   noutliers = input$noutliers, 
-    #                   ell_size = input$ell_size)
-    
-    # metriclearn_data$metric <- res$metriclearn
-    # total_time$time_taken <- res$run_time # reactiveValues
-
-    # ((res$p_hdr$p + res$p_vkde$p) + coord_fixed()) + plot_layout(guides = 'collect')
-    
-    }
-  })
 
   output$plot_embed <- renderPlotly({
     ggplotly(metriclearn_data()$p_emb) %>%
@@ -515,28 +469,13 @@ server <- shinyServer(function(input, output, session) {
   #   # }
   #   plotly_3D(sim_data())
   # })
-  
+
   output$plot_first_row <- renderUI({
-    plot_output_list <- lapply(1:2, function(i) {
-      column(6, plotlyOutput(paste0("c_plot_", i + 1)))
-    })
-    do.call(tagList, plot_output_list)
-  })
-  output$plot_second_row <- renderUI({
-    plot_output_list <- lapply(3:5, function(i) {
-      column(4, plotlyOutput(paste0("c_plot_", i + 1)))
-    })
-    do.call(tagList, plot_output_list)
-  })
-  output$plot_third_row <- renderUI({
-    plot_output_list <- lapply(6:8, function(i) {
-      column(4, plotlyOutput(paste0("c_plot_", i + 1)))
-    })
-    do.call(tagList, plot_output_list)
-  })
-  output$plot_fourth_row <- renderUI({
-    plot_output_list <- lapply(9:11, function(i) {
-      column(4, plotlyOutput(paste0("c_plot_", i + 1)))
+    plot_output_list <- lapply(1:6, function(i) {
+      fluidRow(
+        column(6, plotOutput( paste0("c_plot_", i) )),
+        column(6, plotOutput( paste0("f_plot_", i) ), offset = 0)
+      )
     })
     do.call(tagList, plot_output_list)
   })
@@ -546,10 +485,8 @@ server <- shinyServer(function(input, output, session) {
     algor_list <- input$algor_group
     for (i in 1:6) {
       local({
-        local_i <- i + 1
-        output[[paste0("c_plot_", local_i)]] <-
-          renderPlotly({
-            if ((local_i - 1) %in% seq_along(algor_list)) {
+        local_i <- i 
+        if ((local_i) %in% seq_along(algor_list)) {
               # if (!is.null(data_from_file())) {
               #   DR_data$simulation <- data_from_file()
               # }
@@ -560,7 +497,7 @@ server <- shinyServer(function(input, output, session) {
               res <- ml_outlier(x = sim_data(), s = input$d, 
                                 k = input$searchtype_parameter,
                                 radius = input$searchtype_parameter,
-                                method = algor_list[local_i - 1], #input$algor, 
+                                method = algor_list[local_i], #input$algor, 
                                 invert.h = TRUE, eps = input$ann_parameter,
                                 nt = input$ann_parameter, nlinks = input$ann_parameter,
                                 annmethod = input$ann, distance = input$distance, 
@@ -570,15 +507,62 @@ server <- shinyServer(function(input, output, session) {
                                 n.grid = input$n.grid,
                                 noutliers = input$noutliers, 
                                 ell_size = input$ell_size)
+        }
 
-            } else {
-              plotly_empty(type = "scatter", mode = "markers")
-            }
+        output[[paste0("c_plot_", local_i)]] <-
+          renderPlot({
+            if ((local_i) %in% seq_along(algor_list)) {
+              p3 <- res$p_hdr$p + 
+                    coord_fixed() + 
+                    labs(title = "Variable bandwidth")
+              p4 <- res$p_vkde$p + 
+                    coord_fixed() + 
+                    labs(title = "Fixed bandwidth") 
+
+              (p3 + p4) + 
+                plot_annotation(title = substring(algor_list[local_i], 4), 
+                                theme = theme(plot.title = element_text(size = 18, face = "bold"))) + 
+                plot_layout(guides = 'collect')
+            } else { ggplot() } # plotly_empty(type = "scatter", mode = "markers")
           })
-      })
-    }
-  })
-})
+
+        output[[paste0("f_plot_", local_i)]] <-
+          renderPlot({
+            if ((local_i) %in% seq_along(algor_list)) {
+
+              fxy <- sim_data()$den
+              fxy_hdr <- res$p_hdr$densities
+              fxy_ml <- res$p_vkde$densities
+              
+              p1 <- cbind(fxy, fxy_ml) %>% 
+                as_tibble() %>% 
+                ggplot(aes(fxy, fxy_ml)) + 
+                geom_point(col = sim_data()$colors) +
+                scale_x_log10() + 
+                scale_y_log10() + 
+                scale_color_manual(values = scales::hue_pal()(4)) + 
+                labs(x = "True density", y = "Kernel density estimate",
+                     title = paste("Variable bandwidth correlation:", round(cor(fxy, fxy_ml, method = "spearman"), 3) ))
+              p2 <- cbind(fxy, fxy_hdr) %>% 
+                as_tibble() %>% 
+                ggplot(aes(fxy, fxy_hdr)) + 
+                geom_point(col = sim_data()$colors) +
+                scale_x_log10() + 
+                scale_y_log10() + 
+                scale_color_manual(values = scales::hue_pal()(4)) + 
+                labs(x = "True density", y = "Kernel density estimate",
+                     title = paste("Fixed bandwidth correlation:", round(cor(fxy, fxy_hdr, method = "spearman"), 3) ))
+              p1 + p2
+
+            } else { ggplot() } # plotly_empty(type = "scatter", mode = "markers")
+                          
+          })
+
+      }) # local
+    } # for loop
+  }) # observe button
+
+}) # server
 
 
 # Run the application
