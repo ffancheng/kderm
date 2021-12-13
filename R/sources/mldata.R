@@ -11,12 +11,18 @@
 #' @export
 #'
 #' @examples
-#' mldata(N = 1000, meta = "copula", mapping = "Swiss Roll")
-#' mldata(meta = "gaussian", mapping = "S Curve")
+#' a <- mldata(N = 100, meta = "copula", mapping = "Swiss Roll")
+#' library(ggplot2)
+#' ggplot(as_tibble(a$data), aes(x, y)) + geom_point(aes(color = a$colors))
+#' b <- mldata(meta = "gaussian", mapping = "S Curve")
+#' ggplot(as_tibble(b$data), aes(x, y)) + geom_point(aes(color = b$colors))
 mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"), 
                    mapping = c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")) {
   switch (meta,
-          "uniform" = {co = cbind(x = runif(N), y = runif(N))},
+          "uniform" = {
+            x = runif(N); y = runif(N)
+            co <- cbind(x, y, den = 1*1)
+          },
           "copula" = {
             cl2 <- claytonCopula(2, dim = p)
             co <- rCopula(N, cl2)
@@ -32,12 +38,11 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
             # mu2 <- c(7.5, 12.5)
             # mu3 <- c(12.5, 7.5)
             # mu4 <- c(12.5, 12.5)
-            mu <- tribble(
-              ~mu1, ~mu2,
-              7.5, 7.5,
-              7.5, 12.5,
-              12.5, 7.5,
-              12.5, 12.5)
+            mu <- tribble(~mu1, ~mu2,
+                          7.5, 7.5,
+                          7.5, 12.5,
+                          12.5, 7.5,
+                          12.5, 12.5)
             co <- NULL
             for(i in 1:4) {
               # mui <- get(paste0("mu", i))
@@ -60,16 +65,17 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
   
   switch(mapping,
          "Swiss Roll" = {
-           u <- (1.5 * pi) * (1 + 2 * co) 
+           u <- (1.5 * pi) * (1 + 2 * co[, 1:2]) 
            data <- swissRollMapping(u[,1], u[,2])
          }, 
          "semi-sphere" = {
-           u <- tibble(x = co[,1], y = co[,2]) %>% 
-             mutate(x = 2 * pi * x, y = 2 * y - 1)
-           data <- sphereMapping(u$x, u_$y)
+           # u <- tibble(x = co[,1], y = co[,2]) %>% 
+           #   mutate(x = 2 * pi * x, y = 2 * y - 1)
+           u <- cbind(x = pi * co[,1], y = 2 * co[,2] - 1)
+           data <- sphereMapping(u[,1], u[,2])
          }, 
          "Twin Peak" = {
-           u <- 2 * co - 1
+           u <- 2 * co[, 1:2] - 1
            data <- twinPeaksMapping(u[,1], u[,2])
          }, 
          "S Curve" = {
@@ -77,12 +83,13 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
            data <- sCurveMapping(u[,1], u[,2])
          })
   
-  # colors <- co[, "den"]
-  ifelse(meta == "copula", colors <- co[, "den"], colors <- as.factor(co[, "label"])) # for gaussian kernels, use labels for four kernels for coloring
+  colnames(data) <- c("x", "y", "z")
+  colnames(u) <- c("x", "y") # meta data
+  ifelse(meta != "gaussian", colors <- co[, "den"], colors <- as.factor(co[, "label"])) # for Gaussian kernels, use labels from four kernel indexes for coloring
   
-  return(list(data = data, metadata = u, colors = colors, den = co[, "den"]))
+  return(list(data = data, metadata = u, den = co[, "den"], colors = colors))
 }
-
+## Utility functions
 # swiss roll mapping
 swissRollMapping <- function (x, y) { # U(1.5pi, 4.5pi)
   cbind(x = x * cos(x),
@@ -90,10 +97,15 @@ swissRollMapping <- function (x, y) { # U(1.5pi, 4.5pi)
         z = x * sin(x))
 }
 # semi-sphere mapping
-sphereMapping <- function (phi, psi) { # x~U(0,2pi); y~U(-1,1)
+sphereMapping <- function (phi, psi) { # y~U(-1,1), x~U(0,pi)
   cbind(x = cos(phi) * sin(psi),
-        y = sin(phi) * sin(psi),
-        z = cos(psi))
+        y =sin(phi) * sin(psi),
+        z = cos(psi)
+          )
+  # cbind(x = x,   # x,y~U(-1,1)
+  #       y = y, 
+  #       z = sqrt(1 - (x^2 +y^2))
+  # )
 }
 # twin peak mapping
 twinPeaksMapping <- function (x, y) { # x,y~U(-1,1)

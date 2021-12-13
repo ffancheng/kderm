@@ -38,36 +38,36 @@ ker.density <- function(x, h) {
 # ker.density(data, 0.8)
 
 
-# 2-d kde
-mkde <- function (x, h) {
-  # Data is a matrix of n*d
-  # H is an array of dimension (d,d,n)
-  # start <- Sys.time()
-
-  n <- nrow(x)
-  if (dim(x)[2] < 2)
-    stop("Data matrix has only one variable.")
-  if (any(!is.finite(x)))
-    stop("Missing or infinite values in the data are not allowed! ")
-  if (!all.equal(nrow(h), ncol(h), dim(x)[2]))
-    stop("The bandwidth matrix is of wrong dimension. ")
-
-  s <- rep(0, n)
-  y <- rep(0, n)
-  for (i in 1:n) {
-    for (j in 1:n){
-      s[i] <- s[i] + det(h[,,i])^(-1/2) * exp(- 1/2 * t(x[i,] - x[j,]) %*% solve(h[,,i]) %*% (x[i,] - x[j,]))
-    }
-    y[i] <- s[i] / (n * 2 * pi)
-  }
-  # print(Sys.time() - start)
-
-  return(y)
-}
-# x = metric_isomap$embedding
-# f <- mkde(x = metric_isomap$embedding, h = riem_isomap)
-# # is.na(f) <- sapply(f, is.infinite)
-# # matrixcalc::is.positive.definite(riem_isomap[,,1])
+# # 2-d kde
+# mkde <- function (x, h) {
+#   # Data is a matrix of n*d
+#   # H is an array of dimension (d,d,n)
+#   # start <- Sys.time()
+# 
+#   n <- nrow(x)
+#   if (dim(x)[2] < 2)
+#     stop("Data matrix has only one variable.")
+#   if (any(!is.finite(x)))
+#     stop("Missing or infinite values in the data are not allowed! ")
+#   if (!all.equal(nrow(h), ncol(h), dim(x)[2]))
+#     stop("The bandwidth matrix is of wrong dimension. ")
+# 
+#   s <- rep(0, n)
+#   y <- rep(0, n)
+#   for (i in 1:n) {
+#     for (j in 1:n){
+#       s[i] <- s[i] + det(h[,,i])^(-1/2) * exp(- 1/2 * t(x[i,] - x[j,]) %*% solve(h[,,i]) %*% (x[i,] - x[j,]))
+#     }
+#     y[i] <- s[i] / (n * 2 * pi)
+#   }
+#   # print(Sys.time() - start)
+# 
+#   return(y)
+# }
+# # x = metric_isomap$embedding
+# # f <- mkde(x = metric_isomap$embedding, h = riem_isomap)
+# # # is.na(f) <- sapply(f, is.infinite)
+# # # matrixcalc::is.positive.definite(riem_isomap[,,1])
 
 
 # multivariate variable density estimate
@@ -115,10 +115,7 @@ vkde2d <- function(x, y, h, n = 25, lims = c(range(x), range(y)) ){
   }
   
   z <- rowMeans(z, dims = 2)
-  
-  
-  
-    
+
     # hkd <- 1 / (2 * pi) * det(h[,,k])^(-1/2)
     # hks <- solve(h[,,k])
     # xyk <- c(x[k], y[k])
