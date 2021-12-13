@@ -1,5 +1,5 @@
 # Embedding plot of metricML() output for electricity data
-plot_embedding <- function(x, embedding = FALSE, color = NULL) {
+plot_embedding <- function(x, embedding = FALSE, color = NULL, alpha = NULL) {
   
   if(embedding){
     fn <- x
@@ -21,7 +21,7 @@ plot_embedding <- function(x, embedding = FALSE, color = NULL) {
   p <- fn %>% 
     # cbind(tod = rep(1:48, times = N / 48)) %>% 
     as_tibble() %>% 
-    ggplot(aes(x = E1, y = E2, col = color)) + 
+    ggplot(aes(x = E1, y = E2, col = color, alpha = alpha)) + 
     geom_point() + 
     coord_fixed(ratio = 1) + 
     # color + 
