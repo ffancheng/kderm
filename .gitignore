@@ -1,6 +1,7 @@
 # Folders
 references/
 data/
+reports/swissroll/
 
 # Jupyter notebook files
 .ipynb_checkpoints/
