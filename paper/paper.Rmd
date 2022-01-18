@@ -1,0 +1,121 @@
+---
+title: "Anomaly detection with kernel density estimation on manifolds"
+author:
+- familyname: Cheng
+  othernames: Fan
+  address: Monash University
+  email: Fan.Cheng@monash.edu
+  # correspondingauthor: true
+- familyname: Hyndman
+  othernames: Rob J
+  address: Monash University
+  email: Rob.Hyndman@monash.edu
+- familyname: Panagiotelis
+  othernames: Anastasios
+  address: University of Sydney
+  email: Anastasios.Panagiotelis@sydney.edu.au
+abstract: ""
+# keywords: "manifold learning"
+# wpnumber: 03/2021
+# jelcodes: C55, C65, C80
+blind: true
+cover: false
+toc: false
+lot: false
+bibliography: references.bib
+biblio-style: authoryear-comp
+output:
+  MonashEBSTemplates::workingpaper:
+    fig_caption: yes
+    fig_height: 5
+    fig_width: 8
+    includes:
+      in_header: preamble.tex
+      # after_body: appendix.tex
+    keep_tex: yes
+    number_sections: yes
+    citation_package: biblatex
+    latex_engine: pdflatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  cache = FALSE,
+  messages = FALSE,
+  warning = FALSE,
+  eval = TRUE
+  # include = FALSE
+)
+options(tinytex.verbose = TRUE)
+library(dimRed)
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+library(knitr)
+library(kableExtra)
+library(tibble)
+library(patchwork)
+library(data.table)
+library(dtplyr)
+library(igraph)
+library(ggraph)
+# set.seed(1)
+Jmisc::sourceAll(here::here("R/sources"))
+```
+
+
+# Introduction
+
+
+
+## Using dimension reduction algorithms
+
+Now we can try to see what happens when we use an actual dimension reduction algorithm, for instance ISOMAP
+
+```{r isomap, echo=TRUE,message=FALSE}
+dat<-dimRedData(cbind(x,y,z)) #Prepare data to use in dimRed
+emb<-embed(dat,"Isomap") #Isomap embedding
+plot(hdrscatterplot(emb@data@data[,1],emb@data@data[,2])) #HDR plot
+```
+
+Which seems to not distort things too much.  The HDR plot still identifies outliers (because it has to) but they are just scattered around the corners in a very non-systematic way. 
+
+For something that leads to a lot of distortion have a look t t-SNE.
+
+
+```{r tsneplot, echo=TRUE,message=FALSE}
+emb_tsne<-embed(dat,"tSNE") #tSNE embedding
+plot(hdrscatterplot(emb_tsne@data@data[,1],emb_tsne@data@data[,2])) #HDE plot
+```
+
+The aim of the project is not to evaluate different manifold learning algorithms.  Although ISOMAP worked OK here it is still distorted and in real examples you will never 'know' that the data are uniform on the sphere.  Instead the idea of this project is to do kernel density estimation in a way that takes distortion into account.
+
+## Two dimensional kernel density estimation
+
+In general a multivariate kernel density estimate looks something like this
+
+$$
+\hat{f}(\mathbf{x})=\sum\limits_{i=1}^N K_{\mathbf{H}}(\mathbf{x}-\mathbf{x}_i)
+$$
+
+where if a Gaussian kernel is used
+
+$$
+K_{\mathbf{H}}(\mathbf{x}-\mathbf{x}_i)=(2\pi)^{-d/2}|\mathbf{H}|^{-1/2}\exp\left[-\frac{1}{2}(\mathbf{x}-\mathbf{x}_i)'\mathbf{H}^{-1}(\mathbf{x}-\mathbf{x}_i)\right]
+$$
+
+The matrix $\mathbf{H}$ is called the bandwidth matrix and is very important.  You will often read that the bandwidth matrix is about smoothing and it is.  But an alternative way to think of kernel estimation is that kernel densities 'borrow strength' from nearby points and the bandwidth determines what is "nearby".  If the bandwidth is large then all points are "nearby" and we get an overly smooth kernel density estimate.  The interesting thing about a bandwidth matrix is that it allows for different notions of what is "nearby" along different coordinates and even along diagonal directions.
+
+## Using the Riemannian
+
+The Riemannian estimated using the method of Perrault Joncas and Meila gives some idea of the distortion of an embedding (or so they claim). Mapping the points through a non-linear function "stretchs" some regions of space and "shrinks" others. The Riemannian gives us an idea of the direction and angle of this stretching.  The Riemannian is quite a technical concept but an important thing to understand is that the estimate that comes out of Perrault Joncas algorithm is a square matrix.
+
+We saw how points that are far apart in the embedding may not have been so far apart on the original manifold.  The Riemannian gives us some way of correcting this.  Similarly a bandwidth matrix in a kernel density estimate is all about determining the "directions" in which there should be more or less "closeness".  So the basic idea is to replace the kernel density estimate with
+
+$$
+\hat{f}(\mathbf{x})=\sum\limits_{i=1}^N K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)\\
+K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)=(2\pi)^{-d/2}|\mathbf{H}_i|^{-1/2}\exp\left[-\frac{1}{2}(\mathbf{x}-\mathbf{x}_i)'\mathbf{H}_i^{-1}(\mathbf{x}-\mathbf{x}_i)\right]
+$$
+
+where $H_i$ is either the Riemannian or the inverse of the Riemannian (I am not totally sure which one).  Notice that the bandwidth matrix is different for each point.  This makes it a kernel density estimate with local smoothing, which is quite interesting, but we should take care to understand the properties of such things.  There is a paper by Terrel and Scott from Annals of Statistics in 1992 where they talk about this (it is called "variable kernel density estimation"). Some other search terms to find relevant papers might be "adaptive" or "varying bandwidth". I don't know if anyone has had the idea of bringing all these ideas together with manifold learning and the estimate of the Riemannian - we should do a thorough literature search.  However, if no one has already done this I think it is a very interesting way to do anomaly detection for very high dimensional data.
