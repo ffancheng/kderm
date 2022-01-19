@@ -2,19 +2,64 @@ Title: Anomaly detection with kernel density estimation on manifolds
 
 Abstract: 
 
-Keywords: statistical manifold, dimension reduction, anomaly detection, k-d trees, Hellinger distance, smart meter data
+Keywords: 
 
 - Introduction
 	
-	- Main contributions
+	Background (anomaly detection with density) with summarised contribution
 
+	Anomaly detection using densities, other methods for anomaly detection. Based manifold learning embeddings, density estimates
 
-- Application to smart meter data with Hellinger distances
+	Density estimation methods, KDE with distortion, 2-D variable kernel denstiy estimate with Riemannian matrix
 
+	- Main contributions: better anomaly detection
+
+		fix distortion with Riemmanian matrix
+
+		anomaly detection using density estimates
+
+		kernel density estimate is not accurate
+
+		improve density estimation with distortion in the embedding plot
+
+	Paper structure
+
+- Variable kernel density estimation with manifold embeddings
+
+	Idea: whole process for the main contribution
+
+	Kernel density estimate with Variable bandwidth
+
+	Riemannian matrix to measure distortion
+
+	Use riemannian matrix as variable bandwidth
+
+		Bandwidth is a symmetric positive-definite square matrix, similar to riemannian matrix
+
+	- Manifold learning distortion
+
+		dimension reduction using manifold learning 
+
+		Riemannian matrix to measure topological distortion
+
+		distortion is informative for true embeddings
+
+- Application
+
+	Dataset
+
+	Goal and process
+
+	Results (Plots and tables)
+
+	Analysis and summary
 
 - Conclusion
 
+	Summary of the contribution and conclusion
+
+	Details about the process
+
+	Shortcoming and other references for future direction (improvement on density estimation, other kernels, densities on edges, bad embeddings with inaccurate distortions)
 
 - Appendix
-
-- Online supplimentary document
