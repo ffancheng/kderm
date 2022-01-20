@@ -8,6 +8,8 @@ Keywords:
 	
 	Background (anomaly detection with density) with summarised contribution
 
+		Anomaly detection on very high-dimensional data. Applications. Main contribution.
+
 	Anomaly detection using densities, other methods for anomaly detection. Based manifold learning embeddings, density estimates
 
 	Density estimation methods, KDE with distortion, 2-D variable kernel denstiy estimate with Riemannian matrix
@@ -28,9 +30,9 @@ Keywords:
 
 	Idea: whole process for the main contribution
 
-	Kernel density estimate with Variable bandwidth
+	Kernel density estimate with variable bandwidth
 
-	Riemannian matrix to measure distortion
+	Riemannian matrix could be used to measure distortion
 
 	Use riemannian matrix as variable bandwidth
 
@@ -43,6 +45,33 @@ Keywords:
 		Riemannian matrix to measure topological distortion
 
 		distortion is informative for true embeddings
+
+- Simulation
+
+    - 2-D Meta data from a Gaussian Mixture Model
+
+    Multiple mapping functions: swiss roll, 
+    
+    Manifold learning results for the mapped 3-D data
+        
+        ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, UMAP (useful ones, and the one with too severe distortion)
+    
+    Outlier plot based on density estimates
+    
+        Fixed bandwidth
+        
+        Pointwise adaptive bandwidth using Riemmanien
+        
+        Comparison
+            
+            Rank of densities with the true density (f=f_1/4 + f_2/4 + f_3/4 + f_4/4)
+            Sum of squared errors in the density estimates
+
+    - 5-D data embedding in 100-D space. 4-D from mixture Gaussian kernels (99% from N(0,1), 1% from N(0, 5) to add outliers), 1-D from semi-sphere, all other 95-D as 0, then rotate using the R matrix from QR decomposition to get the 100-D input for manifold learning)
+
+    	The true mixture density is weighted sum of the individual densities from normal distribution.
+
+
 
 - Application
 
@@ -60,6 +89,6 @@ Keywords:
 
 	Details about the process
 
-	Shortcoming and other references for future direction (improvement on density estimation, other kernels, densities on edges, bad embeddings with inaccurate distortions)
+	Shortcoming and other references for future direction (improvement on density estimation, other kernels, densities on edges, bad embeddings with inaccurate distortions, multi-dimensional kernel density estimate)
 
 - Appendix
