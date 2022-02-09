@@ -114,7 +114,7 @@ vkde2d <- function(x, y, h, n = 25, lims = c(range(x), range(y)) ){
     z[,,k] <- det(hk) ^ (-1/2) * matrix(mvtnorm::dmvnorm(x = g, mean = xi[k,], sigma = hk), nrow = n[1], byrow = FALSE) # scalar
   }
   
-  z <- rowMeans(z, dims = 2)
+  z <- rowMeans(z, dims = 2, na.rm = TRUE)
 
     # hkd <- 1 / (2 * pi) * det(h[,,k])^(-1/2)
     # hks <- solve(h[,,k])
