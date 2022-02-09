@@ -25,21 +25,21 @@ set.seed(1)
 N <- 2000
 p <- 2
 
-# # ----Swiss roll dataset with a sparse area------------------------
-# height <- 30
-# x <- (3 * pi / 2) * (1 + 2 * runif(N*1.05, 0, 1))  
-# y <- height * runif(N*1.05, 0 , 1)
-# sr <- cbind(x * cos(x), y, x * sin(x))
-# colnames(sr) <- c("x", "y", "z")
-# sr <- cbind(as_tibble(sr), col = "grey")
-# lowden <- x >= 13 & y >= 18
-# sr$col[lowden] <- "red"
-# removed <- sample(which(lowden), size = N*0.05, replace = FALSE)
-# lowdenpoints <- sr[setdiff(which(lowden), removed), ]
-# sr <- sr[-removed, ]
-# scatterplot3d::scatterplot3d(sr, color = sr$col)
-# # rgl::plot3d(sr, col = sr$col)
-# 
+# ----Swiss roll dataset with a sparse area------------------------
+height <- 30
+x <- (3 * pi / 2) * (1 + 2 * runif(N*1.05, 0, 1))
+y <- height * runif(N*1.05, 0 , 1)
+sr <- cbind(x * cos(x), y, x * sin(x))
+colnames(sr) <- c("x", "y", "z")
+sr <- cbind(as_tibble(sr), col = "grey")
+lowden <- x >= 13 & y >= 18
+sr$col[lowden] <- "red"
+removed <- sample(which(lowden), size = N*0.05, replace = FALSE)
+lowdenpoints <- sr[setdiff(which(lowden), removed), ]
+sr <- sr[-removed, ]
+scatterplot3d::scatterplot3d(sr, color = sr$col)
+# rgl::plot3d(sr, col = sr$col)
+
 
 
 # ----Swiss roll from copula-----------------------------------------
@@ -117,20 +117,36 @@ preswissroll <- preswissroll %>%
 a <- preswissroll$X1
 swissroll <- tibble(x = a * cos(a), y = preswissroll$X2, z = a * sin(a))
 
-# plotting
-preswissroll %>%
+
+
+###--------------------------------------------------------
+## Start from here! 
+###--------------------------------------------------------
+set.seed(1234)
+mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[3]
+sr <- mldata(N = 2000, meta = "gaussian", mapping = mapping)
+swissroll <- sr$data %>% as.data.frame()
+preswissroll <- sr$metadata %>% as_tibble() %>% mutate(den = sr$den, label = c(rep(1:4, each = 500)))
+colnames(preswissroll) <- c("X1", "X2", "den", "label")
+# plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = preswissroll$label,
+#         type = "scatter3d", mode = "markers", size = 1)
+plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den,
+        type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
+scatterplot3d::scatterplot3d(swissroll$x, swissroll$y, swissroll$z, color = preswissroll$label, xlab = "X", ylab = "Y", zlab = "Z")
+
+par(mfrow=c(1,2))
+
+
+# plotting (run once for different mappings)
+metaplot <- preswissroll %>%
   as_tibble() %>% 
   mutate(label = as.factor(label)) %>% 
   ggplot(aes(X1, X2, col = den)) + 
   geom_point() + 
-  scale_color_viridis()
-
-# plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = preswissroll$label,
-#         type = "scatter3d", mode = "markers", size = 1)
-plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = preswissroll$den,
-        type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
-
-
+  scale_color_viridis(option = "B") +
+  labs(color = "Density")
+metaplot
+# ggsave("figures/truedensit_4kernels.png", metaplot, height = 6, width = 8, dpi = 500)
 
 
 
@@ -149,7 +165,7 @@ annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 2 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
 
 ## ---- message=FALSE-------------------------------------------------------------
@@ -157,7 +173,7 @@ metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, inv
                           # annmethod = annmethod, distance = distance, treetype = treetype, 
                           searchtype = searchtype
                           )
-summary(metric_isomap)
+# summary(metric_isomap)
 
 
 ## ----ggellipse, include=FALSE, eval=FALSE---------------------------------------
@@ -177,7 +193,7 @@ p_hdr_isomap <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NU
 p_hdr_isomap_p <- p_hdr_isomap + 
   plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 100, 
              color = blues9[5], fill = blues9[5], alpha = 0.2)
-p_hdr_isomap_p
+p_hdr_isomap
 
 
 ## ----outliers-------------------------------------------------------------------
@@ -189,8 +205,8 @@ fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = 
 
 
 ## ----hdroutliers----------------------------------------------------------------
-source(here::here("R/sources/hdrplotting.R"))
-p_isomap <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, scale = 1/8, f = f)
+# source(here::here("R/sources/hdrplotting.R"))
+p_isomap <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, scale = 1/8, f = fisomap, ell_size = 0)
 
 
 ## ----compoutlier, eval = FALSE--------------------------------------------------
@@ -217,9 +233,9 @@ fxy_lle <- hdrcde:::interp.2d(flle$x, flle$y, flle$z, x0 = E1, y0 = E2)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_lle <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = flle)
+p_lle <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = flle, ell_size = 0)
 p_hdr_lle <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
-p_hdr_lle_p <- p_hdr_lle$p + 
+p_hdr_lle_p <- p_hdr_lle + 
   plot_ellipse(metric_lle, n.plot = 50, add = T)
 (p_hdr_lle_p + p_lle$p) + coord_fixed()
 
@@ -248,12 +264,14 @@ fxy_tsne <- hdrcde:::interp.2d(ftsne$x, ftsne$y, ftsne$z, x0 = E1, y0 = E2)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = ftsne)
+p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = ftsne, ell_size = 0)
 p_hdr_tsne <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
-p_hdr_tsne_p <- p_hdr_tsne$p + 
+p_hdr_tsne_p <- p_hdr_tsne + 
   plot_ellipse(metric_tsne, n.plot = 50, add = T)
 (p_hdr_tsne_p + p_tsne$p) + coord_fixed()
 
+# metric_tsne$embedding <- preswissroll
+# plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = ftsne, ell_size = 0)
 
 # UMAP
 
@@ -278,16 +296,16 @@ fxy_umap <- hdrcde:::interp.2d(fumap$x, fumap$y, fumap$z, x0 = E1, y0 = E2)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_umap <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20)
+p_umap <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, ell_size = 0)
 p_hdr_umap <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
-p_hdr_umap_p <- p_hdr_umap$p +
+p_hdr_umap_p <- p_hdr_umap +
   plot_ellipse(metric_umap, n.plot = 50, add = T)
 (p_hdr_umap_p + p_umap$p) + coord_fixed()
 
 
 ## -------------------------------------------------------------------------------
 p_den_isomap <- plot_embedding(metric_isomap) + 
-  geom_point(aes(col = preswissroll$den)) 
+  geom_point(aes(col = preswissroll$den))
 p_den_lle <- plot_embedding(metric_lle) + 
   geom_point(aes(col = preswissroll$den)) 
 p_den_tsne <- plot_embedding(metric_tsne) + 
@@ -295,19 +313,21 @@ p_den_tsne <- plot_embedding(metric_tsne) +
 p_den_umap <- plot_embedding(metric_umap) + 
   geom_point(aes(col = preswissroll$den)) 
 
-(((p_isomap$p + ggtitle("Isomap")) | 
-    (p_lle$p + ggtitle("LLE")) | 
-    (p_tsne$p + ggtitle("t-SNE")) | 
-    (p_umap$p + ggtitle("UMAP"))) /
-(p_hdr_isomap_p | p_hdr_lle_p | p_hdr_tsne_p | p_hdr_umap_p) /
-(p_den_isomap | p_den_lle | p_den_tsne | p_den_umap) +
-  coord_fixed() +
-  plot_layout(guides = 'collect') +
-  plot_annotation(subtitle = "Top: True densities from Gaussian mixture model;
-Middle: Outliers using variable kernel density estimate;
-Bottom: Outliers from `hdrcde` package with fixed bandwidth")) &
-  labs(x = "", y = "") 
 
+## FINAL plot to use
+(
+  (((p_den_isomap + ggtitle("ISOMAP")) | (p_den_lle + ggtitle("LLE")) | (p_den_tsne + ggtitle("t-SNE")) | (p_den_umap + ggtitle("UMAP"))) & scale_color_viridis(option = "inferno") & labs(color = "Density") & coord_fixed()) /
+    (p_isomap$p | p_lle$p | p_tsne$p | p_umap$p) /
+    (p_hdr_isomap | p_hdr_lle | p_hdr_tsne | p_hdr_umap) +  ## add _p for ellipses
+  coord_fixed() +
+#     plot_annotation(subtitle = "Top: True densities from Gaussian mixture model;
+# Middle: Outliers using variable kernel density estimate;
+# Bottom: Outliers from `hdrcde` package with fixed bandwidth;") +
+  plot_layout(guides = 'collect') ) &
+  labs(x = "", y = "") &
+  theme(legend.direction = "vertical")
+
+ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases.png"), width = 8, height = 6, dpi = 500)
 
 
 
@@ -316,7 +336,7 @@ Bottom: Outliers from `hdrcde` package with fixed bandwidth")) &
 
 
 
-p_isomap_all <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, noutliers = N, scale = 1/20, f = f)
+p_isomap_all <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, noutliers = N, scale = 1/20, f = fisomap)
 p_tsne_all <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers =N, scale = 1/20, f = ftsne)
 # p_umap_all <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers =N, scale = 1/20)
 
