@@ -76,7 +76,7 @@ hdrscatterplot_new <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash
   
   if (noutliers > 0) {
     outlier_rank <- order(den$fxy[ord])  # order den$fxy as well to match the new data
-    outliers <- outlier_rank[seq(noutliers)] # take top noutliers labels for annotation
+    outliers <- outlier_rank[seq_len(noutliers)] # take top noutliers labels for annotation
   }
   
   p <- ggplot2::ggplot(data, ggplot2::aes_string(vnames[1], vnames[2])) +
@@ -104,7 +104,8 @@ hdrscatterplot_new <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash
   return(list(p=p, 
               # outlier= rownames(data)[outlier_rank], densities = den$fxy[ord]
               outlier = order(den$fxy, decreasing = FALSE),  # densities ascending, top anomalous to typical
-              densities = den$fxy # density order matching the data inpput
+              densities = den$fxy, # density order matching the data input
+              den = den # list of x, y, z(matrix)
               )
          ) ## TODO: check outlier/density order
 }
@@ -137,4 +138,39 @@ hdr.2d <- function(x, y, prob = c(50, 95, 99), den=NULL, kde.package=c("ash","ks
   index <- which.max(fxy)
   mode <- c(x[index],y[index])
   return(structure(list(mode=mode,falpha=falpha,fxy=fxy, den=den, alpha=alpha, x=x, y=y), class="hdr2d"))
+}
+
+
+
+# multivariate density estimate
+# Modified from hdrcde package https://github.com/robjhyndman/hdrcde/blob/master/R/hdr.boxplot.2d.R
+
+den.estimate.5d <- function(x, kde.package=c("ks", "ash"), h=NULL, xextend=0.15) {
+  kde.package <- match.arg(kde.package)
+  # Find ranges for estimates
+  xr <- apply(x, 2, function(x) diff(range(x, na.rm = TRUE)))
+  # xr <- diff(range(x,na.rm=TRUE))
+  # yr <- diff(range(y,na.rm=TRUE))
+  xr <- c(min(x)-xr*xextend,max(x)+xr*xextend)
+  # yr <- c(min(y)-yr*yextend,max(y)+yr*yextend)
+  if(kde.package=="ash")
+  {
+    if(is.null(h))
+      h <- c(5,5)
+    den <- ash::ash2(ash::bin2(cbind(x,y),rbind(xr,yr)),h)
+  } else
+  {
+    # X <- cbind(x,y)
+    X <- x
+    if(is.null(h))
+      h <- ks::Hpi.diag(X,binned=TRUE) # 5*5 diagonal matrix
+    else if(is.vector(h)) # input h as a vector, which was default
+      h <- diag(h) 
+    else
+      # h <- diag(h) 
+      # den <- ks::kde(x=X,H=h,xmin=c(xr[1],yr[1]),xmax=c(xr[2],yr[2])) # h is not variable
+      den <- ks:::kde.sp.2d(x=X,H=h,xmin=c(xr[1],yr[1]),xmax=c(xr[2],yr[2]))  ## TODO
+    den <- list(x=den$eval.points[[1]],y=den$eval.points[[2]],z=den$estimate)
+  }
+  return(den)
 }
