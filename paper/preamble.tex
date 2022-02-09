@@ -1,92 +1,9 @@
 %% Any special functions or other packages can be loaded here.
-\usepackage[utf8]{inputenc}
-\usepackage[flushleft]{threeparttable}
-\usepackage{multirow}
-\usepackage[normalem]{ulem}
-\useunder{\uline}{\ul}{}
-%% \usepackage{makecell,interfaces-makecell} %latex error
-\usepackage[]{graphicx}
-\usepackage[]{color}
-\usepackage{xcolor}
-% \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
-\usepackage{algorithmic}
-\usepackage{bm}
-\usepackage{etoolbox}
-\usepackage{tabu}
-\usepackage{placeins}
-\setlength {\marginparwidth }{2cm}
-\usepackage{todonotes}
-\urlstyle{tt}  % don't use monospace font for urls
-\allowdisplaybreaks
-
-
+\usepackage{tabu,placeins,algorithmic}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
-\usepackage{amsmath, amsfonts, amssymb, bm, mathtools, todonotes, booktabs, microtype}
-
-\makeatletter
-%If bera loaded, this is monash wp.
-\@ifpackageloaded{bera}{}{\usepackage{mathptmx}}
-\makeatother
+\urlstyle{tt}  % use monospace font for urls
 \usepackage[cal = txupr]{mathalpha}
-
-
-\makeatletter
-\@ifpackageloaded{geometry}{}{\usepackage{geometry}}
-\makeatother
 \geometry{margin=2.2cm}
-
 \mathtoolsset{showonlyrefs}
-\newcommand{\argmax}{\mathop{\text{arg\,max}}}
-\clubpenalty = 10000
-\widowpenalty = 10000
-\brokenpenalty = 10000
-\usepackage{graphicx}
-\setcounter{topnumber}{2}
-\setcounter{bottomnumber}{2}
-\setcounter{totalnumber}{4}
-\renewcommand{\topfraction}{0.9}
-\renewcommand{\bottomfraction}{0.9}
-\renewcommand{\textfraction}{0.1}
-\renewcommand{\floatpagefraction}{0.9}
-
-\usepackage{caption}
-\DeclareCaptionStyle{italic}[justification=centering]
- {labelfont={bf},textfont={it},labelsep=colon}
-\captionsetup[figure]{style=italic,format=hang,singlelinecheck=true}
-\captionsetup[table]{style=italic,format=hang,singlelinecheck=true}
-
-
-
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-
-
-% theorem in latex
-\usepackage{amsthm}
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}{Lemma}[section]
-\newtheorem{corollary}{Corollary}[section]
-\newtheorem{proposition}{Proposition}[section]
-\newtheorem{conjecture}{Conjecture}[section]
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}[section]
-\theoremstyle{definition}
-\newtheorem{example}{Example}[section]
-\theoremstyle{definition}
-\newtheorem{exercise}{Exercise}[section]
-\theoremstyle{definition}
-\newtheorem{hypothesis}{Hypothesis}[section]
-\theoremstyle{remark}
-\newtheorem*{remark}{Remark}
-\newtheorem*{solution}{Solution}
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Section}
