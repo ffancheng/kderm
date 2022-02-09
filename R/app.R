@@ -12,7 +12,7 @@ library(ggforce)
 library(patchwork)
 library(copula)
 Jmisc::sourceAll(here::here("R/sources"))
-# set.seed(123)
+set.seed(1)
 
 ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0, 
                        adjacency = NULL, affinity = NULL,
@@ -55,22 +55,27 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   # prob <- c(1, 50, 99)
   f_vkde <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid) # estimated densities with variable bandwidth
   # fxy <- hdrcde:::interp.2d(f_vkde$x, f_vkde$y, f_vkde$z, x0 = E1, y0 = E2) # linear interpolation
+  den <- hdrcde:::den.estimate.2d(x = E1, y = E2, kde.package = "ks", xextend=0.15, yextend = 0.15)
   
   p_vkde <- plot_outlier(x = metriclearn, n.grid = n.grid, prob = prob, noutliers = noutliers, scales = scales, ell_size = ell_size)
   p_hdr <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers)
   p_hdr$p <- p_hdr$p +
     plot_ellipse(metriclearn, n.plot = n.plot, add = TRUE, ell_size = ell_size)
 
-  p_contour <- filled.contour(f_vkde, color.palette = viridis, # p_vkde$hdr2d_info$den
-                      plot.axes = { axis(1); axis(2);
-                        points(fn, pch = 3, col= hcl(c=20, l = 8))})
-  p_contour_hdr <- filled.contour(p_hdr$densities, color.palette = viridis, # p_vkde$hdr2d_info$den
-                      plot.axes = { axis(1); axis(2);
-                        points(fn, pch = 3, col= hcl(c=20, l = 8))})
+  # p_contour <- filled.contour(f_vkde, color.palette = viridis, # p_vkde$hdr2d_info$den
+  #                     plot.axes = { axis(1); axis(2);
+  #                       points(fn, pch = 3, col= hcl(c=20, l = 8))})
+  # p_contour_hdr <- filled.contour(den, color.palette = viridis, # p_vkde$hdr2d_info$den
+  #                     plot.axes = { axis(1); axis(2);
+  #                       points(fn, pch = 3, col= hcl(c=20, l = 8))})
+  # # p_contour_hdr <- ggplot(as.data.frame(fn), aes(E1, E2)) + geom_density2d_filled()
 
   
   return(list(metriclearn = metriclearn, p_emb = p_emb, p_vkde = p_vkde, 
-              p_hdr = p_hdr, run_time = run_time, f_vkde = f_vkde, p_contour = p_contour, p_contour_hdr = p_contour_hdr)) #p_contour = p_contour
+              p_hdr = p_hdr, run_time = run_time, f_vkde = f_vkde, 
+              # p_contour = p_contour, p_contour_hdr = p_contour_hdr, 
+              den = den
+              )) #p_contour = p_contour
   
 }
 
@@ -391,11 +396,10 @@ server <- shinyServer(function(input, output, session) {
   })
 
   output$plot_contour_hdr <- renderPlot({
-    # filled.contour(metriclearn_data()$p_hdr$densities, color.palette = function(n) rocket(n, direction = -1), # p_vkde$hdr2d_info$den
-    #                plot.title = title(main = "Density estimates with variable bandwidth", font.main = 1),
-    #                plot.axes = { axis(1); axis(2);
-    #                  points(metriclearn_data()$metriclearn$embedding, pch = 3, col= sim_data()$colors)})
-    ggplot()
+    filled.contour(metriclearn_data()$den, color.palette = function(n) rocket(n, direction = -1), # p_vkde$hdr2d_info$den
+                   plot.title = title(main = "Density estimates with fixed bandwidth", font.main = 1),
+                   plot.axes = { axis(1); axis(2);
+                     points(metriclearn_data()$metriclearn$embedding, pch = 3, col= sim_data()$colors)})
   })
   
 
@@ -448,7 +452,7 @@ server <- shinyServer(function(input, output, session) {
         output[[paste0("c_plot_", local_i)]] <-
           renderPlot({
             if ((local_i) %in% seq_along(algor_list)) {
-              p3 <- res$p_embed # + coord_fixed()  ## TOOD: not showing with p3 + p6
+              p3 <- res$p_emb # + coord_fixed()  ## TOOD: not showing with p3 + p6
               p4 <- res$p_hdr$p + 
                     coord_fixed() + 
                     labs(title = "Fixed bandwidth")
@@ -456,7 +460,7 @@ server <- shinyServer(function(input, output, session) {
                     coord_fixed() + 
                     labs(title = "Variable bandwidth") 
 
-              p6 <- (p5 + p4) + 
+              p6 <- (p3 + p5 + p4) + 
                 plot_layout(guides = 'collect') + 
                 plot_annotation(title = substring(algor_list[local_i], 4), 
                                 theme = theme(plot.title = element_text(size = 18, face = "bold"))) 
@@ -485,8 +489,8 @@ server <- shinyServer(function(input, output, session) {
                 as_tibble() %>% 
                 ggplot(aes(fxy, fxy_hdr)) + 
                 geom_point(col = sim_data()$colors) +
-                scale_x_log10() + 
-                scale_y_log10() + 
+                #scale_x_log10() + 
+                #scale_y_log10() + 
                 scale_color_manual(values = scales::hue_pal()(4)) + 
                 labs(x = "True density", y = "Kernel density estimate",
                      title = paste("Fixed bandwidth. Outlier ranking correlation:", round(cor(fxy, fxy_hdr, method = "spearman"), 3) ))
