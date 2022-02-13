@@ -25,97 +25,97 @@ set.seed(1)
 N <- 2000
 p <- 2
 
-# ----Swiss roll dataset with a sparse area------------------------
-height <- 30
-x <- (3 * pi / 2) * (1 + 2 * runif(N*1.05, 0, 1))
-y <- height * runif(N*1.05, 0 , 1)
-sr <- cbind(x * cos(x), y, x * sin(x))
-colnames(sr) <- c("x", "y", "z")
-sr <- cbind(as_tibble(sr), col = "grey")
-lowden <- x >= 13 & y >= 18
-sr$col[lowden] <- "red"
-removed <- sample(which(lowden), size = N*0.05, replace = FALSE)
-lowdenpoints <- sr[setdiff(which(lowden), removed), ]
-sr <- sr[-removed, ]
-scatterplot3d::scatterplot3d(sr, color = sr$col)
-# rgl::plot3d(sr, col = sr$col)
-
-
-
-# ----Swiss roll from copula-----------------------------------------
-# ## a 3-dimensional normal copula
-# norm.cop <- normalCopula(0.5, dim = p)
-# u <- rCopula(N, norm.cop)
-# den <- dCopula(u, norm.cop)
-
-# # 3-d t copula
-# t.cop <- tCopula(c(0.5, 0.3), dim = p, dispstr = "toep",
-#                  df = 2, df.fixed = TRUE)
-# u <- rCopula(N, t.cop)
-# den <- dCopula(u, t.cop)
+# # ----Swiss roll dataset with a sparse area------------------------
+# height <- 30
+# x <- (3 * pi / 2) * (1 + 2 * runif(N*1.05, 0, 1))
+# y <- height * runif(N*1.05, 0 , 1)
+# sr <- cbind(x * cos(x), y, x * sin(x))
+# colnames(sr) <- c("x", "y", "z")
+# sr <- cbind(as_tibble(sr), col = "grey")
+# lowden <- x >= 13 & y >= 18
+# sr$col[lowden] <- "red"
+# removed <- sample(which(lowden), size = N*0.05, replace = FALSE)
+# lowdenpoints <- sr[setdiff(which(lowden), removed), ]
+# sr <- sr[-removed, ]
+# scatterplot3d::scatterplot3d(sr, color = sr$col)
+# # rgl::plot3d(sr, col = sr$col)
 # 
-## a 2-dimensional Clayton copula
-cl3 <- claytonCopula(2, dim = p)
-u <- rCopula(N, cl3)
-# pairs(u)
-claytonden <- dCopula(u, cl3) # true density
-# Swiss roll mapping
-u <- (1.5 * pi) * (1 + 2 * u) # U(1.5pi, 4.5pi)
-a <- u[,1]
-claytonsr <- tibble(x = a * cos(a), y = u[,2], z = a * sin(a))
-
-# highlight true density of u: red for high densities and black for low ones
-col <- rep("grey", N)
-col[head(rank(claytonden), n=20)] <- "red"
-col[tail(rank(claytonden), n=20)] <- "black"
-plot(u[,1:2], xlab = expression(italic(u)[1]*"'"), ylab = expression(italic(u)[2]*"'"), col = col, cex = 0.4)
-scatterplot3d::scatterplot3d(claytonsr, color = col)
-# plot_ly(data = claytonsr, x = ~ x, y = ~ y, z = ~ z, color = claytonden,
-#         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", claytonden))
-
-
-
-# ----Swiss roll from a Gaussian Mixture Model----------------------------------
-# randomly sampling from a Gaussian Mixture Model with centers/means at (7.5,7.5), (7.5,12.5), (12.5,7.5) and (12.5,12.5). The covariance for each gaussian was the 2x2 identity matrix
-# 400 points in each of the four clusters
-
-## read data from online resource http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.html
-# preswissroll <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/preswissroll.dat", col_names = FALSE)
-# preswissroll_label <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/preswissroll_labels.dat", col_names = FALSE)$X1 %>% as.factor()
-# swissroll <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.dat", col_names = c("x", "y", "z"))
 # 
-# preswissroll %>% 
-#   add_column(label = preswissroll_label) %>% 
-#   ggplot(aes(X1, X2, col = label)) + 
-#   geom_point()
-
-## manually generate multivariate normal random numbers
-n <- round(N/4)
-R <- matrix(c(1, 0,
-              0, 1), 
-            nrow = 2, ncol = 2)
-mu1 <- c(7.5, 7.5)
-mu2 <- c(7.5, 12.5)
-mu3 <- c(12.5, 7.5)
-mu4 <- c(12.5, 12.5)
-# mvtnorm::rmvnorm(n, mean = mu, sigma = R)
-# MASS::mvrnorm(n, mu = mu1, Sigma = R)
-preswissroll <- NULL
-for(i in 1:4) {
-  mui <- get(paste0("mu", i))
-  a <- MASS::mvrnorm(n, mu = mui, Sigma = R)
-  den <- mclust::dmvnorm(a, mean = mui, sigma = R)
-  a <- cbind(a, i, den)
-  preswissroll <- rbind(preswissroll, a)
-}
-colnames(preswissroll) <- c("X1", "X2", "label", "den")
-preswissroll <- preswissroll %>%
-  as_tibble() %>% 
-  mutate(label = as.factor(label)) 
-
-# Swiss Roll mapping (x,y) -> (x cos x, y, x sin x)
-a <- preswissroll$X1
-swissroll <- tibble(x = a * cos(a), y = preswissroll$X2, z = a * sin(a))
+# 
+# # ----Swiss roll from copula-----------------------------------------
+# # ## a 3-dimensional normal copula
+# # norm.cop <- normalCopula(0.5, dim = p)
+# # u <- rCopula(N, norm.cop)
+# # den <- dCopula(u, norm.cop)
+# 
+# # # 3-d t copula
+# # t.cop <- tCopula(c(0.5, 0.3), dim = p, dispstr = "toep",
+# #                  df = 2, df.fixed = TRUE)
+# # u <- rCopula(N, t.cop)
+# # den <- dCopula(u, t.cop)
+# # 
+# ## a 2-dimensional Clayton copula
+# cl3 <- claytonCopula(2, dim = p)
+# u <- rCopula(N, cl3)
+# # pairs(u)
+# claytonden <- dCopula(u, cl3) # true density
+# # Swiss roll mapping
+# u <- (1.5 * pi) * (1 + 2 * u) # U(1.5pi, 4.5pi)
+# a <- u[,1]
+# claytonsr <- tibble(x = a * cos(a), y = u[,2], z = a * sin(a))
+# 
+# # highlight true density of u: red for high densities and black for low ones
+# col <- rep("grey", N)
+# col[head(rank(claytonden), n=20)] <- "red"
+# col[tail(rank(claytonden), n=20)] <- "black"
+# plot(u[,1:2], xlab = expression(italic(u)[1]*"'"), ylab = expression(italic(u)[2]*"'"), col = col, cex = 0.4)
+# scatterplot3d::scatterplot3d(claytonsr, color = col)
+# # plot_ly(data = claytonsr, x = ~ x, y = ~ y, z = ~ z, color = claytonden,
+# #         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", claytonden))
+# 
+# 
+# 
+# # ----Swiss roll from a Gaussian Mixture Model----------------------------------
+# # randomly sampling from a Gaussian Mixture Model with centers/means at (7.5,7.5), (7.5,12.5), (12.5,7.5) and (12.5,12.5). The covariance for each gaussian was the 2x2 identity matrix
+# # 400 points in each of the four clusters
+# 
+# ## read data from online resource http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.html
+# # preswissroll <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/preswissroll.dat", col_names = FALSE)
+# # preswissroll_label <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/preswissroll_labels.dat", col_names = FALSE)$X1 %>% as.factor()
+# # swissroll <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.dat", col_names = c("x", "y", "z"))
+# # 
+# # preswissroll %>% 
+# #   add_column(label = preswissroll_label) %>% 
+# #   ggplot(aes(X1, X2, col = label)) + 
+# #   geom_point()
+# 
+# ## manually generate multivariate normal random numbers
+# n <- round(N/4)
+# R <- matrix(c(1, 0,
+#               0, 1), 
+#             nrow = 2, ncol = 2)
+# mu1 <- c(7.5, 7.5)
+# mu2 <- c(7.5, 12.5)
+# mu3 <- c(12.5, 7.5)
+# mu4 <- c(12.5, 12.5)
+# # mvtnorm::rmvnorm(n, mean = mu, sigma = R)
+# # MASS::mvrnorm(n, mu = mu1, Sigma = R)
+# preswissroll <- NULL
+# for(i in 1:4) {
+#   mui <- get(paste0("mu", i))
+#   a <- MASS::mvrnorm(n, mu = mui, Sigma = R)
+#   den <- mclust::dmvnorm(a, mean = mui, sigma = R)
+#   a <- cbind(a, i, den)
+#   preswissroll <- rbind(preswissroll, a)
+# }
+# colnames(preswissroll) <- c("X1", "X2", "label", "den")
+# preswissroll <- preswissroll %>%
+#   as_tibble() %>% 
+#   mutate(label = as.factor(label)) 
+# 
+# # Swiss Roll mapping (x,y) -> (x cos x, y, x sin x)
+# a <- preswissroll$X1
+# swissroll <- tibble(x = a * cos(a), y = preswissroll$X2, z = a * sin(a))
 
 
 

@@ -34,16 +34,16 @@ x1 <- c(rnorm(0.99*N, mu1, s1), rnorm(0.01*N, mu2, s2))
 x2 <- c(rnorm(0.99*N, mu1, s1), rnorm(0.01*N, mu2, s2))
 x3 <- c(rnorm(0.99*N, mu1, s1), rnorm(0.01*N, mu2, s2))
 x4 <- c(rnorm(0.99*N, mu1, s1), rnorm(0.01*N, mu2, s2))
-x <- cbind(x1, x2, x3, x4)
-head(x)
-range(x)
+X <- cbind(x1, x2, x3, x4)
+head(X)
+range(X)
 
 # GMM density
-den_calc <- function(x) {
+gmmdensity <- function(x) {
   p1 * dmvnorm(x, rep(mu1, 4), diag(s1, 4)) + 
     p2 *  dmvnorm(x, rep(mu2, 4), diag(s2, 4))
 }
-den <- apply(x, 1, den_calc)
+den <- apply(X, 1, gmmdensity)
 length(den)
 range(den)
 summary(den)
@@ -54,19 +54,19 @@ summary(den)
 # scales::rescale(x, c(0,1))
 r <- ceiling(max(sqrt(x1^2 + x2^2 + x3^2 + x4^2)))
 r
-range(x)
+range(X)
 
 # x_new <- cbind(x/r, 
 #            x5 = sqrt(1 - (x1^2 + x2^2 + x3^2 + x4^2)/r^2),
 #            matrix(0, N, 95)
 #            )
-x_new <- cbind(x, 
+X_new <- cbind(X, 
                x5 = sqrt(r^2 - (x1^2 + x2^2 + x3^2 + x4^2)),
                matrix(0, N, 95)
 )
 # x0 <- x
-head(x_new)
-x_new %>% as_tibble() %>% summarise(a = x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
+head(X_new)
+X_new %>% as_tibble() %>% summarise(a = x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 
 # den1 <- apply(x_new[,1:4], 1, den_calc)
 # summary(den1)
@@ -105,10 +105,10 @@ Q[1:10,1:10]
 # A rotation preserves, not just ratios, but distances themselves.
 # x'x = (Qx)'(Qx) = x'Q'Qx = x'Ix = x'x
 
-train <- t(Q %*% t(x_new))
+train <- t(Q %*% t(X_new))
 dim(train)
 any(train==0)
-all.equal(train %*% t(train), x_new %*% t(x_new))
+all.equal(train %*% t(train), X_new %*% t(X_new))
 
 # ----parameters-----------------------------------------------------------------
 # Parameters fixed
