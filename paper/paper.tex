@@ -279,6 +279,7 @@
 \mathtoolsset{showonlyrefs}
 \def\sectionautorefname{Section}
 \def\subsectionautorefname{Section}
+\usepackage{bm}
 
 
 \begin{document}
@@ -322,6 +323,9 @@ Idea: whole process for the main contribution
 Kernel density estimate with variable bandwidth
 \end{verbatim}
 
+\hypertarget{notations}{%
+\subsection{Notations}\label{notations}}
+
 \hypertarget{two-dimensional-kernel-density-estimation}{%
 \subsection{Two dimensional kernel density estimation}\label{two-dimensional-kernel-density-estimation}}
 
@@ -358,7 +362,7 @@ We saw how points that are far apart in the embedding may not have been so far a
 K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)=(2\pi)^{-d/2}|\mathbf{H}_i|^{-1/2}\exp\left[-\frac{1}{2}(\mathbf{x}-\mathbf{x}_i)'\mathbf{H}_i^{-1}(\mathbf{x}-\mathbf{x}_i)\right]
 \]
 
-where \(H_i\) is either the Riemannian or the inverse of the Riemannian (I am not totally sure which one). Notice that the bandwidth matrix is different for each point. This makes it a kernel density estimate with local smoothing, which is quite interesting, but we should take care to understand the properties of such things. There is a paper by Terrel and Scott from Annals of Statistics in 1992 where they talk about this (it is called ``variable kernel density estimation''). Some other search terms to find relevant papers might be ``adaptive'' or ``varying bandwidth''. I don't know if anyone has had the idea of bringing all these ideas together with manifold learning and the estimate of the Riemannian - we should do a thorough literature search. However, if no one has already done this I think it is a very interesting way to do anomaly detection for very high dimensional data.
+where \(H_i\) is either the Riemannian or the inverse of the Riemannian (I am not totally sure which one). Notice that the bandwidth matrix is different for each point. This makes it a kernel density estimate with local smoothing, which is quite interesting, but we should take care to understand the properties of such things.\\
 
 \begin{verbatim}
     - Manifold learning distortion
@@ -373,12 +377,18 @@ The aim of the project is not to evaluate different manifold learning algorithms
 \hypertarget{simulation}{%
 \section{Simulation}\label{simulation}}
 
-To examine our proposed algorithm, we now run two scenarios for both low and high dimensions. For visualization purpose, \autoref{twodgaussian} presents a 2-D meta data example. We first simulated the data of size \(N=2000\) from a mixture of four Gaussian kernels with the same covariance but different means, each consisting of \(500\) points. Different mapping functions are then applied to the 2-D meta data so that they now lie on a 3-D feature space, which gives the input data for different manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. The embedded dimension is set as \(D=2\), same as the meta data dimension. This enables us to compare the manifold learning embedding with the true meta data. We could now apply the algorithm described in {[}TODO{]}. Similarly, the second simulation in \autoref{fivedgaussian} is based on a 5-D meta data embedded in a 100-D space and the corresponding embedding dimension is \(D=5\).
+In this section, we exam two scenarios for both low and high dimensions to test our proposed algorithm. For visualization purpose, \autoref{twodgaussian} presents a 2-D meta data example. We first simulate the data of size \(N=2000\) from a mixture of four Gaussian kernels with the same covariance but different means, each consisting of \(500\) points. Different mapping functions are then applied to the 2-D meta data so that they now lie on a 3-D feature space, which gives the input data for different manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. The embedded dimension is set as \(D=2\), same as the meta data dimension. This enables us to compare the manifold learning embedding with the true meta data. We could now apply the algorithm described in {[}TODO{]}. Similarly, the second simulation in \autoref{fivedgaussian} is based on a 5-D meta data embedded in a 100-D space and the corresponding embedding dimension is \(D=5\).
 
 \hypertarget{twodgaussian}{%
 \subsection{2-D Meta data from a Gaussian Mixture Model}\label{twodgaussian}}
 
-We first generate a 2-dimensional data of size \(N=2000\) from a Gaussian mixture model of four kernels. The means of four kernels are \((0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)\) and the variance-covariance matrix is \(\big(\begin{smallmatrix} 0.02&0\\ 0&0.02 \end{smallmatrix}\big)\). \autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points, with brighter colors showing high densities and dark colors showing low densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. This is the baseline to be compared with outliers from variable kernel density estimates.
+We first generate a 2-dimensional data of size \(N=2000\) from a Gaussian mixture model with four components with means \(\pmb{\mu_1}=(0.25, 0.25)^\prime, \pmb{\mu_2}=(0.25, 0.75), \pmb{\mu_3}=(0.75, 0.25), \pmb{\mu_4}(0.75, 0.75)\) and the same variance-covariance matrix \(\pmb{\Sigma}_i=diag(0.02, 0.02), i=1,2,3,4\). The mixture proportions are equally set as \(\pi_i=0.25, i=1,2,3,4\).
+Then the mixture Gaussian mixture density function is a weighted linear combination of the four component Gaussian densities as
+\begin{equation}
+\label{eq:gmm}
+P(\pmb{X}=\pmb{x}) = \sum_{i=1}^{4}\pi_i \frac{1}{(2\pi)^{d/2}|\pmb{\Sigma}_i|^{-1}} \exp{\{-\frac{1}{2} (\pmb{x}-\pmb{\mu_i})^\prime \pmb{\Sigma}_i^{-1} (\pmb{x}-\pmb{\mu_i}) \}}.
+\end{equation}
+\autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points, with brighter colors showing high densities and dark colors showing low densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. This is the baseline to be compared with outliers from variable kernel density estimates.
 
 \begin{figure}
 
@@ -386,7 +396,7 @@ We first generate a 2-dimensional data of size \(N=2000\) from a Gaussian mixtur
 
 }
 
-\caption{True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and variance-covariance matrix $\big(\begin{smallmatrix} 0.02&0\ 0&0.02 \end{smallmatrix}\big)$}\label{fig:metadensity}
+\caption{True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.02, 0.02)$}\label{fig:metadensity}
 \end{figure}
 
 Given the 2-D meta data, multiple mapping functions could be applied to embed the data in a 3-D space. One of the most famous example in manifold learning is the swiss roll data, with the mapping function as below.
@@ -433,7 +443,12 @@ For comparison, we use the same meta data with different mapping function, twin 
 \hypertarget{fivedgaussian}{%
 \subsection{5-D data embedding in 100-D space}\label{fivedgaussian}}
 
-4-D from mixture Gaussian kernels (99\% from N(0,1), 1\% from N(0, 5) to add outliers), 1-D from semi-sphere, all other 95-D as 0, then rotate using the R matrix from QR decomposition to get the 100-D input for manifold learning)
+For the high-dimensional case, we generate the meta data from a 5-dimensional semi-hypersphere. First, we simulate \(N=2000\) points from a 4-dimensional Gaussian mixture model with two mixture components, \(\mathcal{N}(\pmb{\mu}_1, \pmb{\Sigma}_1)\) and \(\mathcal{N}(\pmb{\mu}_2, \pmb{\sigma}_2)\), where \(\pmb{\mu}_1 = \pmb{\mu}_2 =(0, 0, 0, 0)^\prime\), \(\pmb{\Sigma}_1 = diag(1,1,1,1)\), and \(\pmb{\Sigma}_1 = diag(25,25,25,25)\). In order to manually generate anomalies, the mixture proportions are set as \(\pi_1=0.99\) and \(\pi_2=0.01\).
+The fifth dimension is calculated to satisfy \(x_1^2 + x_2^2 + x_3^2 + x_4^2 + x_5^2 = r^2\) where \(r\) is set as 15. Similarly, the Gaussian mixture densities could be calculated using Equation \eqref{eq:gmm} as the true density of the 5-d meta data.
+Then we initial the other 95 dimensions in the high-dimensional space as zero columns and further rotate the 100-dimensional data of size \(N\) (denote the transpose of the data matrix as \(X\)) to get rid of the zeros so that it could be passed to the manifold learning algorithms.
+The rotation matrix is derived from the QR decomposition of a \(100\times N\) matrix \(A\) with all components randomly generated from a uniform distribution \(\mathcal{U}(0,1)\).
+For any real matrix \(A\) of dimension \(p\times q\), the QR decomposition could decompose the matrix into the multiplication of two matrix \(Q\) and \(R\) so that \(A = QR\), where the dimension of \(Q\) is a matrix with unit norm orthogonal vectors, \(Q^\prime Q = I\), and \(R\) is an upper triangular matrix. Matrix \(Q\) is used as the rotation matrix and it satisfies
+\(X^\prime X=(QX)^\prime(QX)\), where the rotated data matrix \((QX)^\prime\) is now the input for the manifold learning algorithms.
 
 \hypertarget{application}{%
 \section{Application}\label{application}}
