@@ -10,6 +10,7 @@ python/.ipynb_checkpoints/
 # History files
 .Rhistory
 .Rapp.history
+*.log
 
 # Session Data files
 .RData
