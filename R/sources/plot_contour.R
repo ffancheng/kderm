@@ -1,9 +1,9 @@
 # takes the output of metricML() as input for contour plot
 # n.grid for grid size
-plot_contour <- function(x, n.grid = 50, f = NULL, scales = 1){
+plot_contour <- function(x, n.grid = 50, f = NULL, riem.scale = 1){
   
   fn <- x$embedding
-  Rn <- x$rmetric * scales # array
+  Rn <- x$rmetric * riem.scale # array
   # h <- t(apply(Rn, 3, diag))
   
   if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
@@ -17,11 +17,11 @@ plot_contour <- function(x, n.grid = 50, f = NULL, scales = 1){
 
 
 
-plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(1, 50, 99), noutliers = 20, label = NULL, scales = 1, ell_size = 1, ...){
+plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(1, 50, 99), noutliers = 20, label = NULL, riem.scale = 1, ell_size = 1, ...){
   
   fn <- x$embedding
-  Rn <- x$rmetric * scales
-  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid) # if precomputed f, then scales is not used
+  Rn <- x$rmetric * riem.scale
+  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid) # if precomputed f, then riem.scale is not used
   
   den <- f
   # x <- E1; y <- E2
