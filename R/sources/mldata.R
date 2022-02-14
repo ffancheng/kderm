@@ -63,13 +63,13 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
               co <- rbind(co, a)
             }
             colnames(co) <- c("x", "y", "den", "label")
-            co <- co %>%
-              as_tibble() %>% 
-              # mutate(# label = as.factor(label),
-              #        x = (x - 5)/10, y = (y - 5)/10,
-              #        den = den * 10 # y = h(x) = (x-5)/10; x = 10*y + 5; dx/dy = 10; f_Y(y) = f_X(x) * 10
-              # ) %>% 
-              as.matrix()
+            # co <- co %>%
+            #   as_tibble() %>% 
+            #   # mutate(# label = as.factor(label),
+            #   #        x = (x - 5)/10, y = (y - 5)/10,
+            #   #        den = den * 10 # y = h(x) = (x-5)/10; x = 10*y + 5; dx/dy = 10; f_Y(y) = f_X(x) * 10
+            #   # ) %>% 
+            #   as.matrix()
           }
   )
   
