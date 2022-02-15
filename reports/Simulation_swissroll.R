@@ -19,7 +19,7 @@ library(patchwork)
 library(copula)
 library(plotly)
 Jmisc::sourceAll(here::here("R/sources"))
-set.seed(1)
+# set.seed(1)
 
 # data size
 N <- 2000
@@ -134,7 +134,6 @@ plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den,
         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
 scatterplot3d::scatterplot3d(swissroll$x, swissroll$y, swissroll$z, color = preswissroll$label, xlab = "X", ylab = "Y", zlab = "Z")
 
-par(mfrow=c(1,2))
 
 
 # plotting (run once for different mappings)
@@ -165,7 +164,7 @@ annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 5 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
 
 ## ---- message=FALSE-------------------------------------------------------------
@@ -176,11 +175,11 @@ metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, inv
 # summary(metric_isomap)
 
 
-## ----ggellipse, include=FALSE, eval=FALSE---------------------------------------
-## plot_embedding(metric_isomap) +
-##   labs(x = "ISO1", y = "ISO2")
-## plot_ellipse(metric_isomap, add = F, n.plot = 50, scale = 20,
-##              color = blues9[5], fill = blues9[5], alpha = 0.2)
+# ## ----ggellipse, include=FALSE, eval=FALSE---------------------------------------
+# plot_embedding(metric_isomap) +
+#   labs(x = "ISO1", y = "ISO2")
+# plot_ellipse(metric_isomap, add = F, ell.no = 50, ell.size = .5,
+#              color = blues9[5], fill = blues9[5], alpha = 0.2)
 
 
 ## -------------------------------------------------------------------------------
@@ -188,29 +187,29 @@ metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, inv
 fn <- metric_isomap$embedding
 E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
 E2 <- fn[,2]
-prob <- c(1, 50, 99)
+prob <- c(1, 10, 50, 95, 99) # c(1,50,99)
 p_hdr_isomap <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NULL)
-p_hdr_isomap_p <- p_hdr_isomap + 
-  plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 100, 
+p_hdr_isomap_p <- p_hdr_isomap +
+  plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = .5,
              color = blues9[5], fill = blues9[5], alpha = 0.2)
 p_hdr_isomap
 
 
 ## ----outliers-------------------------------------------------------------------
 Rn <- metric_isomap$rmetric # array
-n.grid <- 10
-fisomap <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
-fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
-# plot_contour(metric_isomap, n.grid = n.grid, scale = 1/20)
+gridsize <- 10
+fisomap <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, gridsize = gridsize) # $x $y $z
+# fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
+plot_contour(metric_isomap, gridsize = gridsize, riem.scale = 1/20)
 
 
 ## ----hdroutliers----------------------------------------------------------------
 # source(here::here("R/sources/hdrplotting.R"))
-p_isomap <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, scale = 1/8, f = fisomap, ell_size = 0)
+p_isomap <- plot_outlier(x = metric_isomap, gridsize = 20, prob = prob, riem.scale = .11, f = fisomap, ell.size = 0)
 
 
 ## ----compoutlier, eval = FALSE--------------------------------------------------
-(p_hdr_isomap_p + p_isomap$p ) + coord_fixed()
+(p_hdr_isomap + p_isomap$p ) + coord_fixed()
 
 
 # LLE
@@ -225,18 +224,18 @@ metric_lle <- metricML(x, s = s, k = k, radius = radius, method = method, invert
 fn <- metric_lle$embedding
 Rn <- metric_lle$rmetric
 E1 <- fn[,1]; E2 <- fn[,2]
-flle <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
+flle <- vkde2d(x = E1, y = E2, h = Rn, gridsize = gridsize)
 fxy_lle <- hdrcde:::interp.2d(flle$x, flle$y, flle$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_lle)
-# plot_ellipse(metric_lle, n.plot = 50)
-# plot_contour(metric_lle, n.grid = 20, scale = 1/20)
+# plot_ellipse(metric_lle, ell.no = 50)
+# plot_contour(metric_lle, gridsize = 20, riem.scale = 1/20)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_lle <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = flle, ell_size = 0)
+p_lle <- plot_outlier(x = metric_lle, gridsize = 20, prob = prob, noutliers = 20, riem.scale = 1/20, f = flle, ell.size = 0)
 p_hdr_lle <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
 p_hdr_lle_p <- p_hdr_lle + 
-  plot_ellipse(metric_lle, n.plot = 50, add = T)
+  plot_ellipse(metric_lle, ell.no = 50, add = T)
 (p_hdr_lle_p + p_lle$p) + coord_fixed()
 
 
@@ -256,22 +255,22 @@ metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = method,
 fn <- metric_tsne$embedding
 Rn <- metric_tsne$rmetric
 E1 <- fn[,1]; E2 <- fn[,2]
-ftsne <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
+ftsne <- vkde2d(x = E1, y = E2, h = Rn, gridsize = gridsize)
 fxy_tsne <- hdrcde:::interp.2d(ftsne$x, ftsne$y, ftsne$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_tsne)
-# plot_ellipse(metric_tsne, n.plot = 50)
-# plot_contour(metric_tsne, n.grid = 20, scale = 1/20)
+# plot_ellipse(metric_tsne, ell.no = 50)
+# plot_contour(metric_tsne, gridsize = 20, riem.scale = 1/20)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = ftsne, ell_size = 0)
+p_tsne <- plot_outlier(x = metric_tsne, gridsize = 20, prob = prob, noutliers = 20, riem.scale = 1/20, f = ftsne, ell.size = 0)
 p_hdr_tsne <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
 p_hdr_tsne_p <- p_hdr_tsne + 
-  plot_ellipse(metric_tsne, n.plot = 50, add = T)
+  plot_ellipse(metric_tsne, ell.no = 50, add = T)
 (p_hdr_tsne_p + p_tsne$p) + coord_fixed()
 
 # metric_tsne$embedding <- preswissroll
-# plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = ftsne, ell_size = 0)
+# plot_outlier(x = metric_tsne, gridsize = 20, prob = prob, noutliers = 20, riem.scale = 1/20, f = ftsne, ell.size = 0)
 
 # UMAP
 
@@ -288,18 +287,18 @@ metric_umap <- metricML(x, s = s, k = k, radius = radius, method = method,
 ## ---- message=FALSE, eval=TRUE--------------------------------------------------
 fumap <- metric_umap$embedding
 E1 <- fumap[,1]; E2 <- fumap[,2]
-fumap <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
+fumap <- vkde2d(x = E1, y = E2, h = Rn, gridsize = gridsize)
 fxy_umap <- hdrcde:::interp.2d(fumap$x, fumap$y, fumap$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_umap)
-# plot_ellipse(metric_umap, n.plot = 50)
-# plot_contour(metric_umap, n.grid = 20, scale = 1/20)
+# plot_ellipse(metric_umap, ell.no = 50)
+# plot_contour(metric_umap, gridsize = 20, riem.scale = 1/20)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_umap <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, ell_size = 0)
+p_umap <- plot_outlier(x = metric_umap, gridsize = 20, prob = prob, noutliers = 20, riem.scale = 1/20, ell.size = 0)
 p_hdr_umap <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
 p_hdr_umap_p <- p_hdr_umap +
-  plot_ellipse(metric_umap, n.plot = 50, add = T)
+  plot_ellipse(metric_umap, ell.no = 50, add = T)
 (p_hdr_umap_p + p_umap$p) + coord_fixed()
 
 
@@ -336,9 +335,9 @@ ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases.png"),
 
 
 
-p_isomap_all <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, noutliers = N, scale = 1/20, f = fisomap)
-p_tsne_all <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers =N, scale = 1/20, f = ftsne)
-# p_umap_all <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers =N, scale = 1/20)
+p_isomap_all <- plot_outlier(x = metric_isomap, gridsize = 20, prob = prob, noutliers = N, riem.scale = 1/20, f = fisomap)
+p_tsne_all <- plot_outlier(x = metric_tsne, gridsize = 20, prob = prob, noutliers =N, riem.scale = 1/20, f = ftsne)
+# p_umap_all <- plot_outlier(x = metric_umap, gridsize = 20, prob = prob, noutliers =N, riem.scale = 1/20)
 
 
 den_rank <- order(preswissroll$den)
