@@ -23,11 +23,12 @@ library(copula)
 library(plotly)
 library(mvtnorm)
 Jmisc::sourceAll(here::here("R/sources"))
-set.seed(1)
-N <- 200
+set.seed(1234)
+N <- 2000
+p <- 100
 mu1 = mu2 = 0
 s1 <- 1#/(15^2)
-s2 <- 5#/(15^2)
+s2 <- 2#/(15^2)
 p1 <- 0.99
 p2 <- 0.01
 x1 <- c(rnorm(0.99*N, mu1, s1), rnorm(0.01*N, mu2, s2))
@@ -38,7 +39,7 @@ X <- cbind(x1, x2, x3, x4)
 head(X)
 range(X)
 
-# GMM density
+# GMM density as true meta data density
 gmmdensity <- function(x) {
   p1 * dmvnorm(x, rep(mu1, 4), diag(s1, 4)) + 
     p2 *  dmvnorm(x, rep(mu2, 4), diag(s2, 4))
@@ -53,24 +54,39 @@ summary(den)
 # semi-sphere radius
 # scales::rescale(x, c(0,1))
 r <- ceiling(max(sqrt(x1^2 + x2^2 + x3^2 + x4^2)))
-r
+r # radius = 15 for sigma=5
 range(X)
 
 # x_new <- cbind(x/r, 
 #            x5 = sqrt(1 - (x1^2 + x2^2 + x3^2 + x4^2)/r^2),
-#            matrix(0, N, 95)
+#            matrix(0, N, p - 5)
 #            )
 X_new <- cbind(X, 
                x5 = sqrt(r^2 - (x1^2 + x2^2 + x3^2 + x4^2)),
-               matrix(0, N, 95)
+               matrix(0, N, p - 5)
 )
 # x0 <- x
 head(X_new)
-X_new %>% as_tibble() %>% summarise(a = x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
+X_new %>% as_tibble() %>% summarise(x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 
 # den1 <- apply(x_new[,1:4], 1, den_calc)
 # summary(den1)
 # all.equal(den, den1) # TRUE
+
+## Plot 5-d semi-sphere
+library(tourr)
+# col <- RColorBrewer::brewer.pal(3, "Dark2") # unique(flea$species)
+# animate_xy(flea[, 1:6], col = flea$species)
+
+animate_xy(X_new[,1:5], col = viridis(length(den), option = "magma"))
+# catogorize density levels and color them accordingly
+
+library(geozoo)
+sphere <- sphere.hollow(p = 5)
+sphere$points <- X_new
+sphere
+
+
 
 ## QR decomposition
 # We split any real matrix A into a product A=QR where Q is a matrix with unit norm orthogonal vectors and R is an upper triangular matrix.
@@ -81,7 +97,7 @@ X_new %>% as_tibble() %>% summarise(a = x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 
 # randomly generate another matrix y (different structure from x) of dimension 100*N
 # QR decomposition of y to get the rotation matrix
-y <- matrix(runif(N*100, 0, 1), 100, N)
+y <- matrix(runif(p*p, 0, 1), p, p)
 head(y)
 dim(y)
 QR <- qr(y)
@@ -89,7 +105,7 @@ QR$rank
 Q <- qr.Q(QR); Q
 R <- qr.R(QR); R
 # We can reconstruct the matrix y from its decomposition as follows:
-all.equal(qr.X(QR, complete = TRUE), y[,1:100])
+all.equal(qr.X(QR, complete = TRUE), y)
 all.equal(t(Q) %*% y, R)
 
 dim(Q)
@@ -110,6 +126,10 @@ dim(train)
 any(train==0)
 all.equal(train %*% t(train), X_new %*% t(X_new))
 
+
+
+
+
 # ----parameters-----------------------------------------------------------------
 # Parameters fixed
 x <- train
@@ -121,7 +141,7 @@ annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 20 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 10 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
 
 ## ----isomap-------------------------------------------------------------
@@ -135,7 +155,7 @@ summary(metric_isomap)
 ## ----ggellipse, include=FALSE, eval=FALSE---------------------------------------
 ## plot_embedding(metric_isomap) +
 ##   labs(x = "ISO1", y = "ISO2")
-## plot_ellipse(metric_isomap, add = F, n.plot = 50, scale = 20,
+## plot_ellipse(metric_isomap, add = F, ell.no = 50, ell.size = 20,
 ##              color = blues9[5], fill = blues9[5], alpha = 0.2)
 
 
@@ -150,7 +170,7 @@ E2 <- fn[,2]
 prob <- c(1, 50, 99)
 p_hdr_isomap <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NULL)
 p_hdr_isomap_p <- p_hdr_isomap + 
-  plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 100, 
+  plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = 100, 
                color = blues9[5], fill = blues9[5], alpha = 0.2)
 p_hdr_isomap
 
@@ -162,12 +182,12 @@ Rn <- metric_isomap$rmetric # array
 n.grid <- 10
 fisomap <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
 fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
-# plot_contour(metric_isomap, n.grid = n.grid, scale = 1/20)
+# plot_contour(metric_isomap, n.grid = n.grid, riem.scale = 1/20)
 
 
 ## ----hdroutliers----------------------------------------------------------------
 # source(here::here("R/sources/hdrplotting.R"))
-p_isomap <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, scale = 1/8, f = fisomap, ell_size = 0)
+p_isomap <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, riem.scale = 1/8, f = fisomap, ell.size = 0)
 
 
 ## ----compoutlier, eval = FALSE--------------------------------------------------
@@ -189,15 +209,15 @@ E1 <- fn[,1]; E2 <- fn[,2]
 flle <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
 fxy_lle <- hdrcde:::interp.2d(flle$x, flle$y, flle$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_lle)
-# plot_ellipse(metric_lle, n.plot = 50)
-# plot_contour(metric_lle, n.grid = 20, scale = 1/20)
+# plot_ellipse(metric_lle, ell.no = 50)
+# plot_contour(metric_lle, n.grid = 20, riem.scale = 1/20)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_lle <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = flle, ell_size = 0)
+p_lle <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = 20, riem.scale = 1/20, f = flle, ell.size = 0)
 p_hdr_lle <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
 p_hdr_lle_p <- p_hdr_lle + 
-  plot_ellipse(metric_lle, n.plot = 50, add = T)
+  plot_ellipse(metric_lle, ell.no = 50, add = T)
 (p_hdr_lle_p + p_lle$p) + coord_fixed()
 
 
@@ -220,19 +240,19 @@ E1 <- fn[,1]; E2 <- fn[,2]
 ftsne <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
 fxy_tsne <- hdrcde:::interp.2d(ftsne$x, ftsne$y, ftsne$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_tsne)
-# plot_ellipse(metric_tsne, n.plot = 50)
-# plot_contour(metric_tsne, n.grid = 20, scale = 1/20)
+# plot_ellipse(metric_tsne, ell.no = 50)
+# plot_contour(metric_tsne, n.grid = 20, riem.scale = 1/20)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = ftsne, ell_size = 0)
+p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, riem.scale = 1/20, f = ftsne, ell.size = 0)
 p_hdr_tsne <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
 p_hdr_tsne_p <- p_hdr_tsne + 
-  plot_ellipse(metric_tsne, n.plot = 50, add = T)
+  plot_ellipse(metric_tsne, ell.no = 50, add = T)
 (p_hdr_tsne_p + p_tsne$p) + coord_fixed()
 
 # metric_tsne$embedding <- preswissroll
-# plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, f = ftsne, ell_size = 0)
+# plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, riem.scale = 1/20, f = ftsne, ell.size = 0)
 
 # UMAP
 
@@ -252,15 +272,15 @@ E1 <- fumap[,1]; E2 <- fumap[,2]
 fumap <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
 fxy_umap <- hdrcde:::interp.2d(fumap$x, fumap$y, fumap$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_umap)
-# plot_ellipse(metric_umap, n.plot = 50)
-# plot_contour(metric_umap, n.grid = 20, scale = 1/20)
+# plot_ellipse(metric_umap, ell.no = 50)
+# plot_contour(metric_umap, n.grid = 20, riem.scale = 1/20)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_umap <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers = 20, scale = 1/20, ell_size = 0)
+p_umap <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers = 20, riem.scale = 1/20, ell.size = 0)
 p_hdr_umap <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
 p_hdr_umap_p <- p_hdr_umap +
-  plot_ellipse(metric_umap, n.plot = 50, add = T)
+  plot_ellipse(metric_umap, ell.no = 50, add = T)
 (p_hdr_umap_p + p_umap$p) + coord_fixed()
 
 
