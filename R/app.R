@@ -24,8 +24,8 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
                        searchtype = c("standard", "priority", "radius")[3],
                        perplexity = round(k/3), theta = 0.5, # t-SNE
                        invert.h = TRUE,
-                       n.plot = 10, ell_size = 1, n.grid = 10, noutliers = 10,
-                       scales = 1, # scaling Riemmanien matrix
+                       ell.no = 10, ell.size = 1, gridsize = 10, noutliers = 10,
+                       riem.scale = 1, # scaling Riemmanien matrix
                        prob = c(1, 50, 99),
                        ...) {
   
@@ -43,9 +43,9 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   
   p_emb <- plot_embedding(metriclearn, color = x$colors, alpha = x$den) +
     labs(x = "", y = "", color = "") +
-    plot_ellipse(metriclearn, add = TRUE, n.plot = n.plot,
+    plot_ellipse(metriclearn, add = TRUE, ell.no = ell.no,
                  color = blues9[5], fill = blues9[5], alpha = 0.1,
-                 ell_size = ell_size) +
+                 ell.size = ell.size) +
     ggtitle(paste0(substring(method, 4), " 2D embedding. Time taken: ", round(run_time, 3), "s.", sep = "")) +
     theme(plot.title = element_text(hjust = 0.5))
 
@@ -53,14 +53,14 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   Rn <- metriclearn$rmetric
   E1 <- fn[,1]; E2 <- fn[,2]
   # prob <- c(1, 50, 99)
-  f_vkde <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid) # estimated densities with variable bandwidth
+  f_vkde <- vkde2d(x = E1, y = E2, h = Rn, gridsize = gridsize) # estimated densities with variable bandwidth
   # fxy <- hdrcde:::interp.2d(f_vkde$x, f_vkde$y, f_vkde$z, x0 = E1, y0 = E2) # linear interpolation
   den <- hdrcde:::den.estimate.2d(x = E1, y = E2, kde.package = "ks", xextend=0.15, yextend = 0.15)
   
-  p_vkde <- plot_outlier(x = metriclearn, n.grid = n.grid, prob = prob, noutliers = noutliers, scales = scales, ell_size = ell_size)
+  p_vkde <- plot_outlier(x = metriclearn, gridsize = gridsize, prob = prob, noutliers = noutliers, riem.scale = riem.scale, ell.size = ell.size)
   p_hdr <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers)
   p_hdr$p <- p_hdr$p +
-    plot_ellipse(metriclearn, n.plot = n.plot, add = TRUE, ell_size = ell_size)
+    plot_ellipse(metriclearn, ell.no = ell.no, add = TRUE, ell.size = ell.size)
 
   # p_contour <- filled.contour(f_vkde, color.palette = viridis, # p_vkde$hdr2d_info$den
   #                     plot.axes = { axis(1); axis(2);
@@ -218,14 +218,14 @@ ui <- dashboardPage(
                    style = "background-color: #ff6666;",
                    h4("Embedding and outlier plot parameters"),
                    fluidRow(
-                     column(4, numericInput("n.plot", "Number of ellipses", 10, min = 0, step = 1)),
-                     column(4, numericInput("ell_size", "Ellipse size", 0, min = 0, max = 100)),
+                     column(4, numericInput("ell.no", "Number of ellipses", 10, min = 0, step = 1)),
+                     column(4, numericInput("ell.size", "Ellipse size", 0, min = 0, max = 100)),
                      column(4, numericInput("noutliers", "Number of outliers", 10, min = 1, max = 1e8, step = 1)),
                    ),
                    
                    fluidRow(
-                     column(4, numericInput("n.grid", "Number of grid points for KDE", 10, min = 1, max = 500, step = 5)),
-                     column(4, numericInput("scales", "Riemmanien matrix scaling", 1, min = 0, max = 100)),
+                     column(4, numericInput("gridsize", "Number of grid points for KDE", 10, min = 1, max = 500, step = 5)),
+                     column(4, numericInput("riem.scale", "Riemmanien matrix scaling", 1, min = 0, max = 100)),
                      column(4, checkboxInput("invert.h", label = "Inversed Riemmanien", TRUE))
                    )
                  )
@@ -321,11 +321,11 @@ server <- shinyServer(function(input, output, session) {
                annmethod = input$ann, distance = input$distance, 
                treetype = "kd",
                searchtype = input$searchtype,
-               n.plot = input$n.plot,
-               n.grid = input$n.grid,
+               ell.no = input$ell.no,
+               gridsize = input$gridsize,
                noutliers = input$noutliers, 
-               ell_size = input$ell_size,
-               scales = input$scales)
+               ell.size = input$ell.size,
+               riem.scale = input$riem.scale)
   })
   
   # First tab ================================================================================
@@ -442,10 +442,10 @@ server <- shinyServer(function(input, output, session) {
                             annmethod = input$ann, distance = input$distance, 
                             treetype = "kd",
                             searchtype = input$searchtype,
-                            n.plot = input$n.plot,
-                            n.grid = input$n.grid,
+                            ell.no = input$ell.no,
+                            gridsize = input$gridsize,
                             noutliers = input$noutliers, 
-                            ell_size = input$ell_size,
+                            ell.size = input$ell.size,
                             scales = input$scales)
         }
 
