@@ -1,89 +1,28 @@
 # takes the output of metricML() as input for contour plot
 # n.grid for grid size
-plot_contour <- function(x, n.grid = 50, f = NULL, riem.scale = 1){
+#' Title
+#'
+#' @param x List object from `metricML()` function containing the 2-d embeddings and the Riemannian metric
+#' @param gridsize Grid size for estimating densities
+#' @param f Pre-computed densities
+#' @param riem.scale Scaling parameter for all Riemannien metric in variable KDE
+#'
+#' @return A full page display of the filled contour with scatterplot of embeddings
+#' @export
+#'
+#' @examples
+#' 
+plot_contour <- function(x, gridsize = 50, f = NULL, riem.scale = 1){
   
   fn <- x$embedding
-  Rn <- x$rmetric * riem.scale # array
+  Rn <- x$rmetric # array
   # h <- t(apply(Rn, 3, diag))
   
-  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
+  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn * riem.scale, gridsize = gridsize)
   # str(f)
   # image(f)
   filled.contour(f, color.palette = viridis,
-                      plot.axes = { axis(1); axis(2);
-                        points(fn, pch = 3, col= hcl(c=20, l = 8))}                      )
- 
+                 plot.axes = { axis(1); axis(2); points(fn, pch = 3, col= hcl(c=20, l = 8, alpha=0.2))}
+  )
+  
 }
-
-
-
-plot_outlier <- function(x, n.grid = 20, f = NULL, prob = c(1, 50, 99), noutliers = 20, label = NULL, riem.scale = 1, ell_size = 1, ...){
-  
-  fn <- x$embedding
-  Rn <- x$rmetric * riem.scale
-  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid) # if precomputed f, then riem.scale is not used
-  
-  den <- f
-  # x <- E1; y <- E2
-  E1 <- fn[,1]
-  E2 <- fn[,2]
-  # Convert prob to coverage percentage if necessary
-  if(max(prob) > 50) {# Assume prob is coverage percentage
-    alpha <- (100-prob)/100
-  } else {# prob is tail probability (for backward compatibility)
-    alpha <- prob}
-  alpha <- sort(alpha)
-  # Calculates falpha needed to compute HDR of bivariate density den.
-  # Also finds approximate mode.
-  fxy <- hdrcde:::interp.2d(den$x,den$y,den$z,E1,E2) 
-  falpha <- quantile(fxy, alpha)
-  index <- which.max(fxy)
-  mode <- c(E1[index],E2[index])
-  hdr2d_info <- structure(list(mode=mode,falpha=falpha,fxy=fxy, den=den, alpha=alpha, x=E1, y=E2), class="hdr2d") # list for hdr.2d() output
-  # plot.hdr2d(hdr2d_info, show.points = T, outside.points = T, pointcol = grey(0.5), xlim = round(range(E1)), ylim = round(range(E2)))
-  
-  p_hdr <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = noutliers, label = label, den = hdr2d_info)
-  p_outlier_vkde <- p_hdr$p + 
-    plot_ellipse(x, add = T, n.plot = 50, ell_size = ell_size, 
-                 color = blues9[5], fill = blues9[5], alpha = 0.2, ...)
-  
-  return(list(p = p_outlier_vkde, outlier = p_hdr$outlier, densities = p_hdr$densities, hdr2d_info = hdr2d_info))
-}
-
-
-# use akima for interpolation
-# plot.contour <- function(x, f, pixel=100, lenbreak=5, plot.hdr = FALSE, ...){
-#   embed_den <- as_tibble(cbind(x = x[,1], y = x[,2], z = f)) %>%
-#     drop_na()
-#   pixel <- 100
-#   lenbreak <- 5
-#   akima.spl <- akima::interp(embed_den$x, embed_den$y, embed_den$z, nx=pixel, ny=pixel, linear=FALSE) # akima uses splines for interpolation, which is only useful for area with enough data points, but is not for points on the edges/no points
-#   
-#   p1 <- NULL
-#   if(plot.hdr){
-#     p1 <- hdrscatterplot(embed_den$x, embed_den$y, noutliers = 10)
-#   }
-#   
-#   p <- filled.contour(akima.spl, color.palette = viridis,
-#                  plot.axes = { axis(1); axis(2);
-#                    title("smooth interp(*, linear = FALSE)");
-#                    points(embed_den, pch = 3, col= hcl(c=20, l = 10))}, 
-#                  ...)
-#   
-#   return(p)
-# }
-
-# x <- dimRed::loadDataSet("Swiss Roll")
-# N <- nrow(x)
-# s <- 2
-# k <- 20
-# method <- "annIsomap"
-# annmethod <- "kdtree"
-# distance <- "euclidean"
-# treetype <- "kd"
-# searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-# radius <- .4 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm
-# metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, invert.h = TRUE)
-# f <- mkde(x = metric_isomap$embedding, h = metric_isomap$rmetric)
-# plot.contour(x = metric_isomap$embedding, f, plot.hdr = F)
-
