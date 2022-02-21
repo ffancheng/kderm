@@ -15,7 +15,7 @@ author:
   address: University of Sydney
   email: Anastasios.Panagiotelis@sydney.edu.au
 abstract: ""
-# keywords: "manifold learning"
+keywords: "manifold learning, variable bandwidth, Riemannian metric, highest density region, Gaussian kernels"
 # wpnumber: 03/2021
 # jelcodes: C55, C65, C80
 blind: true
@@ -25,7 +25,7 @@ lot: false
 bibliography: references.bib
 biblio-style: authoryear-comp
 output:
-  MonashEBSTemplates::workingpaper:
+  monash::workingpaper:
     fig_caption: yes
     fig_height: 5
     fig_width: 8
@@ -66,7 +66,6 @@ library(plotly)
 Jmisc::sourceAll(here::here("R/sources"))
 # set.seed(123)
 ```
-
 
 # Introduction
 	
@@ -119,7 +118,7 @@ Conclusions and discussions are presented in \autoref{conclusion}.
 
 	Kernel density estimate with variable bandwidth
 
-In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. For a high-dimensional data set, various manifold learning algorithms including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, are applied to get a low-dimensional embedding. The manifold learning algorithms map the points through nonlinear functions that stretches some regions of the space while shrinks others. @Perrault2009 gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric and the Riemannian metric is a positive simi-definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with lowest density estimates. 
+In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. For a high-dimensional data set, various manifold learning algorithms including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, are applied to get a low-dimensional embedding. The manifold learning algorithms map the points through nonlinear functions that stretches some regions of the space while shrinks others. @Perrault-Joncas2013-pq gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric and the Riemannian metric is a positive simi-definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with lowest density estimates. 
 
 To start with, we introduce the notations in this manuscript. Then we introduce the multivariate kernel density estimation method with variable bandwidth matrix and the metric learning algorithm to derive the pointwise Riemannian metrix. Finally, we propose our novel method to detect anomalies for high-dimensional data set.
 
@@ -127,22 +126,21 @@ To start with, we introduce the notations in this manuscript. Then we introduce 
 ## Notations
 
 
-
 ## Two dimensional kernel density estimation
 
 <!-- In general a multivariate kernel density estimate looks something like this -->
 
 <!-- $$ -->
-<!-- \hat{f}(\mathbf{x})=\sum\limits_{i=1}^N K_{\mathbf{H}}(\mathbf{x}-\mathbf{x}_i) -->
+<!-- \hat{f}(\pmb{x})=\sum\limits_{i=1}^N K_{\pmb{H}}(\pmb{x}-\pmb{x}_i) -->
 <!-- $$ -->
 
 <!-- where if a Gaussian kernel is used -->
 
 <!-- $$ -->
-<!-- K_{\mathbf{H}}(\mathbf{x}-\mathbf{x}_i)=(2\pi)^{-d/2}|\mathbf{H}|^{-1/2}\exp\left[-\frac{1}{2}(\mathbf{x}-\mathbf{x}_i)'\mathbf{H}^{-1}(\mathbf{x}-\mathbf{x}_i)\right] -->
+<!-- K_{\pmb{H}}(\pmb{x}-\pmb{x}_i)=(2\pi)^{-d/2}|\pmb{H}|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{x}-\pmb{x}_i)'\pmb{H}^{-1}(\pmb{x}-\pmb{x}_i)\right] -->
 <!-- $$ -->
 
-<!-- The matrix $\mathbf{H}$ is called the bandwidth matrix and is very important.  -->
+<!-- The matrix $\pmb{H}$ is called the bandwidth matrix and is very important.  -->
 
 For a bivariate random sample $\pmb X_1, \pmb X_2, \ldots, \pmb X_n$ 
 drawn from a density $f$, 
@@ -189,8 +187,8 @@ The Riemannian estimated using the method of Perrault Joncas and Meila (2009) gi
 We saw how points that are far apart in the embedding may not have been so far apart on the original manifold.  The Riemannian gives us some way of correcting this.  Similarly a bandwidth matrix in a kernel density estimate is all about determining the "directions" in which there should be more or less "closeness".  So the basic idea is to replace the kernel density estimate with
 
 $$
-\hat{f}(\mathbf{x})=\sum\limits_{i=1}^N K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)\\
-K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)=(2\pi)^{-d/2}|\mathbf{H}_i|^{-1/2}\exp\left[-\frac{1}{2}(\mathbf{x}-\mathbf{x}_i)'\mathbf{H}_i^{-1}(\mathbf{x}-\mathbf{x}_i)\right]
+\hat{f}(\pmb{x})=\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{x}-\pmb{x}_i)\\
+K_{\pmb{H}_i}(\pmb{x}-\pmb{x}_i)=(2\pi)^{-d/2}|\pmb{H}_i|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{x}-\pmb{x}_i)'\pmb{H}_i^{-1}(\pmb{x}-\pmb{x}_i)\right]
 $$
 
 where $H_i$ is either the Riemannian or the inverse of the Riemannian (I am not totally sure which one).  Notice that the bandwidth matrix is different for each point.  This makes it a kernel density estimate with local smoothing, which is quite interesting, but we should take care to understand the properties of such things.  
@@ -228,15 +226,12 @@ Both the concepts of distance and volume are relevant to kernel density estimati
 
 The aim of the project is not to evaluate different manifold learning algorithms.  Although ISOMAP worked OK here it is still distorted and in real examples you will never 'know' that the data are uniform on the sphere.  Instead the idea of this project is to do kernel density estimation in a way that takes distortion into account.
 
-
 ### Metric Learning algorithm
 
 @Perrault-Joncas2013-pq propose the Metric Learning algorithm which mainly involves four main steps.
 
 As pointed out by @Perrault-Joncas2013-pq, if the embedding dimension $s$ is larger than the manifold intrinsic dimension $d$, the rank of the embedding metric $h_n(p)$ is $d$; otherwise, the Riemannian metric $g_n$ will be returned. 
 This algorithm is also implemented in a Python library *megaman* [@McQueen2016-xz]. It is designed to apply the manifold learning methods to large-scale data sets, as well as computing the Riemannian metric of the manifold. 
-
-
 
 Learn metric algorithm
 
@@ -270,14 +265,12 @@ Learn metric algorithm
 
   \STATE Calculate the Riemannian metric $h(x)$ as the rank $d$ pseudo inverse of $\tilde{h}(x)$ with 
   $$
-    h(x) = U diag{1/(\Gamma[1:d])} U^\prime,
+    h(x) = U diag{1/(\Lambda[1:d])} U^\prime,
   $$
-  where $[U, \Gamma]$ is the eigendecomposition of matrix $\tilde{h}(x)$, and $U$ is the matrix of column eigenvectors ordered by the eigenvalues $\Gamma$ in descending order.
+  where $[U, \Lambda]$ is the eigendecomposition of matrix $\tilde{h}(x)$, and $U$ is the matrix of column eigenvectors ordered by the eigenvalues $\Lambda$ in descending order.
 
   \end{algorithmic}
 \end{algorithm}
-
-
 
 
 ## Proposed algorithm
@@ -289,31 +282,29 @@ Now we present our proposed method for anomaly detection based on variable kerne
   \label{alg:vkderm}
   \DontPrintSemicolon
   \SetAlgoLined
-  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}\SetKwInOut{OptParameter}{optimization parameter}
+  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}
   \Input{ high-dimensional data $x_i$ for all $i=1,\ldots,N$ }
-  \Output{ outliers embedding coordinates $y_1, \dots, y_{\textit{n_outliers}}$ with their estimated densities $f_1, \dots, f_{\textit{n_outliers}}$ }
-  \Parameter{ number of outliers \textit{n_outliers}, embedding dimension $d$ }
-  \OptParameter{ }
+  \Output{ outliers embedding coordinates $y_1, \dots, y_{n\_outliers}$ with their estimated densities $f_1, \dots, f_{n\_outliers}$ }
+  \Parameter{ number of outliers $n\_outliers$, embedding dimension $d$ }
   \BlankLine
   \begin{algorithmic}[1]
 
-  \STATE for all $i=1,\ldots,N$, compute the $d$-dimensional embeddings $y_i$ with any exsiting manifold leanring algorithms and the corresponding Riemannian metric $h_i$ using Algorithm&nbsp;\@ref(alg:learnmetric) with inputs $d$ and $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ for heat kernels;
+  \STATE For all $i=1,\ldots,N$, compute the $d$-dimensional embeddings $y_i$ with any exsiting manifold leanring algorithms and the corresponding Riemannian metric $h_i$ using the Learn metric algorithm with inputs $d$ and $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ for heat kernels;
 
-  \STATE Set the variable bandwidth for each point as $h_i$;
+  \STATE Set the variable bandwidth for each point as $\pmb{H}_i = h_i$;
 
   \STATE Compute the kernel density estimates for each point as
   $$
-  \hat{f}(\mathbf{y})=\sum\limits_{i=1}^N K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)\\
-  K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)=(2\pi)^{-d/2}|\mathbf{H}_i|^{-1/2}\exp\left[-\frac{1}{2}(\mathbf{x}-\mathbf{x}_i)'\mathbf{H}_i^{-1}(\mathbf{x}-\mathbf{x}_i)\right];
+  \hat{f}(\pmb{y})=\sum\limits_{i=1}^N (2\pi)^{-d/2}|\pmb{H}_i|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{y}-\pmb{y}_i)'\pmb{H}_i^{-1}(\pmb{y}-\pmb{y}_i)\right];
   $$
 
-  \STATE Reorder the embedding coordinates $y$ according to the density estimates $f(y)$ and subset the top $\textit{n_outliers}}$ as the outliers.
+  \STATE Reorder the embedding coordinates $y$ according to the density estimates $f(y)$ and subset the top \textit{n\_outliers} as the outliers.
 
   \end{algorithmic}
 \end{algorithm}
 
-Now that we have proposed a way to take into account the distortion of manifold in kernel density estimate, it would be straightforward to produce the highest density region plots [HDR plots; @Hyndman1996-lk] which are also computed using kernel density estimate of the embedding. Similar to Figure \@ref(fig:hdr) in Chapter \ref{mlann}, we can use the HDR plots to do anomaly detection and apply it to very high dimensional data sets.
-
+Now that we have proposed a way to take into account the distortion of manifold in kernel density estimate, it would be straightforward to produce the highest density region plots [HDR plots; @Hyndman1996-lk] which are also computed using kernel density estimate of the embedding. 
+<!-- Similar to Figure \@ref(fig:hdr) in Chapter \@ref{mlann}, we can use the HDR plots to do anomaly detection and apply it to very high dimensional data sets. -->
 
 
 # Simulation {#simulation}
