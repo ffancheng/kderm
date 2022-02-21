@@ -152,7 +152,6 @@ den.estimate.5d <- function(x, kde.package=c("ks", "ash"), h=NULL, xextend=0.15)
   # xr <- diff(range(x,na.rm=TRUE))
   # yr <- diff(range(y,na.rm=TRUE))
   xr <- c(min(x)-xr*xextend,max(x)+xr*xextend)
-  # yr <- c(min(y)-yr*yextend,max(y)+yr*yextend)
   if(kde.package=="ash")
   {
     if(is.null(h))
