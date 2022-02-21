@@ -53,7 +53,7 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   Rn <- metriclearn$rmetric
   E1 <- fn[,1]; E2 <- fn[,2]
   # prob <- c(1, 50, 99)
-  f_vkde <- vkde2d(x = E1, y = E2, h = Rn, gridsize = gridsize) # estimated densities with variable bandwidth
+  f_vkde <- vkde2d(x = E1, y = E2, h = Rn*riem.scale, gridsize = gridsize) # estimated densities with variable bandwidth
   # fxy <- hdrcde:::interp.2d(f_vkde$x, f_vkde$y, f_vkde$z, x0 = E1, y0 = E2) # linear interpolation
   den <- hdrcde:::den.estimate.2d(x = E1, y = E2, kde.package = "ks", xextend=0.15, yextend = 0.15)
   
@@ -169,7 +169,7 @@ ui <- dashboardPage(
                                         # c("Swiss Roll", "Swiss Hole", "Corner Planes",   
                                         #           "Punctured Sphere", "Twin Peaks", "Clusters",
                                         #           "Toroidal Helix", "Gaussian"),
-                                        selected = "Swiss Roll")
+                                        selected = "Twin Peak")
                      ),
                      column(3, numericInput("num_pts", "No. of Points", 200)),
                      # column(3, uiOutput("data_par")),
@@ -218,7 +218,7 @@ ui <- dashboardPage(
                    style = "background-color: #ff6666;",
                    h4("Embedding and outlier plot parameters"),
                    fluidRow(
-                     column(4, numericInput("ell.no", "Number of ellipses", 10, min = 0, step = 1)),
+                     column(4, numericInput("ell.no", "Number of ellipses", 10, min = 1, step = 1)),
                      column(4, numericInput("ell.size", "Ellipse size", 0, min = 0, max = 100)),
                      column(4, numericInput("noutliers", "Number of outliers", 10, min = 1, max = 1e8, step = 1)),
                    ),
@@ -452,7 +452,7 @@ server <- shinyServer(function(input, output, session) {
         output[[paste0("c_plot_", local_i)]] <-
           renderPlot({
             if ((local_i) %in% seq_along(algor_list)) {
-              p3 <- res$p_emb # + coord_fixed()  ## TOOD: not showing with p3 + p6
+              p3 <- res$p_emb + labs(alpha = "Density", color = "Kernels") + theme(legend.position = "right", legend.direction = "vertical")
               p4 <- res$p_hdr$p + 
                     coord_fixed() + 
                     labs(title = "Fixed bandwidth")
