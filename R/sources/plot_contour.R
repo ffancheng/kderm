@@ -12,16 +12,18 @@
 #'
 #' @examples
 #' 
-plot_contour <- function(x, gridsize = 50, f = NULL, riem.scale = 1){
+plot_contour <- function(x, gridsize = 20, f = NULL, riem.scale = 1){
   
   fn <- x$embedding
   Rn <- x$rmetric # array
   # h <- t(apply(Rn, 3, diag))
   
-  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn * riem.scale, gridsize = gridsize)
-  # str(f)
+  if(is.null(f)) f <- vkde(x = fn, h = Rn * riem.scale, gridsize = gridsize)
+  # f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn * riem.scale, gridsize = gridsize)
+  
+  xyz <- list(x = f$eval.points[[1]], y = f$eval.points[[2]], z = f$estimate)
   # image(f)
-  filled.contour(f, color.palette = viridis,
+  filled.contour(xyz, color.palette = viridis,
                  plot.axes = { axis(1); axis(2); points(fn, pch = 3, col= hcl(c=20, l = 8, alpha=0.2))}
   )
   

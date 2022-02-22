@@ -1,7 +1,10 @@
 # input x is a multivariate data/matrix
 # takes care of the computation when bandwidth is full matrix instead of fixed vector or diagonal matrix
-# lims is a 2-column matrix of ranges(xmin, xmax) for each column in x
-vkde <- function(x, h, gridsize = 25, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points){
+# xmin and xmax are long vectors for all column in x
+# eval.points by default make grids and generate estimates of grid points; if provided, eg. x, can evaluate density at certain points
+# output long list of x, eval.points (grid points or data points), estimates for density, bandwidth matrix, whether estimates are for grids
+
+vkde <- function(x, h = NULL, gridsize = 25, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points){
 
   n <- nrow(x)
   d <- ncol(x)
@@ -11,7 +14,7 @@ vkde <- function(x, h, gridsize = 25, xmin = apply(x, 2, min), xmax = apply(x, 2
     stop("only finite values are allowed in the minimum/maximum values for grids")
   if(is_scalar_atomic(gridsize)) gridsize <- rep(gridsize, d) # vector of number of grid points
 
-  if(is.vector(h)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # only works for 2d
+  if(is.null(h) | !is.array(h)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # only works for 2d
 
   if(missing(eval.points)) {
     # grid points for multidimension, linear method
@@ -19,28 +22,37 @@ vkde <- function(x, h, gridsize = 25, xmin = apply(x, 2, min), xmax = apply(x, 2
     for (i in 1:d) {
       gx <- c(gx, list(seq(xmin[i], xmax[i], length.out = gridsize[i])))
     }
-    g <- expand.grid(gx)
+    eval.points <- expand.grid(gx)
+    
+    # bandwidth is a d*d*nx array
+    # evaluate density on grid points
+    z <- NULL
+    for (k in 1:n) {
+      hk <- h[,,k]
+      z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
+    }
+    z <- rowMeans(z, dims = 2, na.rm = TRUE)
+    
+    f <- c(x = x, eval.points = list(gx), list(estimate = z), H = h, gridded = TRUE)
+    if(d == 2) names(f)[1:2] <- c("x", "y")
     
   } else {
-    g <- eval.points
+    
+    # evaluate density on given data points
+    z <- NULL
+    for (k in 1:n) {
+      hk <- h[,,k]
+      z <-  cbind(z, mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = hk))  # stack vector of length n
+    }
+    z <- rowMeans(z, na.rm = TRUE)
+    
+    f <- list(x = x, eval.points = eval.points, estimate = z, H = h, gridded = FALSE)
   }
-  
-  p <- prod(gridsize)
-  # bandwidth is a d*d*nx array
-  # z <- array(NA, gridsize)
-  z <- NULL
-  
-  for (k in 1:n) {
-    hk <- h[,,k]
-    z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = g, mean = x[k,], sigma = hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
-  }
-  z <- rowMeans(z, dims = 2, na.rm = TRUE)
+
   
   ## TODO: optimize hk as bandwidth pointwise
   # AMISE
   
-  f <- c(x = gx, list(z = z))
-  if(d == 2) names(f)[1:2] <- c("x", "y")
   return(f)
   
 }

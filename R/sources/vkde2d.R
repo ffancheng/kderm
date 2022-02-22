@@ -79,7 +79,7 @@ ker.density <- function(x, h) {
 # x_i is each original data point
 # x is the constructed grid points to calculate the density estimate
 # 
-vkde2d <- function(x, y, h, gridsize = 25, lims = c(range(x), range(y)), eval.points = NULL ){
+vkde2d <- function(x, y, h, gridsize = 25, lims = c(range(x), range(y)), eval.points ){
   
   nx <- length(x)
   if(length(y) != nx)
@@ -116,55 +116,17 @@ vkde2d <- function(x, y, h, gridsize = 25, lims = c(range(x), range(y)), eval.po
   
   z <- rowMeans(z, dims = 2, na.rm = TRUE)
   
-  return(list(x = gx, y = gy, z = z, grid = g))
+  return(list(x = gx, y = gy, z = z))
   
   
   ## TODO: optimize hk as bandwidth pointwise
   # AMISE
 
 
-    # hkd <- 1 / (2 * pi) * det(h[,,k])^(-1/2)
-    # hks <- solve(h[,,k])
-    # xyk <- c(x[k], y[k])
-    # 
-    # for(i in 1:n[1L]) {
-    #   for (j in 1:n[2L]) {
-    #    
-    #     gxy <- c(gx[i], gy[j])
-    #     s[i, j, k] <- hkd * exp( - 1/2 * t(gxy - xyk) %*% hks %*% (gxy - xyk))
-    #   }
-    # }
-  # }
-  
-  # z <- rowMeans(s, dims = 2)
-
-  # for(i in 1:n[1L]) {
-  #   for (j in 1:n[2L]) {
-  # 
-  #     s = 0
-  #     for (k in 1:nx) {
-  #       # s <- s + 1 / (2 * pi) * (-1/(2*h[k,1]*h[k,2])) * exp(- 1/2 * t(gx[i] - x[k]) * 1/(h[k, 1]*h[k, 2]) * (gy[j] - y[k]))
-  #       s <- s + 1 / (2 * pi) * det(h[,,k])^(-1/2) * 
-  #         exp( - 1/2 * t(c(gx[i], gy[j]) - c(x[k], y[k])) %*% solve(h[,,k]) %*% ( c(gx[i], gy[j]) - c(x[k], y[k]) ) )
-  #     }
-  #     z[i, j] <- s / nx
-  # 
-  #   }
-  # }
-  
-  # from MASS:: kde2d()
-  # h <- h/4                            # for S's bandwidth scale
-  # ax <- outer(gx, x, "-" )/h[1L]
-  # ay <- outer(gy, y, "-" )/h[2L]
-  # z <- tcrossprod( matrix(dnorm(ax), , nx)/h[1L], matrix(dnorm(ay), , nx)/h[2L] ) /
-  #   nx
-  # # z <- tcrossprod(matrix(dnorm(ax), , nx), matrix(dnorm(ay), , nx)) /
-  # #   (nx * h[1L] * h[2L])
-
 }
 
 
-
+# ks::dmvnorm.mixt()
 
 
 # attach(geyser)

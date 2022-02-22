@@ -3,25 +3,25 @@ plot_outlier <- function(x, gridsize = 20, f = NULL, prob = c(1, 50, 99), noutli
   
   fn <- x$embedding
   Rn <- x$rmetric
-  if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn * riem.scale, gridsize = gridsize)
+  # if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn * riem.scale, gridsize = gridsize) # works for 2d, use linear interpolation
+  if(is.null(f)) f <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
   
   den <- f
-  # x <- E1; y <- E2
   E1 <- fn[,1]
   E2 <- fn[,2]
   # Convert prob to coverage percentage if necessary
   if(max(prob) > 50) {# Assume prob is coverage percentage
-    alpha <- (100-prob)/100
+    alpha <- (100 - prob) / 100
   } else {# prob is tail probability (for backward compatibility)
     alpha <- prob}
   alpha <- sort(alpha)
   # Calculates falpha needed to compute HDR of bivariate density den.
   
-  # Also finds approximate mode.
-  fxy <- hdrcde:::interp.2d(den$x,den$y,den$z,E1,E2) # where to estimate density, stored in den
-  # fxy <- f$z, change eval.points = data in vkde2d
+  # # Also finds approximate mode.
+  # fxy <- hdrcde:::interp.2d(den$x,den$y,den$z,E1,E2) # where to estimate density, stored in den
+  fxy <- f$estimate # change eval.points = data in vkde2d
   falpha <- quantile(fxy, alpha)
-  index <- which.max(fxy) 
+  index <- which.max(fxy)
   
   mode <- c(E1[index],E2[index]) # maximam density point
   hdr2d_info <- structure(list(mode=mode, falpha=falpha, fxy=fxy, den=den, alpha=alpha, x=E1, y=E2), class="hdr2d") # list for hdr.2d() output
@@ -29,10 +29,10 @@ plot_outlier <- function(x, gridsize = 20, f = NULL, prob = c(1, 50, 99), noutli
   
   p_hdr <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = noutliers, label = label, den = hdr2d_info)
   p_outlier_vkde <- p_hdr$p + 
-    plot_ellipse(x, add = T, ell.size = ell.size, ...) 
+    plot_ellipse(x, add = T, ell.size = ell.size, ...)
                  # color = blues9[5], fill = blues9[5], alpha = 0.2, ...)
   
-  return(list(p = p_outlier_vkde, outlier = p_hdr$outlier, densities = p_hdr$densities, hdr2d_info = hdr2d_info))
+  return(list(p = p_outlier_vkde, outlier = p_hdr$outlier, densities = fxy, hdr2d_info = hdr2d_info))
 }
 
 # Example
