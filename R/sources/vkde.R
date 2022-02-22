@@ -27,18 +27,20 @@ vkde <- function(x, h, gridsize = 25, xmin = apply(x, 2, min), xmax = apply(x, 2
   
   p <- prod(gridsize)
   # bandwidth is a d*d*nx array
-  z <- array(NA, c(gridsize, n))
+  # z <- array(NA, gridsize)
+  z <- NULL
   
   for (k in 1:n) {
     hk <- h[,,k]
-    z[,,k] <-  array(mvtnorm::dmvnorm(x = g, mean = x[k,], sigma = hk), dim = gridsize) # scalar ## det(hk) ^ (-1/2) *
+    z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = g, mean = x[k,], sigma = hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
   }
-  
   z <- rowMeans(z, dims = 2, na.rm = TRUE)
   
   ## TODO: optimize hk as bandwidth pointwise
   # AMISE
-
-  return(list(g = gx, z = z))
+  
+  f <- c(x = gx, list(z = z))
+  if(d == 2) names(f)[1:2] <- c("x", "y")
+  return(f)
   
 }
