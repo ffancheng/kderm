@@ -79,14 +79,16 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   #                      label = label, col = "blue", cex = 2.5
   # 
   
+  # grid estimates for contour plot, xyz passed to filled.contour()
   f_vkde <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize) # estimated densities at grid points
   den <- list(x = f_vkde$eval.points[[1]], y = f_vkde$eval.points[[2]], z = f_vkde$estimate) # VKDE grids
-  # fxy <- hdrcde:::interp.2d(f_vkde$x, f_vkde$y, f_vkde$z, x0 = E1, y0 = E2) # linear interpolation for grid estimates
-  denhdr <- hdrcde:::den.estimate.2d(x = E1, y = E2, kde.package = "ks", xextend=0.15, yextend = 0.15) # hdr grids
+  denhdr <- hdrcde:::den.estimate.2d(x = E1, y = E2, kde.package = "ks", xextend=0.15, yextend = 0.15) # HDR grids
   
+  # fxy <- hdrcde:::interp.2d(den$x, den$y, den$z, x0 = E1, y0 = E2) # linear interpolation for grid estimates
+  # fxy <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
   p_vkde <- plot_outlier(x = metriclearn, gridsize = gridsize, prob = prob, noutliers = noutliers, 
-    riem.scale = riem.scale, ell.size = ell.size) # f input is for data points, not f_vkde for grids
-  p_hdr <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers)
+    riem.scale = riem.scale, ell.size = ell.size) #, f = fxy f input is for data points, not f_vkde for grids; if is.null(f), estiamte using vkde(eval.points = fn)
+  p_hdr <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers) # $densities contains data point estimates
   p_hdr$p <- p_hdr$p +
     plot_ellipse(metriclearn, ell.no = ell.no, add = TRUE, ell.size = ell.size)
 
@@ -504,17 +506,17 @@ server <- shinyServer(function(input, output, session) {
 
               fxy <- sim_data()$den # true meta data density
               fxy_hdr <- res$p_hdr$densities # kde with fixed bandwidth for data points
-              fxy_ml <- res$p_vkde$densities # vkde for data points
+              fxy_vkde <- res$estimate # vkde for data points
               
-              p1 <- cbind(fxy, fxy_ml) %>% 
+              p1 <- cbind(fxy, fxy_vkde) %>% 
                 as_tibble() %>% 
-                ggplot(aes(fxy, fxy_ml)) + 
+                ggplot(aes(fxy, fxy_vkde)) + 
                 geom_point(col = sim_data()$colors) +
                 # scale_x_log10() + 
                 # scale_y_log10() + 
                 scale_color_manual(values = scales::hue_pal()(4)) + 
                 labs(x = "True density", y = "Kernel density estimate",
-                     title = paste("Variable bandwidth. Density correlation:", round(cor(fxy, fxy_ml, method = "spearman"), 3) ))
+                     title = paste("Variable bandwidth. Density correlation:", round(cor(fxy, fxy_vkde, method = "spearman"), 3) ))
               p2 <- cbind(fxy, fxy_hdr) %>% 
                 as_tibble() %>% 
                 ggplot(aes(fxy, fxy_hdr)) + 
