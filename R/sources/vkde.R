@@ -4,17 +4,23 @@
 # eval.points by default make grids and generate estimates of grid points; if provided, eg. x, can evaluate density at certain points
 # output long list of x, eval.points (grid points or data points), estimates for density, bandwidth matrix, whether estimates are for grids
 
-vkde <- function(x, h = NULL, gridsize = 25, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points){
+vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points, xextend = 0.15){
 
   n <- nrow(x)
   d <- ncol(x)
+  
   if(any(!is.finite(x)))
-    stop("missing or infinite values in the data are not allowed")
+    stop("Missing or infinite values in the data are not allowed!")
   if(any(!is.finite(xmin) | !is.finite(xmax)))
-    stop("only finite values are allowed in the minimum/maximum values for grids")
-  if(is_scalar_atomic(gridsize)) gridsize <- rep(gridsize, d) # vector of number of grid points
+    stop("Only finite values are allowed in the minimum/maximum values for grids.")
+  if(gridsize <= 0) stop("Gridsize must be positive.")
+  if(is_scalar_atomic(gridsize)) gridsize <- rep(gridsize[1], d) # vector of number of grid points
 
   if(is.null(h) | !is.array(h)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # only works for 2d
+  
+  xr <- apply(x, 2, function(x) diff(range(x, na.rm = TRUE)))
+  xmin <- xmin - xr * xextend
+  xmax <- xmax + xr * xextend
 
   if(missing(eval.points)) {
     # grid points for multidimension, linear method
@@ -33,8 +39,8 @@ vkde <- function(x, h = NULL, gridsize = 25, xmin = apply(x, 2, min), xmax = app
     }
     z <- rowMeans(z, dims = 2, na.rm = TRUE)
     
-    f <- c(x = x, eval.points = list(gx), list(estimate = z), H = h, gridded = TRUE)
-    if(d == 2) names(f)[1:2] <- c("x", "y")
+    f <- list(x = x, eval.points = gx, estimate = z, H = h, gridded = TRUE)
+    # if(d == 2) names(f$eval.points)[1:2] <- c("x", "y")
     
   } else {
     

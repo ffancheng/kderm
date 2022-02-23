@@ -1,4 +1,4 @@
-
+# f: estimates for all data points x, not grid points
 plot_outlier <- function(x, gridsize = 20, f = NULL, prob = c(1, 50, 99), noutliers = 20, label = NULL, riem.scale = 1, ell.size = 1, ...){
   
   fn <- x$embedding
