@@ -54,11 +54,13 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
             for(i in 1:4) {
               a <- mvtnorm::rmvnorm(n, mean = mu[i,], sigma = R)
               # True density is the mean of densities with all four cores (same R different mus)
-              den <- cbind(mvtnorm::dmvnorm(a, mean = mu[1,], sigma = R),
-                          mvtnorm::dmvnorm(a, mean = mu[2,], sigma = R),
-                          mvtnorm::dmvnorm(a, mean = mu[3,], sigma = R),
-                          mvtnorm::dmvnorm(a, mean = mu[4,], sigma = R)
-              ) %>% rowMeans()
+              # den <- cbind(mvtnorm::dmvnorm(a, mean = mu[1,], sigma = R),
+              #             mvtnorm::dmvnorm(a, mean = mu[2,], sigma = R),
+              #             mvtnorm::dmvnorm(a, mean = mu[3,], sigma = R),
+              #             mvtnorm::dmvnorm(a, mean = mu[4,], sigma = R)
+              # ) %>% rowMeans()
+              # This is the same as 
+              den <- ks::dmvnorm.mixt(a, mus = mu, Sigmas = rbind(R,R,R,R), props = rep(1,4)/4)
               a <- cbind(a, den, i)
               co <- rbind(co, a)
             }

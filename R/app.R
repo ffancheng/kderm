@@ -1,3 +1,7 @@
+# Note: When first deployed, the app will show Error in if: argument is of length zero for the plots location.
+# It comes from ml_outlier(x=sim_data()) where the input is reactive
+# Just ignore it and wait a few seconds and the plots will show up
+
 library(shiny)
 library(shinydashboard)
 library(plotly)
@@ -10,7 +14,7 @@ library(igraph)
 library(matrixcalc)
 library(ggforce)
 library(patchwork)
-library(copula)
+# library(copula)
 Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1)
 
@@ -24,9 +28,9 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
                        searchtype = c("standard", "priority", "radius")[3],
                        perplexity = round(k/3), theta = 0.5, # t-SNE
                        invert.h = TRUE,
-                       ell.no = 10, ell.size = 1, gridsize = 10, noutliers = 10,
+                       ell.no = 10, ell.size = 1, gridsize = 20, noutliers = 10,
                        riem.scale = 1, # scaling Riemmanien matrix
-                       prob = c(1, 50, 99),
+                       prob = c(1, 50, 99), # currently not an input of the app
                        ...) {
   
   if (is.null(x) | is.null(method)) return(NULL)
@@ -44,7 +48,7 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   p_emb <- plot_embedding(metriclearn, color = x$colors, alpha = x$den) +
     labs(x = "", y = "", color = "") +
     plot_ellipse(metriclearn, add = TRUE, ell.no = ell.no,
-                 color = blues9[5], fill = blues9[5], alpha = 0.1,
+                 color = blues9[5], fill = blues9[1], alpha = 0.1,
                  ell.size = ell.size) +
     ggtitle(paste0(substring(method, 4), " 2D embedding. Time taken: ", round(run_time, 3), "s.", sep = "")) +
     theme(plot.title = element_text(hjust = 0.5))
@@ -53,11 +57,35 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   Rn <- metriclearn$rmetric
   E1 <- fn[,1]; E2 <- fn[,2]
   # prob <- c(1, 50, 99)
-  f_vkde <- vkde2d(x = E1, y = E2, h = Rn*riem.scale, gridsize = gridsize) # estimated densities with variable bandwidth
-  # fxy <- hdrcde:::interp.2d(f_vkde$x, f_vkde$y, f_vkde$z, x0 = E1, y0 = E2) # linear interpolation
-  den <- hdrcde:::den.estimate.2d(x = E1, y = E2, kde.package = "ks", xextend=0.15, yextend = 0.15)
   
-  p_vkde <- plot_outlier(x = metriclearn, gridsize = gridsize, prob = prob, noutliers = noutliers, riem.scale = riem.scale, ell.size = ell.size)
+  # # TODO: HDR plot for embedding with true density
+  # # Convert prob to coverage percentage if necessary
+  # if(max(prob) > 50) {# Assume prob is coverage percentage
+  #   alpha <- (100 - prob) / 100
+  # } else {# prob is tail probability (for backward compatibility)
+  #   alpha <- prob}
+  # alpha <- sort(alpha)
+  # # Calculates falpha needed to compute HDR of bivariate density den.
+  # fxy <- x$den
+  # falpha <- quantile(fxy, alpha)
+  # p <- ggplot2::ggplot(data, ggplot2::aes_string(vnames[1], vnames[2])) +
+  #   ggplot2::geom_point(ggplot2::aes_string(col = "Region")) + 
+  #   ggplot2::scale_colour_manual(
+  #     name = "HDRs",
+  #     breaks = c(paste(head(sort(levels), -1)), ">99"),
+  #     values = c(RColorBrewer::brewer.pal(length(levels), "YlOrRd")[-1], "#000000")) + 
+  #   ggplot2::annotate("text",
+  #                      x = data[outliers, 1] + xlim / 50, y = data[outliers, 2] + ylim / 50,
+  #                      label = label, col = "blue", cex = 2.5
+  # 
+  
+  f_vkde <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize) # estimated densities at grid points
+  den <- list(x = f_vkde$eval.points[[1]], y = f_vkde$eval.points[[2]], z = f_vkde$estimate) # VKDE grids
+  # fxy <- hdrcde:::interp.2d(f_vkde$x, f_vkde$y, f_vkde$z, x0 = E1, y0 = E2) # linear interpolation for grid estimates
+  denhdr <- hdrcde:::den.estimate.2d(x = E1, y = E2, kde.package = "ks", xextend=0.15, yextend = 0.15) # hdr grids
+  
+  p_vkde <- plot_outlier(x = metriclearn, gridsize = gridsize, prob = prob, noutliers = noutliers, 
+    riem.scale = riem.scale, ell.size = ell.size) # f input is for data points, not f_vkde for grids
   p_hdr <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers)
   p_hdr$p <- p_hdr$p +
     plot_ellipse(metriclearn, ell.no = ell.no, add = TRUE, ell.size = ell.size)
@@ -72,9 +100,9 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
 
   
   return(list(metriclearn = metriclearn, p_emb = p_emb, p_vkde = p_vkde, 
-              p_hdr = p_hdr, run_time = run_time, f_vkde = f_vkde, 
+              p_hdr = p_hdr, run_time = run_time, estimate = p_vkde$densities, 
               # p_contour = p_contour, p_contour_hdr = p_contour_hdr, 
-              den = den
+              den = den, denhdr = denhdr # grid points
               )) #p_contour = p_contour
   
 }
@@ -224,7 +252,7 @@ ui <- dashboardPage(
                    ),
                    
                    fluidRow(
-                     column(4, numericInput("gridsize", "Number of grid points for KDE", 10, min = 1, max = 500, step = 5)),
+                     column(4, numericInput("gridsize", "Number of grid points for KDE", 20, min = 1, max = 500, step = 5)),
                      column(4, numericInput("riem.scale", "Riemmanien matrix scaling", 1, min = 0, max = 100)),
                      column(4, checkboxInput("invert.h", label = "Inversed Riemmanien", TRUE))
                    )
@@ -309,7 +337,7 @@ server <- shinyServer(function(input, output, session) {
     numericInput("searchtype_parameter", label = searchtype_label, value = searchtype_initial_value)
   })
   
-  sim_data <- reactive({ mldata(N = input$num_pts, meta = input$meta_input, mapping = input$data_input) })
+  sim_data <- reactive({ mldata(N = input$num_pts, p = 2, meta = input$meta_input, mapping = input$data_input) })
   
   metriclearn_data <- reactive({
     ml_outlier(x = sim_data(), s = input$d, 
@@ -364,7 +392,7 @@ server <- shinyServer(function(input, output, session) {
         geom_point(aes(alpha = sim_data()$den)) + #alpha = 0.8
         viridis_color + # use four gaussian index for colors
         # scale_color_viridis() +
-        labs(color = "", title = paste("Meta data for", input$data_input, "mapping"), color = "") +
+        labs(color = "Kernels", title = paste("Meta data for", input$data_input, "mapping"), alpha = "Density") +
         theme(plot.title = element_text(hjust = 0.5))
       # plotly_2D(sim_data()$metadata, colors = sim_data()$colors) # if change to plotlyOutput and renderPlotly
     }
@@ -389,15 +417,15 @@ server <- shinyServer(function(input, output, session) {
     # metriclearn_data()$p_contour #+
       # ggtitle("Contour plot with variable bandwidth") +
       # theme(plot.title = element_text(family = "Times New Roman", size = 16, color = "Black"))
-    filled.contour(metriclearn_data()$f_vkde, color.palette = function(n) rocket(n, direction = -1), # p_vkde$hdr2d_info$den
-                   plot.title = title(main = "Density estimates with variable bandwidth", font.main = 1),
+    filled.contour(metriclearn_data()$den, color.palette = function(n) rocket(n, direction = -1), # p_vkde$hdr2d_info$den
+                   plot.title = title(main = "KDE with variable bandwidth", font.main = 1),
                    plot.axes = { axis(1); axis(2);
                      points(metriclearn_data()$metriclearn$embedding, pch = 3, col= sim_data()$colors)})
   })
 
   output$plot_contour_hdr <- renderPlot({
-    filled.contour(metriclearn_data()$den, color.palette = function(n) rocket(n, direction = -1), # p_vkde$hdr2d_info$den
-                   plot.title = title(main = "Density estimates with fixed bandwidth", font.main = 1),
+    filled.contour(metriclearn_data()$denhdr, color.palette = function(n) rocket(n, direction = -1), # p_vkde$hdr2d_info$den
+                   plot.title = title(main = "KDE with fixed bandwidth", font.main = 1),
                    plot.axes = { axis(1); axis(2);
                      points(metriclearn_data()$metriclearn$embedding, pch = 3, col= sim_data()$colors)})
   })
@@ -446,13 +474,15 @@ server <- shinyServer(function(input, output, session) {
                             gridsize = input$gridsize,
                             noutliers = input$noutliers, 
                             ell.size = input$ell.size,
-                            scales = input$scales)
+                            riem.scale = input$riem.scale)
         }
 
         output[[paste0("c_plot_", local_i)]] <-
           renderPlot({
             if ((local_i) %in% seq_along(algor_list)) {
-              p3 <- res$p_emb + labs(alpha = "Density", color = "Kernels") + theme(legend.position = "right", legend.direction = "vertical")
+              p3 <- res$p_emb + 
+               labs(alpha = "Density", color = "Kernels") + 
+               theme(legend.position = "right", legend.direction = "vertical")
               p4 <- res$p_hdr$p + 
                     coord_fixed() + 
                     labs(title = "Fixed bandwidth")
@@ -472,9 +502,9 @@ server <- shinyServer(function(input, output, session) {
           renderPlot({
             if ((local_i) %in% seq_along(algor_list)) {
 
-              fxy <- sim_data()$den
-              fxy_hdr <- res$p_hdr$densities
-              fxy_ml <- res$p_vkde$densities
+              fxy <- sim_data()$den # true meta data density
+              fxy_hdr <- res$p_hdr$densities # kde with fixed bandwidth for data points
+              fxy_ml <- res$p_vkde$densities # vkde for data points
               
               p1 <- cbind(fxy, fxy_ml) %>% 
                 as_tibble() %>% 
@@ -484,7 +514,7 @@ server <- shinyServer(function(input, output, session) {
                 # scale_y_log10() + 
                 scale_color_manual(values = scales::hue_pal()(4)) + 
                 labs(x = "True density", y = "Kernel density estimate",
-                     title = paste("Variable bandwidth. Outlier ranking correlation:", round(cor(fxy, fxy_ml, method = "spearman"), 3) ))
+                     title = paste("Variable bandwidth. Density correlation:", round(cor(fxy, fxy_ml, method = "spearman"), 3) ))
               p2 <- cbind(fxy, fxy_hdr) %>% 
                 as_tibble() %>% 
                 ggplot(aes(fxy, fxy_hdr)) + 
@@ -493,7 +523,7 @@ server <- shinyServer(function(input, output, session) {
                 #scale_y_log10() + 
                 scale_color_manual(values = scales::hue_pal()(4)) + 
                 labs(x = "True density", y = "Kernel density estimate",
-                     title = paste("Fixed bandwidth. Outlier ranking correlation:", round(cor(fxy, fxy_hdr, method = "spearman"), 3) ))
+                     title = paste("Fixed bandwidth. Density correlation:", round(cor(fxy, fxy_hdr, method = "spearman"), 3) ))
               p1 + p2
 
             } else { ggplot() } # plotly_empty(type = "scatter", mode = "markers")
