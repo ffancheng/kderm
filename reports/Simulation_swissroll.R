@@ -189,11 +189,11 @@ metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, inv
 fn <- metric_isomap$embedding
 E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
 E2 <- fn[,2]
-prob <- c(1, 10, 50, 95, 99) # c(1,50,99)
+prob <- c(1, 10, 50, 95, 99) #c(1,50,99) # 
 p_hdr_isomap <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = 20, label = NULL)
-p_hdr_isomap_p <- p_hdr_isomap$p +
-  plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = .5,
-             color = blues9[5], fill = blues9[1], alpha = 0.2)
+# p_hdr_isomap_p <- p_hdr_isomap$p +
+#   plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = .5,
+#              color = blues9[5], fill = blues9[1], alpha = 0.2)
 p_hdr_isomap
 
 
@@ -201,9 +201,9 @@ p_hdr_isomap
 Rn <- metric_isomap$rmetric # array
 # fisomap <- vkde2d(x = fn[,1], y = fn[,2], h = Rn*riem.scale, gridsize = gridsize) # $x $y $z
 # fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
-plot_contour(metric_isomap, gridsize = gridsize, riem.scale = riem.scale)
+plot_contour(metric_isomap, gridsize = gridsize, riem.scale = riem.scale) # estimate grid densities with vkde()
 
-fisomap <- vkde(x = fn, h = NULL, gridsize = gridsize, eval.points = fn)
+fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
 # str(fisomap)
 # summary(fisomap$estimate)
 
@@ -254,10 +254,10 @@ E1 <- fn[,1]; E2 <- fn[,2]
 # plot_ellipse(metric_lle, ell.no = 50)
 # plot_contour(metric_lle, gridsize = gridsize, riem.scale = 1/20)
 
-flle <- vkde(x = fn, h = NULL, gridsize = gridsize, eval.points = fn)
+flle <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
 ## ---- echo = F------------------------------------------------------------------
 p_lle <- plot_outlier(x = metric_lle, gridsize = gridsize, prob = prob, noutliers = 20, riem.scale = riem.scale, f = flle, ell.size = 0)
-p_hdr_lle <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20)
+p_hdr_lle <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20, levels = prob)
 # p_hdr_lle_p <- p_hdr_lle + 
 #   plot_ellipse(metric_lle, ell.no = 50, add = T)
 (p_lle$p + p_hdr_lle$p) + coord_fixed() + 
@@ -284,15 +284,15 @@ E1 <- fn[,1]; E2 <- fn[,2]
 # fxy_tsne <- hdrcde:::interp.2d(ftsne$x, ftsne$y, ftsne$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_tsne)
 # plot_ellipse(metric_tsne, ell.no = 50)
-plot_contour(metric_tsne, gridsize = gridsize, riem.scale = 1/20)
+# plot_contour(metric_tsne, gridsize = gridsize, riem.scale = riem.scale)
 
-ftsne <- vkde(x = fn, h = NULL, gridsize = gridsize, eval.points = fn)
+ftsne <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
 
 ## ---- echo = F------------------------------------------------------------------
 p_tsne <- plot_outlier(x = metric_tsne, gridsize = gridsize, prob = prob, noutliers = 20, riem.scale = riem.scale, f = ftsne, ell.size = 0)
-p_hdr_tsne <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20)
-p_hdr_tsne_p <- p_hdr_tsne$p + 
-  plot_ellipse(metric_tsne, ell.no = 50, add = T)
+p_hdr_tsne <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20, levels = prob)
+# p_hdr_tsne_p <- p_hdr_tsne$p + 
+#   plot_ellipse(metric_tsne, ell.no = 50, add = T)
 (p_tsne$p + p_hdr_tsne$p) + coord_fixed() + 
   plot_annotation(title = "Left: variable bandwidth; Right: fixed bandwidth", theme = theme(plot.title = element_text(hjust = 0.5)))
 
@@ -314,18 +314,18 @@ metric_umap <- metricML(x, s = s, k = k, radius = radius, method = method,
 ## ---- message=FALSE, eval=TRUE--------------------------------------------------
 fn <- metric_umap$embedding
 E1 <- fn[,1]; E2 <- fn[,2]
-fumap <- vkde2d(x = E1, y = E2, h = Rn*riem.scale, gridsize = gridsize)
-fxy_umap <- hdrcde:::interp.2d(fumap$x, fumap$y, fumap$z, x0 = E1, y0 = E2)
+fumap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
+# fxy_umap <- hdrcde:::interp.2d(fumap$x, fumap$y, fumap$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_umap)
 # plot_ellipse(metric_umap, ell.no = 50)
 # plot_contour(metric_umap, gridsize = gridsize, riem.scale = 1/20)
 
 
 ## ---- echo = F------------------------------------------------------------------
-p_umap <- plot_outlier(x = metric_umap, gridsize = gridsize, prob = prob, noutliers = 20, riem.scale = riem.scale, ell.size = 0)
-p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20)
-p_hdr_umap_p <- p_hdr_umap +
-  plot_ellipse(metric_umap, ell.no = 50, add = T)
+p_umap <- plot_outlier(x = metric_umap, gridsize = gridsize, prob = prob, noutliers = 20, riem.scale = riem.scale, ell.size = 0, f = fumap)
+p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20, levels = prob)
+# p_hdr_umap_p <- p_hdr_umap +
+#   plot_ellipse(metric_umap, ell.no = 50, add = T)
 (p_umap$p + p_hdr_umap$p) + coord_fixed() + 
   plot_annotation(title = "Left: variable bandwidth; Right: fixed bandwidth", theme = theme(plot.title = element_text(hjust = 0.5)))
 
@@ -342,7 +342,7 @@ p_den_umap <- plot_embedding(metric_umap) +
 
 
 ## FINAL plot to use
-(
+p <- (
   (((p_den_isomap + ggtitle("ISOMAP")) | (p_den_lle + ggtitle("LLE")) | (p_den_tsne + ggtitle("t-SNE")) | (p_den_umap + ggtitle("UMAP"))) & scale_color_viridis(option = "inferno") & labs(color = "Density") & coord_fixed()) /
     (p_isomap$p | p_lle$p | p_tsne$p | p_umap$p) /
     (p_hdr_isomap$p | p_hdr_lle$p | p_hdr_tsne$p | p_hdr_umap$p) +  ## add _p for ellipses
@@ -354,13 +354,73 @@ p_den_umap <- plot_embedding(metric_umap) +
   labs(x = "", y = "") &
   theme(legend.direction = "vertical")
 
-ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases_riem01.png"), width = 8, height = 6, dpi = 500)
+ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases_riem01.png"), p, width = 12, height = 8, dpi = 300)
+
+
+
+## ----compareDensity---------------------------------------------------------------------------
+fxy <- preswissroll$den
+methods <- c("isomap", "lle", "tsne", "umap")
+# fnames <- c("fxy_vkde", "fxy_hdr")
+# for(i in 1:length(methods)) {
+#   phrase <- paste0("fxy_vkde <- p_", methods[1], "$densities")
+#   phrase1 <- paste0("fxy_hdr <- p_hdr_", methods[1], "$densities")
+#   eval(phrase)
+#   eval(phrase1)
+#   
+# }
+
+
+## scatterplot to compare f_xy for ISOMAP
+f <- tibble(fxy = fxy, fxy_vkde = p_isomap$densities, fxy_hdr = p_hdr_isomap$densities)
+f
+cor(f$fxy_vkde, f$fxy)
+cor(f$fxy_hdr, f$fxy)
+pf_vkde <- f %>% 
+  ggplot(aes(x = fxy, y = fxy_vkde, col = factor(preswissroll$label))) + 
+  geom_point() + 
+  labs(x = "True density", y = "", color = "Kernels", title = "Variable bandwidth") +
+  scale_y_continuous(n.breaks = 6)
+pf_hdr <- f %>% 
+  ggplot(aes(x = fxy, y = fxy_hdr, col = factor(preswissroll$label))) + 
+  geom_point() + 
+  labs(x = "True density", y = "", color = "Kernels", title = "Fixed bandwidth") +
+  scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
+result <- (pf_vkde + pf_hdr) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+gt <- patchwork::patchworkGrob(result)
+gt <- gridExtra::grid.arrange(gt, left = "Estimated density")
+
+ggsave(paste0("paper/figures/", mapping, "_density_comparison_isomap_riem01.png"), gt, width = 10, height = 6, dpi = 300)
+
+
+
+# Table for density correlations
+library(kableExtra)
+fxy <- preswissroll$den
+dencor <- function(x) cor(x$densities, fxy)
+# dencor(p_lle)
+# dencor(p_hdr_lle)
+cors <- cbind(
+  c(dencor(p_isomap), dencor(p_hdr_isomap)),
+  c(dencor(p_lle), dencor(p_hdr_lle)),
+  c(dencor(p_tsne), dencor(p_hdr_tsne)),
+  c(dencor(p_umap), dencor(p_hdr_umap))
+) 
+rownames(cors) <- c("Variable bandwidth", "Fixed bandwidth")
+colnames(cors) <- c("ISOMAP", "LLE", "t-SNE", "UMAP")
+cors %>% 
+  kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
+  kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = TRUE) %>%
+  row_spec(1, bold = TRUE)
+
+save(cors, file = "paper/figures/CorrelationTable_twinpeak_4ml_riem01.rda")
+
+
 
 
 
 ## ----compareoutliers---------------------------------------------------------------------------
-
-
 
 
 p_isomap_all <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, noutliers = N, riem.scale = 1/20, f = fisomap)
