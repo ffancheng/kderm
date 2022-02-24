@@ -70,18 +70,18 @@ X_new %>% as_tibble() %>% summarise(x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 # summary(den1)
 # all.equal(den, den1) # TRUE
 
-## Plot 5-d semi-sphere
-library(tourr)
-# col <- RColorBrewer::brewer.pal(3, "Dark2") # unique(flea$species)
-# animate_xy(flea[, 1:6], col = flea$species)
-
-animate_xy(X_new[,1:5], col = viridis(length(den), option = "magma"))
-# catogorize density levels and color them accordingly
-
-library(geozoo)
-sphere <- sphere.hollow(p = 5)
-sphere$points <- X_new
-sphere
+# ## Plot 5-d semi-sphere
+# library(tourr)
+# # col <- RColorBrewer::brewer.pal(3, "Dark2") # unique(flea$species)
+# # animate_xy(flea[, 1:6], col = flea$species)
+# 
+# animate_xy(X_new[,1:5], col = viridis(length(den), option = "magma"))
+# # catogorize density levels and color them accordingly
+# 
+# library(geozoo)
+# sphere <- sphere.hollow(p = 5)
+# sphere$points <- X_new
+# sphere
 
 
 
@@ -140,8 +140,8 @@ treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
 radius <- 10 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
-riem.scale <- 10 # tune parameter
-gridsize <- 10
+riem.scale <- .1 # tune parameter
+gridsize <- 20
 
 ## ----isomap-------------------------------------------------------------
 metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
@@ -166,14 +166,14 @@ dim(fn)
 
 
 ## ----Fixed bandwidth density estimates with ks::kde-------------------------
-fixden_isomap <- vkde(x = fn, h = NULL, gridsize = gridsize, eval.points = fn)
+fixden_isomap <- vkde(x = fn, h = NULL, eval.points = fn, binned = FALSE) # gridsize = gridsize
 summary(fixden_isomap$estimate)
 fixden_isomap$H
 
 ## ----VKDE-------------------------------------------------------------------
 Rn <- metric_isomap$rmetric # array
 # tictoc::tic()
-fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
+fisomap <- vkde(x = fn, h = Rn*riem.scale, eval.points = fn)
 # tictoc::toc()
 summary(fisomap$estimate)
 
@@ -182,12 +182,7 @@ par(mfrow=c(1,2))
 plot(den, fisomap$estimate, main = paste("Variable bandwidth correlation:", round(cor(den, fisomap$estimate), 3)))
 plot(den, fixden_isomap$estimate, main = paste("Fixed bandwidth correlation:", round(cor(den, fixden_isomap$estimate), 3)))
 cor(den, fisomap$estimate)
-# # [1] 0.903419
 cor(den, fixden_isomap$estimate)
-# # [1] 0.844388
-
-
-
 
 
 
@@ -223,14 +218,14 @@ Rn <- metric_lle$rmetric
 
 
 ## ----Fixed bandwidth density estimates with ks::kde-------------------------
-fixden_lle <- vkde(x = fn, h = NULL, gridsize = gridsize, eval.points = fn)
+fixden_lle <- vkde(x = fn, h = NULL, binned = FALSE, eval.points = fn)
 summary(fixden_lle$estimate)
 fixden_lle$H
 
 ## ----VKDE-------------------------------------------------------------------
-tictoc::tic()
-flle <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
-tictoc::toc()
+# tictoc::tic()
+flle <- vkde(x = fn, h = Rn*riem.scale, binned = FALSE, eval.points = fn)
+# tictoc::toc()
 summary(flle$estimate)
 
 # ----compare with true density----------------------------------------------
@@ -262,7 +257,7 @@ cor(den, fixden_lle$estimate)
 # fn <- metric_tsne$embedding
 # Rn <- metric_tsne$rmetric
 # # E1 <- fn[,1]; E2 <- fn[,2]
-# # ftsne <- vkde2d(x = E1, y = E2, h = Rn, gridsize = gridsize, eval.points = fn)
+# # ftsne <- vkde2d(x = E1, y = E2, h = Rn, binned = FALSE, eval.points = fn)
 # # fxy_tsne <- hdrcde:::interp.2d(ftsne$x, ftsne$y, ftsne$z, x0 = E1, y0 = E2)
 # # # plot_embedding(metric_tsne)
 # # # plot_ellipse(metric_tsne, ell.no = 50)
@@ -279,14 +274,14 @@ cor(den, fixden_lle$estimate)
 # # # metric_tsne$embedding <- preswissroll
 # # # plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, riem.scale = 1/20, f = ftsne, ell.size = 0)
 # ## ----Fixed bandwidth density estimates with ks::kde-------------------------
-# fixden_tsne <- vkde(x = fn, h = NULL, gridsize = gridsize, eval.points = fn)
+# fixden_tsne <- vkde(x = fn, h = NULL, binned = FALSE, eval.points = fn)
 # summary(fixden_tsne$estimate)
 # fixden_tsne$H
 # 
 # ## ----VKDE-------------------------------------------------------------------
 # Rn <- metric_tsne$rmetric # array
 # tictoc::tic()
-# ftsne <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
+# ftsne <- vkde(x = fn, h = Rn*riem.scale, binned = FALSE, eval.points = fn)
 # tictoc::toc()
 # summary(ftsne$estimate)
 # 
@@ -316,7 +311,7 @@ metric_umap <- metricML(x, s = s, k = k, radius = radius, method = method,
 ## ---- message=FALSE, eval=TRUE--------------------------------------------------
 fn <- metric_umap$embedding
 # E1 <- fn[,1]; E2 <- fn[,2]
-# fumap <- vkde2d(x = E1, y = E2, h = Rn, gridsize = gridsize, eval.points = fn)
+# fumap <- vkde2d(x = E1, y = E2, h = Rn, binned = FALSE, eval.points = fn)
 # fxy_umap <- hdrcde:::interp.2d(fumap$x, fumap$y, fumap$z, x0 = E1, y0 = E2)
 # plot_embedding(metric_umap)
 # plot_ellipse(metric_umap, ell.no = 50)
@@ -332,18 +327,18 @@ fn <- metric_umap$embedding
 
 
 ## ----Fixed bandwidth density estimates with ks::kde-------------------------
-fixden_umap <- vkde(x = fn, h = NULL, gridsize = gridsize, eval.points = fn)
+fixden_umap <- vkde(x = fn, h = NULL, binned = FALSE, eval.points = fn)
 summary(fixden_umap$estimate)
 fixden_umap$H
 
 ## ----VKDE-------------------------------------------------------------------
 Rn <- metric_umap$rmetric # array
-tictoc::tic()
-fumap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
-tictoc::toc()
+# tictoc::tic()
+fumap <- vkde(x = fn, h = Rn*riem.scale, binned = FALSE, eval.points = fn)
+# tictoc::toc()
 summary(fumap$estimate)
 
-# ----compare with true density----------------------------------------------
+# ----check umap----------------------------------------------
 par(mfrow=c(1,2))
 plot(den, fumap$estimate, main = paste("Variable bandwidth correlation:", round(cor(den, fumap$estimate), 3)))
 plot(den, fixden_umap$estimate, main = paste("Fixed bandwidth correlation:", round(cor(den, fixden_umap$estimate), 3)))
@@ -354,73 +349,80 @@ cor(den, fixden_umap$estimate)
 
 
 
-## -------------------------------------------------------------------------------
-p_den_isomap <- plot_embedding(metric_isomap) + 
-  geom_point(aes(col = preswissroll$den))
-p_den_lle <- plot_embedding(metric_lle) + 
-  geom_point(aes(col = preswissroll$den)) 
-p_den_tsne <- plot_embedding(metric_tsne) + 
-  geom_point(aes(col = preswissroll$den)) 
-p_den_umap <- plot_embedding(metric_umap) + 
-  geom_point(aes(col = preswissroll$den)) 
+## ----compareDensity---------------------------------------------------------------------------
+fxy <- den
+methods <- c("isomap", "lle", "umap")
+## scatterplot to compare f_xy for ISOMAP
+f <- tibble(fxy = fxy, fxy_vkde = fisomap$estimate, fxy_hdr = fixden_isomap$estimate)
+f1 <- tibble(fxy = fxy, fxy_vkde = flle$estimate, fxy_hdr = fixden_lle$estimate)
+f2 <- tibble(fxy = fxy, fxy_vkde = fumap$estimate, fxy_hdr = fixden_umap$estimate)
+
+summary(f)
+cor(f$fxy_vkde, f$fxy)
+cor(f$fxy_hdr, f$fxy)
+f=f
+pf_vkde <- f %>% 
+  ggplot(aes(x = fxy, y = fxy_vkde)) + 
+  geom_point() + 
+  labs(x = "", y = "", color = "Kernels", title = "Variable bandwidth") +
+  scale_y_continuous(limits = c(0, max(f$fxy_vkde)), n.breaks = 6)
+pf_hdr <- f %>% 
+  ggplot(aes(x = fxy, y = fxy_hdr)) + 
+  geom_point() + 
+  labs(x = "", y = "", color = "Kernels", title = "Fixed bandwidth") +
+  scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
+p <- pf_vkde + pf_hdr
+
+f=f1
+pf_vkde <- f %>% 
+  ggplot(aes(x = fxy, y = fxy_vkde)) + 
+  geom_point() + 
+  labs(x = "", y = "", color = "Kernels", title = "") +
+  scale_y_continuous(limits = c(0, max(f$fxy_vkde)), n.breaks = 6)
+pf_hdr <- f %>% 
+  ggplot(aes(x = fxy, y = fxy_hdr)) + 
+  geom_point() + 
+  labs(x = "", y = "", color = "Kernels", title = "") +
+  scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
+p1 <- pf_vkde + pf_hdr
+
+f=f2
+pf_vkde <- f %>% 
+  ggplot(aes(x = fxy, y = fxy_vkde)) + 
+  geom_point() + 
+  labs(x = "True density", y = "", color = "Kernels", title = "") +
+  scale_y_continuous(limits = c(0, max(f$fxy_vkde)), n.breaks = 6)
+pf_hdr <- f %>% 
+  ggplot(aes(x = fxy, y = fxy_hdr)) + 
+  geom_point() + 
+  labs(x = "True density", y = "", color = "Kernels", title = "") +
+  scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
+p2 <- pf_vkde + pf_hdr
+
+result <- (p/p1/p2) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+gt <- patchwork::patchworkGrob(result)
+gt <- gridExtra::grid.arrange(gt, left = "Estimated density")
+gt
+ggsave(paste0("paper/figures/", "fived", "_density_comparison_isomap_riem20.png"), gt, width = 8, height = 10, dpi = 300)
 
 
-## FINAL plot to use
-(
-  (((p_den_isomap + ggtitle("ISOMAP")) | (p_den_lle + ggtitle("LLE")) | (p_den_tsne + ggtitle("t-SNE")) | (p_den_umap + ggtitle("UMAP"))) & scale_color_viridis(option = "inferno") & labs(color = "Density") & coord_fixed()) /
-    (p_isomap$p | p_lle$p | p_tsne$p | p_umap$p) /
-    (p_hdr_isomap | p_hdr_lle | p_hdr_tsne | p_hdr_umap) +  ## add _p for ellipses
-    coord_fixed() +
-    #     plot_annotation(subtitle = "Top: True densities from Gaussian mixture model;
-    # Middle: Outliers using variable kernel density estimate;
-    # Bottom: Outliers from `hdrcde` package with fixed bandwidth;") +
-    plot_layout(guides = 'collect') ) &
-  labs(x = "", y = "") &
-  theme(legend.direction = "vertical")
 
-ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases.png"), width = 8, height = 6, dpi = 500)
+# Table for density correlations
+fxy <- den
+dencor <- function(x) cor(x$estimate, fxy)
+# dencor(p_lle)
+# dencor(p_hdr_lle)
+cors <- cbind(
+  c(dencor(fisomap), dencor(fixden_isomap)),
+  c(dencor(flle), dencor(fixden_lle)),
+  # c(dencor(ftsne), dencor(fixden_tsne)),
+  c(dencor(fumap), dencor(fixden_umap))
+) 
+rownames(cors) <- c("Variable bandwidth", "Fixed bandwidth")
+colnames(cors) <- c("ISOMAP", "LLE", "UMAP")
+cors %>% 
+  kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
+  kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = TRUE) 
 
-
-
-
-
-
-
-
-
-# n <- round(N/4)
-# R <- matrix(c(1, 0,
-#               0, 1), 
-#             nrow = 2, ncol = 2)
-# # mu1 <- c(7.5, 7.5)
-# # mu2 <- c(7.5, 12.5)
-# # mu3 <- c(12.5, 7.5)
-# # mu4 <- c(12.5, 12.5)
-# mu <- matrix(#~mu1, ~mu2,
-#   c(7.5, 7.5,
-#     7.5, 12.5,
-#     12.5, 7.5,
-#     12.5, 12.5), 
-#   4, 2, byrow = TRUE)
-# co <- NULL
-# for(i in 1:4) {
-#   # mui <- get(paste0("mu", i))
-#   # mui <- as.matrix(mu[i,])
-#   a <- mvtnorm::rmvnorm(n, mean = mu[i,], sigma = R)
-#   # True density is the mean of densities with all four cores (same R different mus)
-#   den <- cbind(mvtnorm::dmvnorm(a, mean = mu[1,], sigma = R),
-#                mvtnorm::dmvnorm(a, mean = mu[2,], sigma = R),
-#                mvtnorm::dmvnorm(a, mean = mu[3,], sigma = R),
-#                mvtnorm::dmvnorm(a, mean = mu[4,], sigma = R)
-#   ) %>% rowMeans()
-#   a <- cbind(a, den, i)
-#   co <- rbind(co, a)
-# }
-# colnames(co) <- c("x", "y", "den", "label")
-# co <- co %>%
-#   as_tibble() %>% 
-#   mutate(# label = as.factor(label),
-#     x = (x - 5)/10, y = (y - 5)/10,
-#     den = den * 10 # y = h(x) = (x-5)/10; x = 10*y + 5; dx/dy = 10; f_Y(y) = f_X(x) * 10
-#   ) %>% 
-#   as.matrix()
+save(cors, file = paste0("paper/figures/CorrelationTable_", "fived", "_4ml_riem20.rda"))

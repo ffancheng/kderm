@@ -4,7 +4,7 @@
 # eval.points by default make grids and generate estimates of grid points; if provided, eg. x, can evaluate density at certain points
 # output long list of x, eval.points (grid points or data points), estimates for density, bandwidth matrix, whether estimates are for grids
 
-vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points, xextend = 0.15){
+vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points, xextend = 0.15, ...){
 
   n <- nrow(x)
   d <- ncol(x)
@@ -16,7 +16,7 @@ vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = app
   if(gridsize <= 0) stop("Gridsize must be positive.")
   if(is_scalar_atomic(gridsize)) gridsize <- rep(gridsize[1], d) # vector of number of grid points
 
-  if(is.null(h) | !is.array(h)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # only works for 2d
+  if(is.null(h) | !is.array(h)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points, ...)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # only works for 2d
   
   xr <- apply(x, 2, function(x) diff(range(x, na.rm = TRUE)))
   xmin <- xmin - xr * xextend
