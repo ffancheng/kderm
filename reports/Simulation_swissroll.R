@@ -18,6 +18,7 @@ library(ks)
 library(patchwork)
 # library(copula)
 library(plotly)
+library(kableExtra)
 Jmisc::sourceAll(here::here("R/sources"))
 # set.seed(1)
 
@@ -123,7 +124,7 @@ p <- 2
 ## Start from here! 
 ###--------------------------------------------------------
 set.seed(1234)
-mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[3]
+mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[1]
 sr <- mldata(N = 2000, meta = "gaussian", mapping = mapping)
 swissroll <- sr$data %>% as.data.frame()
 preswissroll <- sr$metadata %>% as_tibble() %>% mutate(den = sr$den, label = c(rep(1:4, each = 500)))
@@ -164,9 +165,9 @@ annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 5 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
-riem.scale <- 0.1
+riem.scale <- 1
 gridsize <- 20
 
 ## ---- message=FALSE-------------------------------------------------------------
@@ -194,7 +195,7 @@ p_hdr_isomap <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = 20, label 
 # p_hdr_isomap_p <- p_hdr_isomap$p +
 #   plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = .5,
 #              color = blues9[5], fill = blues9[1], alpha = 0.2)
-p_hdr_isomap
+# p_hdr_isomap
 
 
 ## ----outliers-------------------------------------------------------------------
@@ -206,6 +207,7 @@ plot_contour(metric_isomap, gridsize = gridsize, riem.scale = riem.scale) # esti
 fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
 # str(fisomap)
 # summary(fisomap$estimate)
+# all.equal(fisomap$estimate, p_isomap$densities)
 
 # check if vkde with grid estimate is the same as hdrcde::interp.2d
 # fixgrid_isomap <- vkde(x = fn, h = NULL, gridsize = gridsize)
@@ -215,25 +217,16 @@ fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn
 
 
 ## ----hdroutliers----------------------------------------------------------------
-# source(here::here("R/sources/hdrplotting.R"))
 p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
 # all.equal(fxy_isomap, p_isomap$densities)
-
 
 ## ----compoutlier, eval = FALSE--------------------------------------------------
 (p_isomap$p + p_hdr_isomap$p) + coord_fixed() + 
   plot_annotation(title = "Left: variable bandwidth; Right: fixed bandwidth", theme = theme(plot.title = element_text(hjust = 0.5)))
 
-# library(profvis)
-# profvis({
-#   fisomap <- vkde2d(x = fn[,1], y = fn[,2], h = Rn*riem.scale, gridsize = gridsize) # $x $y $z
-#   f1 <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize)
-# })
-# 
-# str(fisomap)
-# str(f1)
-# attributes(f1)
-# all.equal(fisomap$z, f1$z, check.attributes = F) # TRUE
+cor(preswissroll$den, p_isomap$densities)
+cor(preswissroll$den, p_hdr_isomap$densities)
+
 
 
 # LLE
@@ -353,8 +346,8 @@ p <- (
   plot_layout(guides = 'collect') ) &
   labs(x = "", y = "") &
   theme(legend.direction = "vertical")
-
-ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases_riem01.png"), p, width = 12, height = 8, dpi = 300)
+p
+ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases_riem001.png"), p, width = 12, height = 8, dpi = 300)
 
 
 
@@ -369,7 +362,6 @@ methods <- c("isomap", "lle", "tsne", "umap")
 #   eval(phrase1)
 #   
 # }
-
 
 ## scatterplot to compare f_xy for ISOMAP
 f <- tibble(fxy = fxy, fxy_vkde = p_isomap$densities, fxy_hdr = p_hdr_isomap$densities)
@@ -395,7 +387,6 @@ ggsave(paste0("paper/figures/", mapping, "_density_comparison_isomap_riem01.png"
 
 
 # Table for density correlations
-library(kableExtra)
 fxy <- preswissroll$den
 dencor <- function(x) cor(x$densities, fxy)
 # dencor(p_lle)
@@ -414,56 +405,56 @@ cors %>%
   kable_paper(full_width = TRUE) %>%
   row_spec(1, bold = TRUE)
 
-save(cors, file = "paper/figures/CorrelationTable_twinpeak_4ml_riem01.rda")
+save(cors, file = paste0("paper/figures/CorrelationTable_", mapping, "_4ml_riem01.rda"))
 
 
 
 
 
-## ----compareoutliers---------------------------------------------------------------------------
-
-
-p_isomap_all <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, noutliers = N, riem.scale = 1/20, f = fisomap)
-p_tsne_all <- plot_outlier(x = metric_tsne, gridsize = gridsize, prob = prob, noutliers =N, riem.scale = 1/20, f = ftsne)
-# p_umap_all <- plot_outlier(x = metric_umap, gridsize = gridsize, prob = prob, noutliers =N, riem.scale = 1/20)
-
-
-den_rank <- order(preswissroll$den)
-
-
-head(p_isomap_all$outlier, n = 20)
-head(p_tsne_all$outlier, n = 20)
-# head(p_umap_all$outlier, n = 20)
-outlier_isomap <- order(as.numeric(p_isomap_all$outlier))
-outlier_tsne <- order(as.numeric(p_tsne_all$outlier))
-# outlier_umap <- order(as.numeric(p_umap_all$outlier))
-cor(outlier_isomap, outlier_tsne)
-plot(outlier_isomap, den_rank, asp = 1)
-abline(0, 1)
-# topconfects::rank_rank_plot(outlier_isomap, outlier_tsne, n=50)
-
-
-
-## -------------------------------------------------------------------------------
-head(p_isomap$outlier, n = 20)
-head(p_hdr_tsne$outlier, n = 20)
-hdroutlier_isomap <- order(as.numeric(p_isomap$outlier))
-hdroutlier_tsne <- order(as.numeric(p_hdr_tsne$outlier))
-cor(hdroutlier_isomap, hdroutlier_tsne)
-plot(hdroutlier_isomap, hdroutlier_tsne, asp = 1)
-abline(0, 1)
-# cor(hdroutlier_isomap %>% head(50), hdroutlier_tsne %>% head(50))
-# topconfects::rank_rank_plot(hdroutlier_isomap, hdroutlier_tsne, n=50)
-
-
-## -------------------------------------------------------------------------------
-tail(p_isomap_all$outlier, n = 20)
-tail(p_tsne_all$outlier, n = 20)
-cor(outlier_isomap %>% tail(50), outlier_tsne %>% tail(50))
-
-
-## -------------------------------------------------------------------------------
-tail(p_isomap$outlier, n = 20)
-tail(p_hdr_tsne$outlier, n = 20)
-cor(hdroutlier_isomap %>% tail(50), hdroutlier_tsne %>% tail(50))
-
+# ## ----compareoutliers---------------------------------------------------------------------------
+# 
+# 
+# p_isomap_all <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, noutliers = N, riem.scale = 1/20, f = fisomap)
+# p_tsne_all <- plot_outlier(x = metric_tsne, gridsize = gridsize, prob = prob, noutliers =N, riem.scale = 1/20, f = ftsne)
+# # p_umap_all <- plot_outlier(x = metric_umap, gridsize = gridsize, prob = prob, noutliers =N, riem.scale = 1/20)
+# 
+# 
+# den_rank <- order(preswissroll$den)
+# 
+# 
+# head(p_isomap_all$outlier, n = 20)
+# head(p_tsne_all$outlier, n = 20)
+# # head(p_umap_all$outlier, n = 20)
+# outlier_isomap <- order(as.numeric(p_isomap_all$outlier))
+# outlier_tsne <- order(as.numeric(p_tsne_all$outlier))
+# # outlier_umap <- order(as.numeric(p_umap_all$outlier))
+# cor(outlier_isomap, outlier_tsne)
+# plot(outlier_isomap, den_rank, asp = 1)
+# abline(0, 1)
+# # topconfects::rank_rank_plot(outlier_isomap, outlier_tsne, n=50)
+# 
+# 
+# 
+# ## -------------------------------------------------------------------------------
+# head(p_isomap$outlier, n = 20)
+# head(p_hdr_tsne$outlier, n = 20)
+# hdroutlier_isomap <- order(as.numeric(p_isomap$outlier))
+# hdroutlier_tsne <- order(as.numeric(p_hdr_tsne$outlier))
+# cor(hdroutlier_isomap, hdroutlier_tsne)
+# plot(hdroutlier_isomap, hdroutlier_tsne, asp = 1)
+# abline(0, 1)
+# # cor(hdroutlier_isomap %>% head(50), hdroutlier_tsne %>% head(50))
+# # topconfects::rank_rank_plot(hdroutlier_isomap, hdroutlier_tsne, n=50)
+# 
+# 
+# ## -------------------------------------------------------------------------------
+# tail(p_isomap_all$outlier, n = 20)
+# tail(p_tsne_all$outlier, n = 20)
+# cor(outlier_isomap %>% tail(50), outlier_tsne %>% tail(50))
+# 
+# 
+# ## -------------------------------------------------------------------------------
+# tail(p_isomap$outlier, n = 20)
+# tail(p_hdr_tsne$outlier, n = 20)
+# cor(hdroutlier_isomap %>% tail(50), hdroutlier_tsne %>% tail(50))
+# 
