@@ -42,7 +42,7 @@ plot_embedding <- function(x, embedding = FALSE, color = NULL, alpha = NULL) {
     as_tibble() %>% 
     ggplot(aes(x = E1, y = E2, color = color, alpha = alpha)) + 
     geom_point() + 
-    coord_fixed(ratio = 1) + 
+    # coord_fixed(ratio = 1) + 
     # color + 
     theme(legend.position = 'bottom')
   
