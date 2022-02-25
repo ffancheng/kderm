@@ -4,7 +4,7 @@
 #'
 #' @param x List object from `metricML()` function containing the 2-d embeddings and the Riemannian metric
 #' @param gridsize Grid size for estimating densities
-#' @param f Pre-computed densities
+#' @param f Pre-computed densities over grid points
 #' @param riem.scale Scaling parameter for all Riemannien metric in variable KDE
 #'
 #' @return A full page display of the filled contour with scatterplot of embeddings
