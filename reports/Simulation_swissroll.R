@@ -167,7 +167,7 @@ treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
 radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
-riem.scale <- 1
+riem.scale <- .08 # scale Riemmanian
 gridsize <- 20
 
 ## ---- message=FALSE-------------------------------------------------------------
@@ -255,7 +255,39 @@ p_hdr_lle <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20, leve
 #   plot_ellipse(metric_lle, ell.no = 50, add = T)
 (p_lle$p + p_hdr_lle$p) + coord_fixed() + 
   plot_annotation(title = "Left: variable bandwidth; Right: fixed bandwidth", theme = theme(plot.title = element_text(hjust = 0.5)))
+cor(preswissroll$den, p_lle$densities)
+cor(preswissroll$den, p_hdr_lle$densities)
 
+
+
+# Laplacian Eigemaps
+
+## ----le, message=FALSE, warning=FALSE, eval=TRUE------------------------------
+x <- train
+method <- "LaplacianEigenmaps"
+metric_le <- metricML(x, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
+                       # annmethod = annmethod, distance = distance, treetype = treetype, 
+                       searchtype = searchtype
+)
+fn <- metric_le$embedding
+Rn <- metric_le$rmetric
+E1 <- fn[,1]; E2 <- fn[,2]
+# fle <- vkde2d(x = E1, y = E2, h = Rn*riem.scale, gridsize = gridsize)
+# fxy_le <- hdrcde:::interp.2d(fle$x, fle$y, fle$z, x0 = E1, y0 = E2)
+# plot_embedding(metric_le)
+# plot_ellipse(metric_le, ell.no = 50)
+# plot_contour(metric_le, gridsize = gridsize, riem.scale = 1/20)
+
+fle <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
+## ---- echo = F------------------------------------------------------------------
+p_le <- plot_outlier(x = metric_le, gridsize = gridsize, prob = prob, noutliers = 20, riem.scale = riem.scale, f = fle, ell.size = 0)
+p_hdr_le <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20, levels = prob)
+# p_hdr_le_p <- p_hdr_le + 
+#   plot_ellipse(metric_le, ell.no = 50, add = T)
+(p_le$p + p_hdr_le$p) + coord_fixed() + 
+  plot_annotation(title = "Left: variable bandwidth; Right: fixed bandwidth", theme = theme(plot.title = element_text(hjust = 0.5)))
+cor(preswissroll$den, p_le$densities)
+cor(preswissroll$den, p_hdr_le$densities)
 
 
 # tSNE
@@ -291,6 +323,9 @@ p_hdr_tsne <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20, lev
 
 # metric_tsne$embedding <- preswissroll
 # plot_outlier(x = metric_tsne, gridsize = gridsize, prob = prob, noutliers = 20, riem.scale = 1/20, f = ftsne, ell.size = 0)
+cor(preswissroll$den, p_tsne$densities)
+cor(preswissroll$den, p_hdr_tsne$densities)
+
 
 # UMAP
 
@@ -302,8 +337,6 @@ metric_umap <- metricML(x, s = s, k = k, radius = radius, method = method,
                         searchtype = searchtype, 
                         invert.h = TRUE)
 
-
-
 ## ---- message=FALSE, eval=TRUE--------------------------------------------------
 fn <- metric_umap$embedding
 E1 <- fn[,1]; E2 <- fn[,2]
@@ -313,7 +346,6 @@ fumap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
 # plot_ellipse(metric_umap, ell.no = 50)
 # plot_contour(metric_umap, gridsize = gridsize, riem.scale = 1/20)
 
-
 ## ---- echo = F------------------------------------------------------------------
 p_umap <- plot_outlier(x = metric_umap, gridsize = gridsize, prob = prob, noutliers = 20, riem.scale = riem.scale, ell.size = 0, f = fumap)
 p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20, levels = prob)
@@ -321,39 +353,85 @@ p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = 20, lev
 #   plot_ellipse(metric_umap, ell.no = 50, add = T)
 (p_umap$p + p_hdr_umap$p) + coord_fixed() + 
   plot_annotation(title = "Left: variable bandwidth; Right: fixed bandwidth", theme = theme(plot.title = element_text(hjust = 0.5)))
+cor(preswissroll$den, p_umap$densities)
+cor(preswissroll$den, p_hdr_umap$densities)
 
 
 ## -------------------------------------------------------------------------------
 p_den_isomap <- plot_embedding(metric_isomap) + 
-  geom_point(aes(col = preswissroll$den))
+  geom_point(aes(col = preswissroll$den)) + 
+  scale_color_viridis(option = "inferno") +
+  labs(color = "Density")
 p_den_lle <- plot_embedding(metric_lle) + 
-  geom_point(aes(col = preswissroll$den)) 
+  geom_point(aes(col = preswissroll$den))  + 
+  scale_color_viridis(option = "inferno") +
+  labs(color = "Density")
+p_den_le <- plot_embedding(metric_le) + 
+  geom_point(aes(col = preswissroll$den)) + 
+  scale_color_viridis(option = "inferno") +
+  labs(color = "Density") 
 p_den_tsne <- plot_embedding(metric_tsne) + 
-  geom_point(aes(col = preswissroll$den)) 
+  geom_point(aes(col = preswissroll$den)) + 
+  scale_color_viridis(option = "inferno") +
+  labs(color = "Density") 
 p_den_umap <- plot_embedding(metric_umap) + 
-  geom_point(aes(col = preswissroll$den)) 
+  geom_point(aes(col = preswissroll$den)) + 
+  scale_color_viridis(option = "inferno") +
+  labs(color = "Density") 
 
 
 ## FINAL plot to use
+# p <- (
+#   (((p_den_isomap + ggtitle("ISOMAP")) | (p_den_lle + ggtitle("LLE")) | (p_den_tsne + ggtitle("t-SNE")) | (p_den_umap + ggtitle("UMAP"))) & scale_color_viridis(option = "inferno") & labs(color = "Density") & coord_fixed()) /
+#     (p_isomap$p | p_lle$p | p_tsne$p | p_umap$p) /
+#     (p_hdr_isomap$p | p_hdr_lle$p | p_hdr_tsne$p | p_hdr_umap$p) +  ## add _p for ellipses
+#   coord_fixed() +
+# #     plot_annotation(subtitle = "Top: True densities from Gaussian mixture model;
+# # Middle: Outliers using variable kernel density estimate;
+# # Bottom: Outliers from `hdrcde` package with fixed bandwidth;") +
+#   plot_layout(guides = 'collect') ) &
+#   labs(x = "", y = "") &
+#   theme(legend.direction = "vertical")
+
+
+
+nolabs <- labs(x = "", y = "")
 p <- (
-  (((p_den_isomap + ggtitle("ISOMAP")) | (p_den_lle + ggtitle("LLE")) | (p_den_tsne + ggtitle("t-SNE")) | (p_den_umap + ggtitle("UMAP"))) & scale_color_viridis(option = "inferno") & labs(color = "Density") & coord_fixed()) /
-    (p_isomap$p | p_lle$p | p_tsne$p | p_umap$p) /
-    (p_hdr_isomap$p | p_hdr_lle$p | p_hdr_tsne$p | p_hdr_umap$p) +  ## add _p for ellipses
-  coord_fixed() +
-#     plot_annotation(subtitle = "Top: True densities from Gaussian mixture model;
-# Middle: Outliers using variable kernel density estimate;
-# Bottom: Outliers from `hdrcde` package with fixed bandwidth;") +
-  plot_layout(guides = 'collect') ) &
-  labs(x = "", y = "") &
-  theme(legend.direction = "vertical")
+    ( (p_den_isomap + labs(x = "", y = "ISOMAP", title = "True density") ) |
+        (p_isomap$p + labs(x = "", y = "", title = "Variable bandwidth") ) |
+        (p_isomap$p + labs(x = "", y = "", title = "Fixed bandwidth") ) 
+    ) /
+    ( (p_den_lle + labs(x = "", y = "LLE") ) | 
+        (p_lle$p + nolabs) |
+        (p_hdr_lle$p + nolabs) 
+    ) /
+    ( (p_den_le + labs(x = "", y = "Laplacian Eigenmaps") ) | 
+        (p_le$p + nolabs) |
+        (p_hdr_le$p + nolabs) 
+    ) /
+    ( (p_den_tsne + labs(x = "", y = "t-SNE") ) | 
+        (p_tsne$p + nolabs) |
+        (p_hdr_tsne$p + nolabs) 
+    ) / 
+    ( (p_den_umap + labs(x = "", y = "UMAP") ) | 
+        (p_umap$p + nolabs) |
+        (p_hdr_umap$p + nolabs) 
+    )
+  ) +
+  plot_layout(guides = 'collect') &
+  theme(legend.direction = "horizontal", legend.position = "bottom", 
+        legend.box = "horizontal",
+        plot.title = element_text(hjust = 0.5, face = "bold"))
 p
-ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases_riem001.png"), p, width = 12, height = 8, dpi = 300)
+ggsave(paste0("paper/figures/", mapping, "_outliers_comparison_4ml_3cases_riem", format(riem.scale, decimal.mark = "_"), ".png"), p, width = 8, height = 10, dpi = 300)
+
+
 
 
 
 ## ----compareDensity---------------------------------------------------------------------------
 fxy <- preswissroll$den
-methods <- c("isomap", "lle", "tsne", "umap")
+methods <- c("isomap", "lle", "le", "tsne", "umap")
 # fnames <- c("fxy_vkde", "fxy_hdr")
 # for(i in 1:length(methods)) {
 #   phrase <- paste0("fxy_vkde <- p_", methods[1], "$densities")
@@ -364,7 +442,7 @@ methods <- c("isomap", "lle", "tsne", "umap")
 # }
 
 ## scatterplot to compare f_xy for ISOMAP
-f <- tibble(fxy = fxy, fxy_vkde = p_isomap$densities, fxy_hdr = p_hdr_isomap$densities)
+f <- tibble(fxy = fxy, fxy_vkde = p_lle$densities, fxy_hdr = p_hdr_lle$densities)
 f
 cor(f$fxy_vkde, f$fxy)
 cor(f$fxy_hdr, f$fxy)
@@ -377,12 +455,15 @@ pf_hdr <- f %>%
   ggplot(aes(x = fxy, y = fxy_hdr, col = factor(preswissroll$label))) + 
   geom_point() + 
   labs(x = "True density", y = "", color = "Kernels", title = "Fixed bandwidth") +
-  scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
-result <- (pf_vkde + pf_hdr) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+  scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 5)
+result <- (pf_vkde + pf_hdr) + 
+  plot_layout(guides = 'collect') & 
+  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold")) &
+  ylim(0, max(f[,2:3])) # same y breaks labels
 gt <- patchwork::patchworkGrob(result)
 gt <- gridExtra::grid.arrange(gt, left = "Estimated density")
 
-ggsave(paste0("paper/figures/", mapping, "_density_comparison_isomap_riem01.png"), gt, width = 10, height = 6, dpi = 300)
+ggsave(paste0("paper/figures/", mapping, "_density_comparison_lle_riem",  format(riem.scale, decimal.mark = "_"), ".png"), gt, width = 10, height = 6, dpi = 300)
 
 
 
@@ -394,18 +475,18 @@ dencor <- function(x) cor(x$densities, fxy)
 cors <- cbind(
   c(dencor(p_isomap), dencor(p_hdr_isomap)),
   c(dencor(p_lle), dencor(p_hdr_lle)),
+  c(dencor(p_le), dencor(p_hdr_le)),
   c(dencor(p_tsne), dencor(p_hdr_tsne)),
   c(dencor(p_umap), dencor(p_hdr_umap))
 ) 
 rownames(cors) <- c("Variable bandwidth", "Fixed bandwidth")
-colnames(cors) <- c("ISOMAP", "LLE", "t-SNE", "UMAP")
+colnames(cors) <- c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP")
 cors %>% 
   kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
   kable_styling(latex_options = "scale_down") %>%
-  kable_paper(full_width = TRUE) %>%
-  row_spec(1, bold = TRUE)
+  kable_paper(full_width = TRUE)
 
-save(cors, file = paste0("paper/figures/CorrelationTable_", mapping, "_4ml_riem01.rda"))
+save(cors, file = paste0("paper/figures/CorrelationTable_", mapping, "_4ml_riem",  format(riem.scale, decimal.mark = "_"), ".rda"))
 
 
 
