@@ -65,7 +65,7 @@ library(patchwork)
 library(plotly)
 library(kableExtra)
 Jmisc::sourceAll(here::here("R/sources"))
-# set.seed(123)
+# set.seed(1234)
 ```
 
 # Introduction
@@ -323,8 +323,7 @@ P(\pmb{X}=\pmb{x}) = \sum_{i=1}^{4}\pi_i \frac{1}{(2\pi)^{d/2}|\pmb{\Sigma}_i|^{
 knitr::include_graphics("figures/truedensity_4kernels.png")
 ```
 
-
-<!-- ### Swiss roll mapping -->
+### Swiss roll mapping
 
 Given the 2-D meta data, multiple mapping functions could be applied to embed the data in a 3-D space. One of the most famous example in manifold learning is the swiss roll data, with the mapping function in \@ref(eq:swissroll). The two-dimensional meta data $(\pmb{X}_1, \pmb{X}_2)$ is transformed into the three-dimensional data $(\pmb{X}, \pmb{Y}, \pmb{Z})$, shown in the left plot of \autoref{fig:mappings}.
 \begin{equation}
@@ -343,26 +342,27 @@ knitr::include_graphics("figures/mappings_sr_tp.png")
 ```
 
 ```{r sroutliers, fig.align = 'center', out.width = "95%", fig.cap="Highest density region plots of four manifold learning embeddings of the swiss roll data. Colors are indicating densities from top: true densities from the Gaussian mixture model; middle: KDE with Riemannian matrix as variable bandwidth; and bottom: KDE with fixed bandwidth. Variable KDE preforms better in finding kernel structures with ISOMAP and LLE, and in locating outliers with t-SNE. Both methods are not detecting outliers accurately when using UMAP.", echo = FALSE}
-knitr::include_graphics("figures/Swiss Roll_outliers_comparison_4ml_3cases_riem001.png")
+knitr::include_graphics("figures/Swiss Roll_outliers_comparison_4ml_3cases_riem0_08.png")
 ```
 
 Now we are able to apply different manifold learning algorithms to $(\pmb{X}, \pmb{Y}, \pmb{Z})$ and reduce the dimension back to $d=2$, and further estimate the density of the 2-D embedding. According to the density estimates, we could rank the data points and then identify which observations lie in an highest density region of specified coverage, eg. 1%, 50%, 99%, >99%. For each of the four manifold learning methods, namely ISOMAP, LLE, t-SNE, and UMAP, \autoref{fig:sroutliers} presents the 2-D embedding plot in the same column, with the colors indicating the densities levels, the top row for true densities from the Gaussian mixture model, the middle row for highest density region plots with densities from our proposed variable KDE method, and the bottom for similar HDR plots with densities from KDE with fixed bandwidth. The top ten outliers with lowest densities are also highlighted in black with point indexes in blue. 
 Since there are four kernels in the meta data and darker points are the defined outliers, we could derive that for ISOMAP and LLE, variable kernel density estimates could detect the number of kernels more accurately than the KDE with fixed bandwidth. As for t-SNE and UMAP, both embeddings are quite close to each other with points clustered together, but the mixture of kernel structure is not as clear as LLE. Instead, we could roughly compare the location of outliers. For t-SNE, the middle plot have indexed more true outliers than the bottom plot; while for UMAP, both the middle and bottom plot fail to find the true outliers, but the outliers from fixed bandwidth are more scattered along the curved embedding.
 
-```{r srcors, echo=FALSE, message=FALSE, eval=F}
-load("figures/CorrelationTable_Swiss Roll_4ml_riem01.rda")
+```{r srcors, echo=FALSE, message=FALSE, eval=T}
+load("figures/CorrelationTable_Swiss Roll_4ml_riem0_08.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
 data.frame(cors) %>% 
   mutate_if(is.numeric, format, digits = 3, nsmall = 3) %>% 
   kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
   kable_styling(latex_options = "scale_down") %>%
-  # kable_paper(full_width = TRUE) %>%
+  # kable_paper(full_width = FALSE) %>%
+  # column_spec(1, width = "6cm") %>% 
   column_spec(2, bold = max.match[,1]) %>%
   column_spec(3, bold = max.match[,2]) %>%
   column_spec(4, bold = max.match[,3]) %>%
-  column_spec(5, bold = max.match[,4]) %>% 
-  column_spec(1, width = "6cm")
+  column_spec(5, bold = max.match[,4]) %>%
+  column_spec(6, bold = max.match[,5])
 ```
 
 ### Twin peaks mapping
@@ -400,13 +400,14 @@ max.match <- rep(col.max, each = 2) == cors
 data.frame(cors) %>% 
   mutate_if(is.numeric, format, digits = 3, nsmall = 3) %>% 
   kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
-  kable_styling(latex_options = "scale_down") %>%
-  # kable_paper(full_width = TRUE) %>%
+  # kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = FALSE) %>%
+  # column_spec(1, width = "6cm") %>% 
   column_spec(2, bold = max.match[,1]) %>%
   column_spec(3, bold = max.match[,2]) %>%
   column_spec(4, bold = max.match[,3]) %>%
-  column_spec(5, bold = max.match[,4]) %>% 
-  column_spec(1, width = "6cm")
+  column_spec(5, bold = max.match[,4]) #%>%
+  # column_spec(6, bold = max.match[,5])
 ```
 
 
@@ -438,13 +439,13 @@ max.match <- rep(col.max, each = 2) == cors
 data.frame(cors) %>% 
   mutate_if(is.numeric, format, digits = 3, nsmall = 3) %>% 
   kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
-  kable_styling(latex_options = "scale_down") %>%
-  # kable_paper(full_width = TRUE) %>%
+  # kable_styling(latex_options = "scale_down") %>% # automatically adjust the table to page width
+  kable_paper(full_width = FALSE) %>%
+  # column_spec(1, width = "6cm") %>% 
   column_spec(2, bold = max.match[,1]) %>%
   column_spec(3, bold = max.match[,2]) %>%
-  column_spec(4, bold = max.match[,3]) %>%
-  # column_spec(5, bold = max.match[,4]) %>% 
-  column_spec(1, width = "6cm")
+  column_spec(4, bold = max.match[,3]) #%>%
+  # column_spec(5, bold = max.match[,4]) 
 ```
 
 # Application {#application}
