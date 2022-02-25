@@ -493,7 +493,7 @@ Now that we have proposed a way to take into account the distortion of manifold 
 \hypertarget{simulation}{%
 \section{Simulation}\label{simulation}}
 
-In this section, we exam two scenarios for both low and high dimensions to test our proposed algorithm. For visualization purpose, \autoref{twodgaussian} presents a 2-D meta data example. We first simulate the data of size \(N=2000\) from a mixture of four Gaussian kernels with the same covariance but different means, each consisting of \(500\) points. Different mapping functions are then applied to the 2-D meta data to be mapped in a 3-D feature space, which gives the higher-dimensional input for different manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. The embedded dimension is set as \(d=2\), same as the meta data dimension. This enables us to compare the manifold learning embedding with the true meta data. We could now apply the algorithm described in \ref{alg:vkderm} to get the density estimates of all data points and further detect anomalies. As a high-dimensional example, the second simulation in \autoref{fivedgaussian} is based on a 5-D meta data embedded in a 100-D space and the corresponding embedding dimension is \(d=5\).
+In this section, we exam two scenarios for both low and high dimensions to test our proposed algorithm. For visualization purpose, \autoref{twodgaussian} presents a 2-D meta data example. We first simulate the data of size \(N=2,000\) from a mixture of four Gaussian kernels with the same covariance but different means, each consisting of \(500\) points. Different mapping functions are then applied to the 2-D meta data to be mapped in a 3-D feature space, which gives the higher-dimensional input for different manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. The embedded dimension is set as \(d=2\), same as the meta data dimension. This enables us to compare the manifold learning embedding with the true meta data. We could now apply Algorithm \ref{alg:vkderm} to get the density estimates of all data points and further detect anomalies. As a high-dimensional example, the second simulation in \autoref{fivedgaussian} is based on a 5-D meta data of size \(N=10,000\) embedded in a 100-D space and the corresponding embedding dimension is \(d=5\).
 
 \hypertarget{twodgaussian}{%
 \subsection{2-D Meta data from a Gaussian Mixture Model}\label{twodgaussian}}
@@ -504,7 +504,7 @@ Then the mixture Gaussian mixture density function is a weighted linear combinat
 \label{eq:gmm}
 P(\pmb{X}=\pmb{x}) = \sum_{i=1}^{4}\pi_i \frac{1}{(2\pi)^{d/2}|\pmb{\Sigma}_i|^{-1/2}} \exp{\{-\frac{1}{2} (\pmb{x}-\pmb{\mu_i})^\prime \pmb{\Sigma}_i^{-1} (\pmb{x}-\pmb{\mu_i}) \}}.
 \end{equation}
-\autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points calculated from \eqref{eq:gmm}, with brighter colors showing higher densities and darker colors showing lower densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. This is the baseline, which we call \emph{true densities}, to be compared with outliers from the kernel density estimates.
+\autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points calculated from \eqref{eq:gmm}, with brighter colors showing higher densities and darker colors showing lower densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. These are \emph{true outliers} to be compared with outliers from the kernel density estimates.
 
 \begin{figure}
 
@@ -512,23 +512,11 @@ P(\pmb{X}=\pmb{x}) = \sum_{i=1}^{4}\pi_i \frac{1}{(2\pi)^{d/2}|\pmb{\Sigma}_i|^{
 
 }
 
-\caption{True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.02, 0.02)$}\label{fig:metadensity}
+\caption{True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.02, 0.02)$.}\label{fig:metadensity}
 \end{figure}
 
 \hypertarget{swiss-roll-mapping}{%
 \subsubsection{Swiss roll mapping}\label{swiss-roll-mapping}}
-
-Given the 2-D meta data, multiple mapping functions could be applied to embed the data in a 3-D space. One of the most famous example in manifold learning is the swiss roll data, with the mapping function in \eqref{eq:swissroll}. The two-dimensional meta data \((\pmb{X}_1, \pmb{X}_2)\) is transformed into the three-dimensional data \((\pmb{X}, \pmb{Y}, \pmb{Z})\), shown in the left plot of \autoref{fig:mappings}.
-\begin{equation}
-\label{eq:swissroll}
-\left\{ 
-\begin{array}{lcl}
-X = X_1 \cos{X_1}, \\
-Y = X_2, \\
-Z = X_1 \sin{X_1}.
-\end{array}
-\right.
-\end{equation}
 
 \begin{figure}
 
@@ -539,23 +527,35 @@ Z = X_1 \sin{X_1}.
 \caption{3-D Mappings of the meta data with colors indicating four kernels. Left: swiss roll mapping. Right: twin peak mapping.}\label{fig:mappings}
 \end{figure}
 
+Given the 2-D meta data, multiple mapping functions could be applied to embed the data in a 3-D space. One of the most famous example in manifold learning is the swiss roll data, with the mapping function in \eqref{eq:swissroll}. The two-dimensional meta data \((\pmb{X}_1, \pmb{X}_2)^\prime\) is transformed into the three-dimensional data \((\pmb{X}, \pmb{Y}, \pmb{Z})^\prime\), shown in the left plot of \autoref{fig:mappings}. The four colors in the mappings represents the four Gaussian kernels used to generate the meta data \((\pmb{X}_1, \pmb{X}_2)^\prime\).
+\begin{equation}
+\label{eq:swissroll}
+\left\{
+\begin{array}{lcl}
+X = X_1 \cos{X_1}, \\
+Y = X_2, \\
+Z = X_1 \sin{X_1}.
+\end{array}
+\right.
+\end{equation}
+
 \begin{figure}
 
-{\centering \includegraphics[width=0.95\linewidth]{figures/Swiss Roll_outliers_comparison_4ml_3cases_riem0_08} 
+{\centering \includegraphics[width=0.95\linewidth]{figures/Swiss Roll5levels_outliers_comparison_4ml_3cases_riem0_08} 
 
 }
 
-\caption{Highest density region plots of four manifold learning embeddings of the swiss roll data. Colors are indicating densities from top: true densities from the Gaussian mixture model; middle: KDE with Riemannian matrix as variable bandwidth; and bottom: KDE with fixed bandwidth. Variable KDE preforms better in finding kernel structures with ISOMAP and LLE, and in locating outliers with t-SNE. Both methods are not detecting outliers accurately when using UMAP.}\label{fig:sroutliers}
+\caption{Highest density region plots of five manifold learning embeddings of the swiss roll data. Colors are indicating densities from left: true densities from the Gaussian mixture model; middle: KDE with Riemannian matrix as variable bandwidth; and right: KDE with fixed bandwidth. Variable KDE preforms better in finding kernel structures with ISOMAP, LLE, and Laplacian Eigenmaps, and in locating outliers with ISOMAP and LLE. Both methods are not detecting outliers accurately when using t-SNE and UMAP.}\label{fig:sroutliers}
 \end{figure}
 
-Now we are able to apply different manifold learning algorithms to \((\pmb{X}, \pmb{Y}, \pmb{Z})\) and reduce the dimension back to \(d=2\), and further estimate the density of the 2-D embedding. According to the density estimates, we could rank the data points and then identify which observations lie in an highest density region of specified coverage, eg. 1\%, 50\%, 99\%, \textgreater99\%. For each of the four manifold learning methods, namely ISOMAP, LLE, t-SNE, and UMAP, \autoref{fig:sroutliers} presents the 2-D embedding plot in the same column, with the colors indicating the densities levels, the top row for true densities from the Gaussian mixture model, the middle row for highest density region plots with densities from our proposed variable KDE method, and the bottom for similar HDR plots with densities from KDE with fixed bandwidth. The top ten outliers with lowest densities are also highlighted in black with point indexes in blue.
-Since there are four kernels in the meta data and darker points are the defined outliers, we could derive that for ISOMAP and LLE, variable kernel density estimates could detect the number of kernels more accurately than the KDE with fixed bandwidth. As for t-SNE and UMAP, both embeddings are quite close to each other with points clustered together, but the mixture of kernel structure is not as clear as LLE. Instead, we could roughly compare the location of outliers. For t-SNE, the middle plot have indexed more true outliers than the bottom plot; while for UMAP, both the middle and bottom plot fail to find the true outliers, but the outliers from fixed bandwidth are more scattered along the curved embedding.
+Now we are able to apply different manifold learning algorithms to \((\pmb{X}, \pmb{Y}, \pmb{Z})^\prime\) and reduce the dimension back to \(d=2\), and further estimate the density of the 2-D embedding. According to the density estimates, we could rank the data points and then identify which observations lie in an highest density region of specified coverage, eg. 1\%, 5\%, 50\%, 99\%, \textgreater99\%. For each of the five manifold learning methods, namely ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, \autoref{fig:sroutliers} presents the 2-D embedding plot in the same row, with the colors indicating the densities levels, the left column for true densities from the Gaussian mixture model, the middle column for highest density region plots with densities from our proposed variable KDE method, and the right for similar HDR plots with densities from KDE with fixed bandwidth. The top twenty outliers with lowest densities are highlighted in black with point indexes in blue.
+From \autoref{fig:metadensity} and the data generating process, we know that there are four highest density regions. However, in all manifold learning embeddings colored with true densities (left column in \autoref{fig:sroutliers} ), except for LLE, the number of highest density regions are not the same as the meta data. When comparing the number of HDRs for variable and fixed bandwidth (middle and right column in \autoref{fig:sroutliers} ), our proposed method with variable bandwidth outperforms fixed bandwith for ISOMAP, LLE, and Laplacian Eigenmaps (top three rows in \autoref{fig:sroutliers} ).
+In terms of the top 20 outliers found rowwise, variable bandwidth could find most outliers lying on the left area of the embedding in ISOMAP and UMAP, and both methods in LLE embedding could find the outliers in the outer area, but for the other methods, both variable and fixed bandwidth are not detect true outliers accurately. For t-SNE and UMAP embedding, the embedding structure is highly distorted and the points are clustered together in a discontinuous way, which is also shown in the clustered outliers.
 
 \begin{table}
 
-\caption{\label{tab:srcors}Correlation between true density and estimated density for four manifold learning embeddings.}
+\caption{\label{tab:srcors}Correlation between true density ranking and estimated density ranking for different manifold learning embeddings.}
 \centering
-\resizebox{\linewidth}{!}{
 \begin{tabular}[t]{l>{}l>{}l>{}l>{}l>{}l}
 \toprule
   & ISOMAP & LLE & Laplacian.Eigenmaps & t.SNE & UMAP\\
@@ -563,13 +563,15 @@ Since there are four kernels in the meta data and darker points are the defined 
 Variable bandwidth & 0.0696 & \textbf{0.400} & -0.2357 & 0.023 & \textbf{0.0138}\\
 Fixed bandwidth & \textbf{0.2798} & 0.351 & \textbf{0.0141} & \textbf{0.367} & -0.0110\\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table}
+
+To further compare the accuracy of the estimated densities for all data points, we calculate the correlation between the rank of true densities and the estimated densities and present in \autoref{tab:srcors}. It can be seen that the rank correlation of our proposed method with variable bandwidth is higher for LLE and UMAP, although the correlation for UMAP is very close to zero. The highest correlation comes from our method in LLE embedding, which is mainly due to it is closest to rectangular structure of the meta data shown in \autoref{fig:metadensity}. For Laplacian Eigenmaps, our method has wrongly estimated the left area with lower densities even though their true densities are the very high in yellow, leading to a negative correlation. The negative correlation would occur typically when the highest or lowest true density areas are not well estimated. As for the estimates in highly distorted embedding, including ISOMAP, t-SNE, and UMAP, the rank correlations are quite low. In conclusion, our proposed method could improve the kernel density estimate of manifold learning embedding by considering the distortion using the Riemannian metric. However, if the distortion is too severe, eg. ISOMAP, or when the embedding are discontinuous, eg. t-SNE and UMAP, the density estimates are not as reliable for outlier detection.
 
 \hypertarget{twin-peaks-mapping}{%
 \subsubsection{Twin peaks mapping}\label{twin-peaks-mapping}}
 
-For comparison, we use the same meta data with different mapping function, twin peak mapping in Equation \eqref{eq:twinpeak}, with the corresponding 3-D data shown in the right plot of \autoref{fig:mappings}. The four colors in both mappings represents the four gaussian kernels used to generate the meta data \((\pmb{X}_1, \pmb{X}_2)\).
+For comparison, we use the same meta data in \autoref{fig:metadensity} with different mapping function, twin peak mapping in Equation \eqref{eq:twinpeak}, with the corresponding 3-D data shown in the right plot of \autoref{fig:mappings}.
 \begin{equation}
 \label{eq:twinpeak}
 \left\{ 
@@ -583,7 +585,7 @@ Z = \sin(\pi X_1) \tanh (3 X_2).
 
 \begin{figure}
 
-{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak_outliers_comparison_4ml_3cases_riem01} 
+{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak5levels_outliers_comparison_4ml_3cases_riem0_1} 
 
 }
 
@@ -595,7 +597,7 @@ Similar to \autoref{fig:sroutliers}, four manifold learning embeddings are obtai
 
 \begin{figure}
 
-{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak_density_comparison_isomap_riem01} 
+{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak_density_comparison_isomap_riem0_1} 
 
 }
 
@@ -608,12 +610,12 @@ With severe distortion in the t-SNE and UMAP embeddings, both variable and fixed
 
 \caption{\label{tab:tpcors}Correlation between true density and estimated density for four manifold learning embeddings.}
 \centering
-\begin{tabular}[t]{l>{}l>{}l>{}l>{}l}
+\begin{tabular}[t]{l>{}l>{}l>{}l>{}l>{}l}
 \toprule
-  & ISOMAP & LLE & t.SNE & UMAP\\
+  & ISOMAP & LLE & Laplacian.Eigenmaps & t.SNE & UMAP\\
 \midrule
-Variable bandwidth & \textbf{0.940} & \textbf{0.407} & 0.520 & 0.259\\
-Fixed bandwidth & 0.626 & 0.399 & \textbf{0.660} & \textbf{0.655}\\
+Variable bandwidth & \textbf{0.899} & 0.385 & 0.620 & 0.259 & \textbf{0.659}\\
+Fixed bandwidth & 0.626 & \textbf{0.399} & \textbf{0.622} & \textbf{0.663} & 0.653\\
 \bottomrule
 \end{tabular}
 \end{table}
