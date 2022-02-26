@@ -419,9 +419,9 @@ In \autoref{fig:tpisomapden}, we plot the estimated density against the true den
 
 ## 5-D data embedding in 100-D space {#fivedgaussian}
 
-For the high-dimensional case, we generate the meta data from a 5-dimensional semi-hypersphere. First, we simulate $N=2000$ points from a 4-dimensional Gaussian mixture model with two mixture components, $\mathcal{N}(\pmb{\mu}_1, \pmb{\Sigma}_1)$ and $\mathcal{N}(\pmb{\mu}_2, \pmb{\sigma}_2)$, where $\pmb{\mu}_1 = \pmb{\mu}_2 =(0, 0, 0, 0)^\prime$, $\pmb{\Sigma}_1 = diag(1,1,1,1)$, and $\pmb{\Sigma}_1 = diag(25,25,25,25)$. In order to manually generate anomalies, the mixture proportions are set as $\pi_1=0.99$ and $\pi_2=0.01$.
-The fifth dimension is calculated to satisfy $x_1^2 + x_2^2 + x_3^2 + x_4^2 + x_5^2 = r^2$ where $r$ is set as 15. Similarly, the Gaussian mixture densities could be calculated using Equation \@ref(eq:gmm) as the true density of the 5-d meta data. \autoref{fig:fivedmeta} shows a scatterplot when animating a 5-D tour path with the R package *tourr* [REFERENCE].
-Then we initial the other 95 dimensions in the high-dimensional space as zero columns and further rotate the 100-dimensional data of size $N$ (denote the transpose of the data matrix as $X$) to get rid of the zeros so that it could be passed to the manifold learning algorithms.
+As a high-dimensional experiment, we generate the meta data from a 5-dimensional semi-hypersphere and transform it into 100-dimensional space. First, we simulate $N=10,000$ points from a 4-dimensional Gaussian mixture model with two mixture components, $\mathcal{N}(\pmb{\mu}_1, \pmb{\Sigma}_1)$ and $\mathcal{N}(\pmb{\mu}_2, \pmb{\sigma}_2)$, where $\pmb{\mu}_1 = \pmb{\mu}_2 =(0, 0, 0, 0)^\prime$, $\pmb{\Sigma}_1 = diag(1,1,1,1)$, and $\pmb{\Sigma}_1 = diag(2,2,2,2)$. In order to manually generate anomalies, the mixture proportions are set as $\pi_1=0.99$ and $\pi_2=0.01$.
+The fifth dimension is calculated to satisfy $x_1^2 + x_2^2 + x_3^2 + x_4^2 + x_5^2 = r^2$ where $r$ is set as $7$. Similarly, the Gaussian mixture densities could be calculated using Equation \@ref(eq:gmm) as the true density of the 5-d meta data. \autoref{fig:fivedmeta} shows a scatterplot when animating a 5-D tour path with the R package *tourr* [REFERENCE].
+Then we initial the other 95 dimensions in the high-dimensional space as zero columns and further rotate the 100-dimensional data of size $N$ (denote the transpose of the data matrix as $X$) to get rid of the zeros so that it could be passed to the manifold learning algorithms. 
 The rotation matrix is derived from the QR decomposition of a $100\times 100$ matrix $A$ with all components randomly generated from a uniform distribution $\mathcal{U}(0,1)$. 
 For any real matrix $A$ of dimension $p\times q$, the QR decomposition could decompose the matrix into the multiplication of two matrix $Q$ and $R$ so that $A = QR$, where the dimension of $Q$ is a matrix with unit norm orthogonal vectors, $Q^\prime Q = I$, and $R$ is an upper triangular matrix. Matrix $Q$ is used as the rotation matrix and it satisfies 
 $X^\prime X=(QX)^\prime(QX)$, where the rotated data matrix $(QX)^\prime$ is now the input for the manifold learning algorithms.
@@ -434,7 +434,7 @@ Similar to \autoref{fig:sroutliers}, four manifold learning embeddings are obtai
 [ANALYSE TWIN PEAK PLOT]
 
 ```{r fivedisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density of different embeddings for KDE with both variable and fixed bandwidth. Top: ISOMAP; middle: LLE; bottom: UMAP.", echo = FALSE}
-knitr::include_graphics("figures/fived_density_comparison_isomap_riem20.png")
+knitr::include_graphics("figures/fived_density_comparison_4ml_riem20.png")
 ```
 
 ```{r fivedcors, echo=FALSE, message=FALSE, eval=T}
@@ -449,8 +449,8 @@ data.frame(cors) %>%
   # column_spec(1, width = "6cm") %>% 
   column_spec(2, bold = max.match[,1]) %>%
   column_spec(3, bold = max.match[,2]) %>%
-  column_spec(4, bold = max.match[,3]) #%>%
-  # column_spec(5, bold = max.match[,4]) 
+  column_spec(4, bold = max.match[,3]) %>%
+  column_spec(5, bold = max.match[,4])
 ```
 
 # Application {#application}

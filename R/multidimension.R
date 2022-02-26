@@ -23,7 +23,7 @@ library(plotly)
 library(mvtnorm)
 Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1234)
-N <- 2000
+N <- 10000
 p <- 100
 mu1 = mu2 = 0
 s1 <- 1#/(15^2)
@@ -37,6 +37,7 @@ x4 <- c(rnorm(0.99*N, mu1, s1), rnorm(0.01*N, mu2, s2))
 X <- cbind(x1, x2, x3, x4)
 head(X)
 range(X)
+label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
 
 # GMM density as true meta data density
 gmmdensity <- function(x) {
@@ -71,20 +72,23 @@ X_new %>% as_tibble() %>% summarise(x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 # all.equal(den, den1) # TRUE
 
 # distance to (0,0,0,0,0) is the same, = radius = 7
+# calculate distance to (0,0,0,0) and color them
+label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
+dist2center <- sqrt(r^2 - X_new[,5]^2)
 
-# ## Plot 5-d semi-sphere
-# library(tourr)
-# # col <- RColorBrewer::brewer.pal(3, "Dark2") # unique(flea$species)
-# # animate_xy(flea[, 1:6], col = flea$species)
-# 
-# animate_xy(X_new[,1:5], col = viridis(length(den), option = "magma"))
-# # catogorize density levels and color them accordingly
-# 
+## Plot 5-d semi-sphere, run once
+library(tourr)
+colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
+pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
+animate_xy(X_new[,1:5], col = colors, pch = pchs, cex = 0.8, 
+           axes = "bottomleft", fps=15
+           )
+# "figures/tourr_5d_semisphere.png"
+
 # library(geozoo)
 # sphere <- sphere.hollow(p = 5)
 # sphere$points <- X_new
 # sphere
-
 
 
 ## QR decomposition
@@ -142,7 +146,7 @@ treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
 radius <- 10 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
-riem.scale <- .1 # tune parameter
+riem.scale <- 20 # tune parameter
 gridsize <- 20
 
 ## ----isomap-------------------------------------------------------------
@@ -352,6 +356,8 @@ cor(den, fixden_umap$estimate)
 
 ## ----compareDensity---------------------------------------------------------------------------
 fxy <- den
+label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
+dist2center <- sqrt(r^2 - X_new[,5]^2)
 methods <- c("isomap", "lle", "le", "umap")
 ## scatterplot to compare f_xy for ISOMAP
 f <- tibble(fxy = fxy, fxy_vkde = fisomap$estimate, fxy_hdr = fixden_isomap$estimate)
@@ -364,60 +370,66 @@ cor(f$fxy_vkde, f$fxy)
 cor(f$fxy_hdr, f$fxy)
 f=f
 pf_vkde <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_vkde)) + 
+  ggplot(aes(x = fxy, y = fxy_vkde, col = dist2center, shape = label)) + 
+  # scale_color_viridis(option = "A", direction = -1) + 
   geom_point() + 
-  labs(x = "", y = "ISOMAP", color = "Kernels", title = "Variable bandwidth") +
+  labs(x = "", y = "ISOMAP", color = "Distance", shape = "Kernels", title = "Variable bandwidth") +
   scale_y_continuous(limits = c(0, max(f$fxy_vkde)), n.breaks = 6)
 pf_hdr <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_hdr)) + 
+  ggplot(aes(x = fxy, y = fxy_hdr, col = dist2center, shape = label)) + 
   geom_point() + 
-  labs(x = "", y = "", color = "Kernels", title = "Fixed bandwidth") +
+  labs(x = "", y = "", color = "Distance", shape = "Kernels", title = "Fixed bandwidth") +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
 p <- pf_vkde + pf_hdr
 
 f=f1
 pf_vkde <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_vkde)) + 
+  ggplot(aes(x = fxy, y = fxy_vkde, col = dist2center, shape = label)) + 
+  # scale_color_viridis(option = "A", direction = -1) +  
   geom_point() + 
-  labs(x = "", y = "LLE", color = "Kernels", title = "") +
+  labs(x = "", y = "LLE", color = "Distance", shape = "Kernels", title = "") +
   scale_y_continuous(limits = c(0, max(f$fxy_vkde)), n.breaks = 6)
 pf_hdr <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_hdr)) + 
+  ggplot(aes(x = fxy, y = fxy_hdr, col = dist2center, shape = label)) + 
+  # scale_color_viridis(option = "A", direction = -1) +  
   geom_point() + 
-  labs(x = "", y = "", color = "Kernels", title = "") +
+  labs(x = "", y = "", color = "Distance", shape = "Kernels", title = "") +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
 p1 <- pf_vkde + pf_hdr
 
 f=f2
 pf_vkde <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_vkde)) + 
+  ggplot(aes(x = fxy, y = fxy_vkde, col = dist2center, shape = label)) + 
+  # scale_color_viridis(option = "A", direction = -1) +  
   geom_point() + 
-  labs(x = "True density", y = "Laplacian Eigenmaps", color = "Kernels", title = "") +
+  labs(x = "True density", y = "Laplacian Eigenmaps", color = "Distance", shape = "Kernels", title = "") +
   scale_y_continuous(limits = c(0, max(f$fxy_vkde)), n.breaks = 6)
 pf_hdr <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_hdr)) + 
+  ggplot(aes(x = fxy, y = fxy_hdr, col = dist2center, shape = label)) + 
+  # scale_color_viridis(option = "A", direction = -1) +  
   geom_point() + 
-  labs(x = "True density", y = "", color = "Kernels", title = "") +
+  labs(x = "True density", y = "", color = "Distance", shape = "Kernels", title = "") +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
 p2 <- pf_vkde + pf_hdr
 
 f=f3
 pf_vkde <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_vkde)) + 
+  ggplot(aes(x = fxy, y = fxy_vkde, col = dist2center, shape = label)) + 
   geom_point() + 
-  labs(x = "", y = "UMAP", color = "Kernels", title = "") +
+  labs(x = "", y = "UMAP", color = "Distance", shape = "Kernels", title = "") +
   scale_y_continuous(limits = c(0, max(f$fxy_vkde)), n.breaks = 6)
 pf_hdr <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_hdr)) + 
+  ggplot(aes(x = fxy, y = fxy_hdr, col = dist2center, shape = label)) + 
   geom_point() + 
-  labs(x = "", y = "", color = "Kernels", title = "") +
+  labs(x = "", y = "", color = "Distance", shape = "Kernels", title = "") +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 6)
 p3 <- pf_vkde + pf_hdr
 
 result <- (p/p1/p2/p3) + plot_layout(guides = 'collect') & 
-  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
+  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold")) & 
+  scale_color_viridis(option = "A", direction = -1) 
 gt <- patchwork::patchworkGrob(result)
-gt <- gridExtra::grid.arrange(gt, left = "Estimated density")
+gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
 gt
 ggsave(paste0("paper/figures/", "fived", "_density_comparison_4ml_riem", format(riem.scale, decimal.mark = "_"), ".png"), gt, width = 8, height = 10, dpi = 300)
 
