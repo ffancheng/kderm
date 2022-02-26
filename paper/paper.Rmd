@@ -353,7 +353,7 @@ In terms of the top 20 outliers found rowwise, variable bandwidth could find mos
 load("figures/CorrelationTable_Swiss Roll_4ml_riem0_08.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
-data.frame(cors) %>% 
+as_tibble(cors, rownames = " ") %>% 
   mutate_if(is.numeric, format, nsmall = 3, digits = 3) %>% 
   kableExtra::kbl(caption = "Correlation between true density ranking and estimated density ranking for different manifold learning embeddings of the swiss roll data. Variable bandwidth KDE outperfoms for LLE and UMAP, and LLE gives the highest rank correlation.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
   # kable_styling(latex_options = "scale_down") %>%
@@ -395,7 +395,7 @@ In general, the four highest density regions in yellow are identified in almost 
 load("figures/CorrelationTable_Twin Peak_4ml_riem0_1.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
-data.frame(cors) %>% 
+as_tibble(cors, rownames = " ") %>% 
   mutate_if(is.numeric, format, digits = 3, nsmall = 3) %>% 
   kableExtra::kbl(caption = "Correlation between true density ranking and estimated density ranking for different manifold learning embeddings of the twin peak data. Variable bandwidth KDE outperfoms for LLE and UMAP, and LLE gives the highest rank correlation.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
   # kable_styling(latex_options = "scale_down") %>%
@@ -444,7 +444,7 @@ For variable bandwidth KDE, there is a strong positive linear relationship with 
 load("figures/CorrelationTable_fived_4ml_riem20.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
-data.frame(cors) %>% 
+as_tibble(cors, rownames = " ") %>% 
   mutate_if(is.numeric, format, digits = 3, nsmall = 3) %>% 
   kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings. Variable bandwidth always outperfoms fixed bandwidth although they both have negative correlations in UMAP.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
   # kable_styling(latex_options = "scale_down") %>% # automatically adjust the table to page width
