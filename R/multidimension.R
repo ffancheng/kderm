@@ -76,19 +76,19 @@ X_new %>% as_tibble() %>% summarise(x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
 dist2center <- sqrt(r^2 - X_new[,5]^2)
 
-## Plot 5-d semi-sphere, run once
-library(tourr)
-colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
-pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
-animate_xy(X_new[,1:5], col = colors, pch = pchs, cex = 0.8, 
-           axes = "bottomleft", fps=15
-           )
-# "figures/tourr_5d_semisphere.png"
-
-# library(geozoo)
-# sphere <- sphere.hollow(p = 5)
-# sphere$points <- X_new
-# sphere
+# ## Plot 5-d semi-sphere, run once
+# library(tourr)
+# colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
+# pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
+# animate_xy(X_new[,1:5], col = colors, pch = pchs, cex = 0.8, 
+#            axes = "bottomleft", fps=15
+#            )
+# # "figures/tourr_5d_semisphere.png"
+# 
+# # library(geozoo)
+# # sphere <- sphere.hollow(p = 5)
+# # sphere$points <- X_new
+# # sphere
 
 
 ## QR decomposition
@@ -431,7 +431,7 @@ result <- (p/p1/p2/p3) + plot_layout(guides = 'collect') &
 gt <- patchwork::patchworkGrob(result)
 gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
 gt
-ggsave(paste0("paper/figures/", "fived", "_density_comparison_4ml_riem", format(riem.scale, decimal.mark = "_"), ".png"), gt, width = 8, height = 10, dpi = 300)
+ggsave(paste0("paper/figures/", "fived", N, "_density_comparison_4ml_riem", format(riem.scale, decimal.mark = "_"), ".png"), gt, width = 8, height = 10, dpi = 300)
 
 
 
@@ -453,4 +453,4 @@ cors %>%
   kable_styling(latex_options = "scale_down") %>%
   kable_paper(full_width = TRUE) 
 
-save(cors, file = paste0("paper/figures/CorrelationTable_", "fived", "_4ml_riem", format(riem.scale, decimal.mark = "_"), ".rda"))
+save(cors, file = paste0("paper/figures/CorrelationTable_", "fived", N, "_4ml_riem", format(riem.scale, decimal.mark = "_"), ".rda"))
