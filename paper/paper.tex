@@ -541,7 +541,7 @@ Z = X_1 \sin{X_1}.
 
 \begin{figure}
 
-{\centering \includegraphics[width=0.95\linewidth]{figures/Swiss Roll5levels_outliers_comparison_4ml_3cases_riem0_08} 
+{\centering \includegraphics[width=0.95\linewidth]{figures/Swiss Roll_outliers_comparison_4ml_3cases_riem0_08} 
 
 }
 
@@ -558,7 +558,7 @@ In terms of the top 20 outliers found rowwise, variable bandwidth could find mos
 \centering
 \begin{tabular}[t]{l>{}l>{}l>{}l>{}l>{}l}
 \toprule
-  & ISOMAP & LLE & Laplacian Eigenmaps & t-SNE & UMAP\\
+  & ISOMAP & LLE & Laplacian.Eigenmaps & t.SNE & UMAP\\
 \midrule
 Variable bandwidth & 0.0696 & \textbf{0.400} & -0.2357 & 0.023 & \textbf{0.0138}\\
 Fixed bandwidth & \textbf{0.2798} & 0.351 & \textbf{0.0141} & \textbf{0.367} & -0.0110\\
@@ -601,7 +601,7 @@ In general, the four highest density regions in yellow are identified in almost 
 \centering
 \begin{tabular}[t]{l>{}l>{}l>{}l>{}l>{}l}
 \toprule
-  & ISOMAP & LLE & Laplacian Eigenmaps & t-SNE & UMAP\\
+  & ISOMAP & LLE & Laplacian.Eigenmaps & t.SNE & UMAP\\
 \midrule
 Variable bandwidth & \textbf{0.899} & 0.385 & 0.620 & 0.259 & \textbf{0.659}\\
 Fixed bandwidth & 0.626 & \textbf{0.399} & \textbf{0.622} & \textbf{0.663} & 0.653\\
@@ -642,7 +642,7 @@ The Gaussian mixture densities could be calculated using Equation \eqref{eq:gmm}
 Then we initial the other 95 dimensions in the high-dimensional space as zero columns and further rotate the \(100\)-dimensional data of size \(N\) (denote the transpose of the data matrix as \(\pmb{X}_0\) with dimension \(100 \times N\)) to get rid of the zeros so that it could be passed to the manifold learning algorithms.
 The rotation matrix is derived from the QR decomposition of a \(100\times 100\) matrix \(\pmb{A}\) with all components randomly generated from a uniform distribution \(\mathcal{U}(0,1)\).
 For any real matrix \(\pmb{A}\) of dimension \(p\times q\), the QR decomposition could decompose the matrix into the multiplication of two matrix \(\pmb{Q}\) and \(\pmb{R}\) so that \(\pmb{A} = \pmb{QR}\), where the dimension of \(Q\) is a matrix with unit norm orthogonal vectors, \(\pmb{Q}^\prime \pmb{Q} = \pmb{I}\), and \(\pmb{R}\) is an upper triangular matrix. Matrix \(\pmb{Q}\) satisfies
-\(\pmb{X}_0^\prime \pmb{X}_0=(\pmb{QX}_0)^\prime(\pmb{QX}_0)\), meaning that the pairwise Euclidean distances between data points in \(\pmb{X}_0^\prime\) is equivalent to that of \((\pmb{QX}_0)^\prime\). Therefore, we use matrix \(Q\) as the rotation matrix for where the rotated data matrix \(\pmb{X} = (\pmb{QX}_0)^\prime\) of dimension \(N \times 100\) is now the input data for the manifold learning algorithms. Again, we set the embedding dimension to be equal to the meta data dimension \(d=5\).
+\(\pmb{X}_0^\prime \pmb{X}=(\pmb{QX}_0)^\prime(\pmb{QX}_0)\), meaning that the pairwise Euclidean distances between data points in \(\pmb{X}_0^\prime\) is equivalent to that of \((\pmb{QX}_0)^\prime\). Therefore, we use matrix \(Q\) as the rotation matrix for where the rotated data matrix \(\pmb{X} = (\pmb{QX}_0)^\prime\) of dimension \(N \times 100\) is now the input data for the manifold learning algorithms. Again, we set the embedding dimension to be equal to the meta data dimension \(d=5\).
 
 \begin{figure}
 
@@ -655,15 +655,15 @@ For any real matrix \(\pmb{A}\) of dimension \(p\times q\), the QR decomposition
 
 In \autoref{fig:fivedisomapden}, the estimated densities are compared with the true density on the x-axis for four manifold learning embeddings, ISOMAP, LLE, Laplacian Eigenmaps, and UMAP. Note that we exclude t-SNE algorithm in this section because it is designed mainly for low-dimensional visualization purposes, and it is only application to embedding dimension within three.
 Similar to \autoref{fig:fivedmeta}, the point shapes show the two mixture component in the meta data, and the colors represent the distance to the kernel means, with distant outliers shown in darker colors. For well estimated densities, the true outliers with low true densities will also have low estimated densities, which suggest that darker-colored points should appear in the bottom-left corner in \autoref{fig:fivedisomapden}. This is true for both ISOMAP and LLE, partly true for Laplacian Eigenmaps, but not in UMAP where these outliers have relatively high density estimates.
-For variable bandwidth KDE, there is a strong positive linear relationship with the true densities for ISOMAP, LLE, and Laplacian Eigenmaps, and the relationship is stronger than the fixed bandwidth. The rank correlations are also presented in \autoref{tab:fivedcors} with variable bandwidth always have a higher correlation of density ranking. This again suggests that our proposed KDE with variable bandwidth is more accurate than the fixed bandwidth in estimating the manifold learning embedding densities. In KDE with a fixed bandwidth, the bandwidth is often too large to smooth across all data points, especially when there is severe distortion in the embedding data. By introducing the pointwise variable Riemannian metric in kernel density estimation, it is reasonable to believe that it could fix the distortion introduced by these three manifold learning algorithms.
+For variable bandwidth KDE, there is a strong positive linear relationship with the true densities for ISOMAP, LLE, and Laplacian Eigenmaps, and the relationship is stronger than the fixed bandwidth. This suggests that our proposed KDE with variable bandwidth is more accurate than the fixed bandwidth in estimating the manifold learning embedding densities. In KDE with a fixed bandwidth, the bandwidth is often too large to smooth across all data points, especially when there is severe distortion in the embedding data. By introducing the pointwise variable Riemannian metric in kernel density estimation, it is reasonable to believe that it could fix the distortion introduced by these three manifold learning algorithms.
 
 \begin{table}
 
-\caption{\label{tab:fivedcors}Correlation between true density and estimated density for four manifold learning embeddings. Variable bandwidth always outperfoms fixed bandwidth although they both have negative correlations in UMAP.}
+\caption{\label{tab:fivedcors}Correlation between true density and estimated density for four manifold learning embeddings.}
 \centering
 \begin{tabular}[t]{l>{}l>{}l>{}l>{}l}
 \toprule
-  & ISOMAP & LLE & Laplacian Eigenmaps & UMAP\\
+  & ISOMAP & LLE & Laplacian.Eigenmaps & UMAP\\
 \midrule
 Variable bandwidth & \textbf{0.921} & \textbf{0.981} & \textbf{0.662} & \textbf{-0.130}\\
 Fixed bandwidth & 0.806 & 0.940 & -0.181 & -0.341\\
@@ -674,23 +674,14 @@ Fixed bandwidth & 0.806 & 0.940 & -0.181 & -0.341\\
 \hypertarget{application}{%
 \section{Application}\label{application}}
 
-\hypertarget{victoria-smart-meter-dataset}{%
-\subsection{Victoria smart meter dataset}\label{victoria-smart-meter-dataset}}
+\hypertarget{irish-smart-meter-dataset}{%
+\subsection{Irish smart meter dataset}\label{irish-smart-meter-dataset}}
 
-{[}TODO{]}
+In this application, we use the smart meter data from the \emph{CER Smart Metering Project - Electricity Customer Behaviour Trial, 2009-2010} in Ireland \autocite{cer2012-data} between 14 July 2009 and 31 December 2010. The CER dataset\footnote{accessed via the Irish Social Science Data Archive - www.ucd.ie/issda.} records the half-hourly electricity consumption of individual residential and commercial properties, not including energy for cooling or heating systems. We selected the \(3,639\) residential data with no missing values during the data collection period for a total of \(535\) days.
 
-Next, we consider smart-meter data for residential and non-profiled meter consumers, collected in the \emph{CER Smart Metering Project - Electricity Customer Behaviour Trial, 2009-2010} in Ireland \autocite{cer2012-data}. Electricity smart meters record consumption, on a near real-time basis, at the level of individual commercial and residential properties. The CER dataset\footnote{accessed via the Irish Social Science Data Archive - www.ucd.ie/issda.} does not include energy for heating systems since it is either metered separately, or households use a different source of energy, such as oil or gas. In this study, the installed cooling systems are also not reported.
+For the electricity consumption data of residential individuals, it would be worthwhile to explore the distribution of electricity demand rather than the raw consumption data to study the usage patterns of different households or different periods or the week \autocite{Hyndman2018-ia}. \textcite{Cheng2021-ex} propose two non-Euclidean distance estimators to enable manifold learning algorithms in statistical manifolds with each observation as a distribution. \textcite{Cheng2021-ex} use the same smart meter data for identifying outliers with kernel bandwidth estimation but fail to consider the distortion and information loss in the 2-dimensional embeddings given that the input data dimension is much higher. By introducing the Riemannian metric as the bandwidth matrix, we could take into account the distortion in the 2-D embedding and further improve the accuracy of the density estimation.
 
-We use measurements of half-hourly electricity consumption gathered from 3,639 residential consumers over 535 consecutive days. Every meter provides electricity consumption between 14 July 2009 and 31 December 2010. Demand data from two smart meters (ID 1003 and 1539) are shown in \autoref{fig:smartmeter} as time series plots. It is obvious that these meters have relatively different patterns. Meter 1539 (bottom of \autoref{fig:smartmeter}) has a period of around 150 days with lower (approximately half) the electricity usage of remaining days and is otherwise relatively stable. In contrast, Meter 1003 (top of \autoref{fig:smartmeter}) exhibits regular spikes on weekends.
-
-For electricity demand data, one particular problem of interest is to visualize and identify households or periods of the week with anomalous usage patterns. For this reason, the object of interest in comparing households or periods of the week is the distribution of electricity demand rather than the raw data itself \autocite{Hyndman2018-ia}. An additional advantage of looking at distributions rather than raw data is that it provides a convenient mechanism for handling missing data which can be a significant problem in smart meter data applications.
-In the rest of this section, we first describe how discrete approximations to the distributions of interest are computed. We then approximate the distances between vectors containing probabilities with the consistent estimator in \autoref{estimator}, which allows us to apply manifold learning techniques on statistical manifolds.
-
-Let \(d_{i,t}\) denote the electricity demand for observation \(i\) and for time period \(t\) (subsequently we will see that \(i\) can either index the household, time of the week, or both, while \(t\) may index the week or half-hour period). The objective is to estimate the distances between the distribution of electricity demand for observation \(i\), \(F_i\), over time. Since the raw data could be thought of as samples generated from the true electricity usage distributions for different households and different periods, we could apply the consistent Hellinger distance estimator derived in \autoref{estimator} to the smart meter data.
-The first step is to group all data together regardless of \(i\) and \(t\), and take the data as samples from the reference probability distribution \(R\). The sample size \(r=93,616,914\). Next, we construct \(T_r=100\) intervals with about \(1\%\) samples from \(R\) within each interval (except for the last interval). The segments \(\{I_g^r\}_{g=1,2,\dots,100}\) can then be used to construct discrete distribution approximation to \(F_i\) by counting the ratio of samples points from \(F_i\) fallen into segment \(I_g^r\).
-This is found by computing \(\pi_{i,g}=(1/m)\sum_t I(d_{i,t} \in I_g^r)\) where \(m\) is the sample size from \(F_i\).
-Then the Hellinger distance between \(F_i\) and \(F_j\) could be estimated using Equation \eqref{eq:hellingerest1}.
-In this way, we make it possible to search nearest neighbors more efficiently using ANN methods and further apply manifold learning algorithms.
+In this section, we first calculated the same empirical distributions of the \(336\) half-hourly periods of the week for each household, and apply the total variation distance estimator proposed in \textcite{Cheng2021-ex} in the statistical manifold learning to get the 2-D embedding of all households. Algorithm \ref{alg:vkderm} is then used to obtain density estimates with the pointwise variable Riemannian metric as the bandwidth matrix and detect outliers. The data processing steps has been clearly stated in the application section of \textcite{Cheng2021-ex} and they are skipped here. Unlike the simulations in \autoref{simulation}, we know nothing about the true density of the electricity distributions for all periods of week and all households, so it is impossible to compare the estimated densities with the true meta data density as in \autoref{fig:fivedisomapden}. However, we could generate all the density estimates with the exsiting KDE method with fixed bandwidth, which is an optimal method for density estimation, and compare the densities from our proposed method with them.
 
 \hypertarget{conclusion}{%
 \section{Conclusion}\label{conclusion}}
