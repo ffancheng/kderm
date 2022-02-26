@@ -342,7 +342,7 @@ Z = X_1 \sin{X_1}.
 \end{equation}
 
 ```{r sroutliers, fig.align = 'center', out.width = "95%", fig.cap="Highest density region plots of five manifold learning embeddings of the swiss roll data. Colors are indicating densities from left: true densities from the Gaussian mixture model; middle: KDE with Riemannian matrix as variable bandwidth; and right: KDE with fixed bandwidth. Variable KDE preforms better in finding kernel structures with ISOMAP, LLE, and Laplacian Eigenmaps, and in locating outliers with ISOMAP and LLE. The t-SNE and UMAP embeddings are highly distorted and the outliers found are clustered.", echo = FALSE}
-knitr::include_graphics("figures/Swiss Roll5levels_outliers_comparison_4ml_3cases_riem0_08.png")
+knitr::include_graphics("figures/Swiss Roll_outliers_comparison_4ml_3cases_riem0_08.png")
 ```
 
 Now we are able to apply different manifold learning algorithms to $(\pmb{X}, \pmb{Y}, \pmb{Z})^\prime$ and reduce the dimension back to $d=2$, and further estimate the density of the 2-D embedding. According to the density estimates, we could rank the data points and then identify which observations lie in an highest density region of specified coverage, eg. 1%, 5%, 50%, 99%, >99%. For each of the five manifold learning methods, namely ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, \autoref{fig:sroutliers} presents the 2-D embedding plot in the same row, with the colors indicating the densities levels, the left column for true densities from the Gaussian mixture model, the middle column for highest density region plots with densities from our proposed variable KDE method, and the right for similar HDR plots with densities from KDE with fixed bandwidth. The top twenty outliers with lowest densities are highlighted in black with point indexes in blue. 
@@ -353,7 +353,7 @@ In terms of the top 20 outliers found rowwise, variable bandwidth could find mos
 load("figures/CorrelationTable_Swiss Roll_4ml_riem0_08.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
-as_tibble(cors, rownames = " ") %>% 
+data.frame(cors) %>% 
   mutate_if(is.numeric, format, nsmall = 3, digits = 3) %>% 
   kableExtra::kbl(caption = "Correlation between true density ranking and estimated density ranking for different manifold learning embeddings of the swiss roll data. Variable bandwidth KDE outperfoms for LLE and UMAP, and LLE gives the highest rank correlation.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
   # kable_styling(latex_options = "scale_down") %>%
@@ -395,7 +395,7 @@ In general, the four highest density regions in yellow are identified in almost 
 load("figures/CorrelationTable_Twin Peak_4ml_riem0_1.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
-as_tibble(cors, rownames = " ") %>% 
+data.frame(cors) %>% 
   mutate_if(is.numeric, format, digits = 3, nsmall = 3) %>% 
   kableExtra::kbl(caption = "Correlation between true density ranking and estimated density ranking for different manifold learning embeddings of the twin peak data. Variable bandwidth KDE outperfoms for LLE and UMAP, and LLE gives the highest rank correlation.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
   # kable_styling(latex_options = "scale_down") %>%
@@ -430,7 +430,7 @@ The Gaussian mixture densities could be calculated using Equation \@ref(eq:gmm) 
 Then we initial the other 95 dimensions in the high-dimensional space as zero columns and further rotate the $100$-dimensional data of size $N$ (denote the transpose of the data matrix as $\pmb{X}_0$ with dimension $100 \times N$) to get rid of the zeros so that it could be passed to the manifold learning algorithms. 
 The rotation matrix is derived from the QR decomposition of a $100\times 100$ matrix $\pmb{A}$ with all components randomly generated from a uniform distribution $\mathcal{U}(0,1)$. 
 For any real matrix $\pmb{A}$ of dimension $p\times q$, the QR decomposition could decompose the matrix into the multiplication of two matrix $\pmb{Q}$ and $\pmb{R}$ so that $\pmb{A} = \pmb{QR}$, where the dimension of $Q$ is a matrix with unit norm orthogonal vectors, $\pmb{Q}^\prime \pmb{Q} = \pmb{I}$, and $\pmb{R}$ is an upper triangular matrix. Matrix $\pmb{Q}$ satisfies 
-$\pmb{X}_0^\prime \pmb{X}_0=(\pmb{QX}_0)^\prime(\pmb{QX}_0)$, meaning that the pairwise Euclidean distances between data points in $\pmb{X}_0^\prime$ is equivalent to that of $(\pmb{QX}_0)^\prime$. Therefore, we use matrix $Q$ as the rotation matrix for  where the rotated data matrix $\pmb{X} = (\pmb{QX}_0)^\prime$ of dimension $N \times 100$ is now the input data for the manifold learning algorithms. Again, we set the embedding dimension to be equal to the meta data dimension $d=5$. 
+$\pmb{X}_0^\prime \pmb{X}=(\pmb{QX}_0)^\prime(\pmb{QX}_0)$, meaning that the pairwise Euclidean distances between data points in $\pmb{X}_0^\prime$ is equivalent to that of $(\pmb{QX}_0)^\prime$. Therefore, we use matrix $Q$ as the rotation matrix for  where the rotated data matrix $\pmb{X} = (\pmb{QX}_0)^\prime$ of dimension $N \times 100$ is now the input data for the manifold learning algorithms. Again, we set the embedding dimension to be equal to the meta data dimension $d=5$. 
 
 ```{r fivedisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density of different embeddings for KDE with both variable and fixed bandwidth. The point shapes indicates the two Gaussian mixture components and the colors shows the distance to the kernel cores.", echo = FALSE}
 knitr::include_graphics("figures/fived_density_comparison_4ml_riem20.png")
@@ -438,15 +438,15 @@ knitr::include_graphics("figures/fived_density_comparison_4ml_riem20.png")
 
 In \autoref{fig:fivedisomapden}, the estimated densities are compared with the true density on the x-axis for four manifold learning embeddings, ISOMAP, LLE, Laplacian Eigenmaps, and UMAP. Note that we exclude t-SNE algorithm in this section because it is designed mainly for low-dimensional visualization purposes, and it is only application to embedding dimension within three. 
 Similar to \autoref{fig:fivedmeta}, the point shapes show the two mixture component in the meta data, and the colors represent the distance to the kernel means, with distant outliers shown in darker colors. For well estimated densities, the true outliers with low true densities will also have low estimated densities, which suggest that darker-colored points should appear in the bottom-left corner in \autoref{fig:fivedisomapden}. This is true for both ISOMAP and LLE, partly true for Laplacian Eigenmaps, but not in UMAP where these outliers have relatively high density estimates.
-For variable bandwidth KDE, there is a strong positive linear relationship with the true densities for ISOMAP, LLE, and Laplacian Eigenmaps, and the relationship is stronger than the fixed bandwidth. The rank correlations are also presented in \autoref{tab:fivedcors} with variable bandwidth always have a higher correlation of density ranking. This again suggests that our proposed KDE with variable bandwidth is more accurate than the fixed bandwidth in estimating the manifold learning embedding densities. In KDE with a fixed bandwidth, the bandwidth is often too large to smooth across all data points, especially when there is severe distortion in the embedding data. By introducing the pointwise variable Riemannian metric in kernel density estimation, it is reasonable to believe that it could fix the distortion introduced by these three manifold learning algorithms. 
+For variable bandwidth KDE, there is a strong positive linear relationship with the true densities for ISOMAP, LLE, and Laplacian Eigenmaps, and the relationship is stronger than the fixed bandwidth. This suggests that our proposed KDE with variable bandwidth is more accurate than the fixed bandwidth in estimating the manifold learning embedding densities. In KDE with a fixed bandwidth, the bandwidth is often too large to smooth across all data points, especially when there is severe distortion in the embedding data. By introducing the pointwise variable Riemannian metric in kernel density estimation, it is reasonable to believe that it could fix the distortion introduced by these three manifold learning algorithms. 
 
 ```{r fivedcors, echo=FALSE, message=FALSE, eval=T}
 load("figures/CorrelationTable_fived_4ml_riem20.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
-as_tibble(cors, rownames = " ") %>% 
+data.frame(cors) %>% 
   mutate_if(is.numeric, format, digits = 3, nsmall = 3) %>% 
-  kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings. Variable bandwidth always outperfoms fixed bandwidth although they both have negative correlations in UMAP.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
+  kableExtra::kbl(caption = "Correlation between true density and estimated density for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE) %>%
   # kable_styling(latex_options = "scale_down") %>% # automatically adjust the table to page width
   kable_paper(full_width = FALSE) %>%
   # column_spec(1, width = "6cm") %>% 
@@ -455,6 +455,8 @@ as_tibble(cors, rownames = " ") %>%
   column_spec(4, bold = max.match[,3]) %>%
   column_spec(5, bold = max.match[,4])
 ```
+
+
 
 # Application {#application}
 
@@ -466,7 +468,7 @@ as_tibble(cors, rownames = " ") %>%
 
 <!-- Analysis and summary -->
 	
-## Victoria smart meter dataset
+## Irish smart meter dataset
 
 [TODO]
 
