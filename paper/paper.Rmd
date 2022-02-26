@@ -472,41 +472,34 @@ For the electricity consumption data of residential individuals, it would be wor
 knitr::include_graphics("figures/smartmeter.png")
 ```
 
+<!-- 5x2 HDRs plot of vkde and hdr, 5levels, 5 ML methods, kdtrees, eps=1 -->
+<!-- index top 20 outliers -->
+<!-- compare density ranking of VKDE and HDR,  -->
+<!-- scatterplot no colors, table with one row for 5 ML methods -->
+
+
+<!-- top 1 typical points + top 2 outlier, HDR -->
+<!-- top 1 typical points + top 2 outlier, VKDE -->
+<!-- raw data plot side by side -->
+<!-- density plot in two figures -->
+
 
 
 
 # Conclusion {#conclusion}
 
-<!-- Summary of the contribution and conclusion -->
-
-<!-- Details about the process -->
-
 <!-- Shortcoming and other references for future direction (improvement on density estimation, other kernels, densities on edges, bad embeddings with inaccurate distortions, multi-dimensional kernel density estimate). -->
 
 <!-- Discuss simulation with non-uniform meta data. -->
 
+In this paper, we propose a new method to estimate the density of manifold learning embedding and further identify outliers based on the densities. The Riemannian metric measure the direction and angle of the distortion when mapping data points through a non-linear function in manifold learning algorithms. By introducing the Riemannian metric as the pointwise variable bandwidth matrix in kernel density estimation, the local distortion in the low-dimensional embedding could be used to estimate densities, leading to a more accurate description of the data distributions. We compare our propsed method with fixed bandwidth KDE by two simulation settings, 2-D meta data mapped as 3-D swiss roll or twin peaks data and 5-D semi-hypersphere meta data mapped in 100-D space, and show that varibale bandwidth could improve the density estimation given a good manifold learning embedding.
+
+As an empirical example, we explore the distributions of different households and time periods of the week in the Irish smart meter data. Five manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, are applied to get the 2-D embeddings, and KDE with both variable and fixed bandwidth are used to get the density estimates. We compare both density estimates by looking at the distributions of the most typical households with highest densities and the most anomalous households with lowest densities. Both methods could identify the typical households with certain usage patterns, while the outliers are anomalous in differnt ways.  
+
+There are several open questions to be explored. The first involves the selection of tuning parameters for the manifold algorithm so that a maximal level of embedding quality is achieved, where embedding quality is measured using one of the metrics discussed in the online supplementary material of @Cheng2021-ex. The scaling of the Riemannian metric to get the closest range of the true densities is also worth exploring. The scale of distortion in each point in manifold learning could vary a lot. If we could smooth across all data points, eg. multiply the Riemannian matrix with the ratio between its determinant and the sum of all Riemannian matrix determinants, the global density estimates could be potentially smoothed. The density estimates on the edges of the whole data structure could be improved because most outer area points tend to be detected as outliers. The choice of manifold learning algorithms also has a large impact on the embedding accuracy, which we have seen will affect the density estimation and outlier detection. However, the outperformance of VKDE with Riemannian bandwidth than the fixed bandwidth has been shown in the higher dimensional simulation data and the electricity usage data, which are more close to real-life datasets.
 
 
+# Acknowledgment {-}
 
+This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster.
 
-
-
-<!-- ## Using dimension reduction algorithms -->
-
-<!-- Now we can try to see what happens when we use an actual dimension reduction algorithm, for instance ISOMAP -->
-
-<!-- ```{r isomap, echo=TRUE,message=FALSE, eval=FALSE} -->
-<!-- dat<-dimRedData(cbind(x,y,z)) #Prepare data to use in dimRed -->
-<!-- emb<-embed(dat,"Isomap") #Isomap embedding -->
-<!-- plot(hdrscatterplot(emb@data@data[,1],emb@data@data[,2])) #HDR plot -->
-<!-- ``` -->
-
-<!-- Which seems to not distort things too much.  The HDR plot still identifies outliers (because it has to) but they are just scattered around the corners in a very non-systematic way.  -->
-
-<!-- For something that leads to a lot of distortion have a look t t-SNE. -->
-
-
-<!-- ```{r tsneplot, echo=TRUE,message=FALSE, eval=FALSE} -->
-<!-- emb_tsne<-embed(dat,"tSNE") #tSNE embedding -->
-<!-- plot(hdrscatterplot(emb_tsne@data@data[,1],emb_tsne@data@data[,2])) #HDE plot -->
-<!-- ``` -->
