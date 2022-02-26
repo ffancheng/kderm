@@ -125,7 +125,7 @@ p <- 2
 ###--------------------------------------------------------
 set.seed(1234)
 mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[3]
-sr <- mldata(N = 2000, meta = "gaussian", mapping = mapping)
+sr <- mldata(N = N, meta = "gaussian", mapping = mapping)
 swissroll <- sr$data %>% as.data.frame()
 preswissroll <- sr$metadata %>% as_tibble() %>% mutate(den = sr$den, label = c(rep(1:4, each = 500)))
 colnames(preswissroll) <- c("X1", "X2", "den", "label")
@@ -134,12 +134,15 @@ colnames(preswissroll) <- c("X1", "X2", "den", "label")
 plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den,
         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
 
-# # mappings 3D plot, plot once
-# par(mfrow=c(1,2))
-# # twinpeak <- swissroll # first run with mapping index is 3
-# # pretwinpeak <- preswissroll
-# mypalette <- scales::hue_pal()(4)
-# scatterplot3d::scatterplot3d(swissroll$x, swissroll$y, swissroll$z, color = mypalette[as.numeric(preswissroll$label)], xlab = "X", ylab = "Y", zlab = "Z")
+# mappings 3D plot, plot once
+par(mfrow=c(1,2))
+# twinpeak <- swissroll # first run with mapping index is 3
+# pretwinpeak <- preswissroll
+mypalette <- scales::hue_pal()(4)
+scatterplot3d::scatterplot3d(swissroll$x, swissroll$y, swissroll$z, 
+                             color = mypalette[as.numeric(preswissroll$label)], 
+                             pch = rep(c(16, 17, 15, 3), each = N/4), # 1,2,0,3
+                             xlab = "X", ylab = "Y", zlab = "Z")
 # "paper/figures/mappings_sr_tp.png"
 
 # # Add small dots on basal plane and on the depth plane 
@@ -164,7 +167,7 @@ plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den,
 #                 main = "Iris data",  clab = c("Petal", "Width (cm)") )
 
 
-
+# package failed to load
 # library(gg3D)
 # theta=0 
 # phi=20
@@ -184,12 +187,12 @@ plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den,
 metaplot <- preswissroll %>%
   as_tibble() %>% 
   mutate(label = as.factor(label)) %>% 
-  ggplot(aes(X1, X2, col = den)) + 
+  ggplot(aes(X1, X2, col = den, shape = label)) + 
   geom_point() + 
   scale_color_viridis(option = "B") +
-  labs(color = "Density")
+  labs(color = "Density", shape = "Kernels")
 metaplot
-# ggsave("figures/truedensit_4kernels.png", metaplot, height = 6, width = 8, dpi = 500)
+# ggsave("paper/figures/truedensity_4kernels.png", metaplot, height = 6, width = 8, dpi = 300)
 
 
 
@@ -212,7 +215,7 @@ radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note th
 
 gridsize <- 20
 noutliers <- 20
-riem.scale <- 20 # .1 # scale Riemmanian
+riem.scale <- .1 # .1 # scale Riemmanian
 
 # ISOMAP
 
@@ -508,26 +511,42 @@ methods <- c("isomap", "lle", "le", "tsne", "umap")
 # }
 
 ## scatterplot to compare f_xy for ISOMAP
-f <- tibble(fxy = fxy, fxy_vkde = p_isomap$densities, fxy_hdr = p_hdr_isomap$densities)
+f <- tibble(fxy = fxy, # true densities
+            fxy_vkde = p_isomap$densities, fxy_hdr = p_hdr_isomap$densities, # estimated densities with ISOMAP, best
+            fxy_vkde_tsne = p_tsne$densities, fxy_hdr_tsne = p_hdr_tsne$densities, # estimated densities with tSNE, worst
+            )
 f
 cor(f$fxy_vkde, f$fxy)
 cor(f$fxy_hdr, f$fxy)
 pf_vkde <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_vkde, col = factor(preswissroll$label))) + 
+  ggplot(aes(x = fxy, y = fxy_vkde, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
   geom_point() + 
-  labs(x = "True density", y = "", color = "Kernels", title = "Variable bandwidth") +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = "Variable bandwidth") +
   scale_y_continuous(n.breaks = 6)
 pf_hdr <- f %>% 
-  ggplot(aes(x = fxy, y = fxy_hdr, col = factor(preswissroll$label))) + 
+  ggplot(aes(x = fxy, y = fxy_hdr, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
   geom_point() + 
-  labs(x = "True density", y = "", color = "Kernels", title = "Fixed bandwidth") +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = "Fixed bandwidth") +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 5)
-result <- (pf_vkde + pf_hdr) + 
+
+# pf_vkde_tsne <- f %>% 
+#   ggplot(aes(x = fxy, y = fxy_vkde_tsne, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
+#   geom_point() + 
+#   labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = "") +
+#   scale_y_continuous(n.breaks = 6)
+# pf_hdr_tsne <- f %>% 
+#   ggplot(aes(x = fxy, y = fxy_hdr_tsne, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
+#   geom_point() + 
+#   labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = "") +
+#   scale_y_continuous(limits = c(0, max(f$fxy_hdr_tsne)), n.breaks = 7)
+
+result <- 
+  # ( (pf_vkde + pf_hdr + ylim(0, max(f[,2:3]))) / (pf_vkde_tsne + pf_hdr_tsne + scale_y_continuous(limits = c(0, max(f[,4:5])), n.breaks = 5, labels = scales::comma)) ) + 
+  (pf_vkde + pf_hdr + ylim(0, max(f[,2:3]))) +
   plot_layout(guides = 'collect') & 
-  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold")) &
-  ylim(0, max(f[,2:3])) # same y breaks labels
+  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
 gt <- patchwork::patchworkGrob(result)
-gt <- gridExtra::grid.arrange(gt, left = "Estimated density")
+gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
 
 ggsave(paste0("paper/figures/", mapping, "_density_comparison_isomap_riem", format(riem.scale, decimal.mark = "_"), ".png"), gt, width = 10, height = 6, dpi = 300)
 
