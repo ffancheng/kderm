@@ -14,7 +14,7 @@ author:
   othernames: Anastasios
   address: University of Sydney
   email: Anastasios.Panagiotelis@sydney.edu.au
-abstract: "In this paper, we propose a new method to estimate the density of manifold learning embedding and further identify outliers based on the densities. The Riemannian metric measure the direction and angle of the distortion when mapping data points through a non-linear function in manifold learning algorithms. By introducing the Riemannian metric as the pointwise variable bandwidth matrix in kernel density estimation, the local distortion in the low-dimensional embedding could be used to estimate densities, leading to a more accurate description of the data distributions. We compare our proposed method with fixed bandwidth KDE by two simulation settings, 2-D meta data mapped as 3-D swiss roll or twin peaks data and 5-D semi-hypersphere meta data mapped in 100-D space, and show that variable bandwidth could improve the density estimation given a good manifold learning embedding. As an empirical example, we explore the distributions of different households and time periods of the week in the Irish smart meter data. Five manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, are applied to get the 2-D embeddings, and KDE with both variable and fixed bandwidth are used to get the density estimates. We compare both density estimates by looking at the distributions of the most typical households with highest densities and the most anomalous households with lowest densities. Both methods could identify the typical households with certain usage patterns, while the outliers are anomalous in different ways."
+abstract: "Kernel denstity estimation based on random samples often invovles a crutial bandwidth selection. For data points lying on the Riemannien manifolds embedded in a high-dimensional space, manifold learning aims to find the low-dimensional representation of the data but there are local distortion for each observation, which failed to be captured by the kernel density estimation. We propose a new kernel density estimation of manifold learning embedding with the Riemannian metric being the pointwise bandwidth matrix and further identify outliers with lowest densities. The Riemannian metric measures the direction and angle of the local distortion induced by the non-linear functions in manifold learning and is used for smoothing the density estimates. To compare our proposed method with fixed bandwidth KDE, we run two simulation with a 2-D meta data mapped into a 3-D swiss roll or twin peaks shape and a 5-D semi-hypersphere meta data mapped in 100-D space, and show that the proposed estimator could improve the density estimates given a good manifold learning embedding and gives higher correlations between ranks of true density and estimated density. For application, we use the Irish smart meter data and explore the distributions of different households and time periods of the week. Both density estimators are compared by examing the distributions of the most typical households with highest densities and the most anomalous households with lowest densities."
 keywords: "manifold learning, variable bandwidth, Riemannian metric, highest density region, Gaussian kernels"
 # wpnumber: 03/2021
 # jelcodes: C55, C65, C80
@@ -49,55 +49,43 @@ knitr::opts_chunk$set(
 )
 options(tinytex.verbose = TRUE)
 library(tidyverse)
-library(dimRed)
-library(reticulate)
+# library(dimRed)
+# library(reticulate)
 library(here)
-library(viridis)
+# library(viridis)
 library(hdrcde)
-library(igraph)
-library(matrixcalc)
-library(akima)
+# library(igraph)
+# library(matrixcalc)
+# library(akima)
 library(car)
-library(ggforce)
-library(ks)
+# library(ggforce)
+# library(ks)
 library(patchwork)
 # library(copula)
 library(plotly)
 library(kableExtra)
-Jmisc::sourceAll(here::here("R/sources"))
+# Jmisc::sourceAll(here::here("R/sources"))
 # set.seed(1234)
 ```
 
 \newpage
 
 # Introduction
-	
-<!-- Background (anomaly detection with density) with summarized contribution -->
 
-<!-- 	Anomaly detection on very high-dimensional data. Applications. Main contribution. -->
+Anomaly detection has been an important and diverse area where anomalies or outliers are detected in a given data. It often involves a data analysis process to uncover the unusual patterns and has been widely applied to machine learning [@Omar2013-lz], network intrusions identification [@Ahmed2016-co; @Bhuyan2013-ra], medical imaging [@Fernando2022-ef], fraudulent attacks [@Ahmed2016-dz], cyber-security [@Ten2011-co], energy consumption [@Cheng2021-ex], the last of which explored detecting households with anomalous electricity usage distributions instead of raw data. 
+In the case of non-Euclidean sample space, the observations lie on a Riemannian manifold embedded in a very high-dimensional ambient space, which make it computationally expensive or impossible to detect anomalies. To address this problem, we propose a kernel density estimator of the low-dimensional statistical manifold embedding and find outliers as the data with the lowest density estimates.
 
-<!-- Anomaly detection using densities, other methods for anomaly detection. Based manifold learning embeddings, density estimates -->
+Kernel density estimation [KDE; @Parzen1962-gt; @Chen2017-dw] is one of the most popular method to calculate the probability density function from a sample dataset. KDE is flexible to learn the shape of the underlying density from the data controlled by the bandwidth and the selection of bandwidth is crucial in KDE [@Jones1990-oe; @Terrell1992-ut]. There are extensive research on bandwidth selection, two main categories of which are the cross-validation [@Jones1992-ta; @Sain1994-gr] and plug-in methods [@Wand1994-gc; @Duong2003-sp]. For multivariate data, variable kernel density estimator [VKDE;  @Jones1990-oe; @Terrell1992-ut] has been studied with an adaptive bandwidth matrix to control the amount of smoothing on the location of the estimated point [balloon estimator; @Terrell1992-ef] or the data point [sample smoothing estimator; @Terrell1992-ef].
+However, these density estimators are based on random samples in the Euclidean space. 
 
-<!-- Density estimation methods, KDE with distortion, 2-D variable kernel denstiy estimate with Riemannian matrix -->
+For samples points lying on a manifold with the differentiable structure called the Riemannian manifold, @Pelletier2005-vu proposed the a kernel density estimator based on the kernel weight depending on the distance between the estimated points and the sample data points. The idea of the estimator is to use a strictly positive function of the geodesic distance on the manifold and then normalize it with the volume density function of the Riemannian manifold for curvature. [@Henry2009-ll] In many application scenarios, we tend to find that the sample points on a manifold are embedded in a much higher-dimensional space, and the kernel density estimator from @Pelletier2005-vu is not directly applicable. This is when we introduce manifold learning to reduce the input data dimension.
+For these high-dimensional data set, various manifold learning algorithms including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP (see details of these algorithms in @Cheng2021-ex), are applied to get a low-dimensional embedding. We propose a kernel density estimator to be applied to the low-dimensional embedding and define outliers as those with lowest densities. 
 
-<!-- - Main contributions: better anomaly detection -->
+In manifold learning, the underlying idea is that the data lies on a low-dimensional smooth manifold which is embedded in a high-dimensional space. One of the fundamental objectives of manifold learning is to explore the geometry of the dataset, including the distances between points and volumes of regions of data. These intrinsic geometric attributes of the data, such as distances, angles, and areas, however, can be distorted in the low-dimensional embedding, leading to failure to recover the geometry of the manifold [@Goldberg2008-co]. To tackle this problem and measure the distortion incurred in manifold learning, @Perrault-Joncas2013-pq propose the Learn metric algorithm to augment any existing embedding output with geometric information in the Riemannian metric of the manifold itself. By applying this algorithm, the outputs of different manifold learning methods can be unified and compared under the same framework, which would highly benefit in improving the effectiveness of the embedding.
 
-<!-- 	fix distortion with Riemmannian matrix -->
-
-<!-- 	anomaly detection using density estimates -->
-
-<!-- 	kernel density estimate is not accurate -->
-
-<!-- 	improve density estimation with distortion in the embedding plot -->
-
-In manifold learning, the underlying idea is that the data lies on a low-dimensional smooth manifold which is embedded in a high-dimensional space. One of the fundamental objectives of manifold learning is to explore the geometry of the dataset, including the distances between points and volumes of regions of data. These intrinsic geometric attributes of the data, such as distances, angles, and areas, however, can be distorted in the low-dimensional embedding, leading to failure to recover the geometry of the manifold [@Goldberg2008-co]. To tackle this problem and measure the distortion incurred in manifold learning, @Perrault-Joncas2013-pq propose the Metric Learning algorithm to augment any existing embedding output with geometric information in the Riemannian metric of the manifold itself. By applying the Metric Learning algorithm, the outputs of different manifold learning methods can be unified and compared under the same framework, which would highly benefit in improving the effectiveness of the embedding.
-
-The Riemannian metric defined at each point of the manifold is used to compute the geometric quantities, including angle, length, and volume, of the low-dimensional manifold embedding in any coordinate system, and be further applied to correct the distortion caused by the manifold learning algorithms. 
+The Riemannian metric using the method of @Perrault-Joncas2013-pq gives some idea of the distortion of an embedding. Mapping the points through a non-linear function "stretches" some regions of space and "shrinks" others. The Riemannian gives us an idea of the direction and angle of this stretching, which is informative for learning the manifold.
 In variable kernel density estimate, the bandwidth matrix $H$ is also defined to control the amount of smoothing for each data point. 
-Therefore, if we could replace the bandwidth matrix with the Riemannian metric, we could further get the kernel density estimation of the manifold $\mathcal{M}$. This kernel density estimate can then be used to produce the highest density region plots [@Hyndman1996-lk] for anomaly detection. 
-
-By applying an existing manifold learning algorithm to the data $X\in \mathbb{R}^r$ with $n$ observations, a low-dimensional embedding $f_n \in \mathbb{R}^d$ can be computed. Most manifold learning methods involve the construction of the nearest neighbor graph based on which the Laplace-Beltrami operator $\Delta_\mathcal{M}$ is built. The Laplacian is quite useful because it can be coordinate-free while containing all the important geometry. @Perrault-Joncas2013-pq have stated one way to compute the approximated $\Delta_\mathcal{M}$ with a discrete consistent estimator, the geometric graph Laplacian $\mathcal{L}_{\varepsilon,n}$ [@Zhou2011-za], where $\varepsilon$ is the radius parameter for the nearest neighbor graph. The graph Laplacian together with the embedding can be used in the Metric Learning algorithm to achieve the augmented embedding with the Riemannian metric $(f_n, g_n)$. The highlighted two steps in Figure \@ref(fig:vkde) are the main contributions of this main chapter, replacing the bandwidth matrix $H_i$ with the Riemannian metric $g_i$ for each point in variable kernel density estimate, and computing the highest density region plots based on the density estimates, $\hat{f}(\mathbb{x})$, for anomaly detection.
-
+Therefore, we propose to the use Riemannian metric as the bandwidth matrix in , we could further get the kernel density estimation of the manifold $\mathcal{M}$. This kernel density estimate can then be used to produce the highest density region plots [@Hyndman1996-lk] for outlier visualization. 
 
 The rest of the paper is organized as follows.
 In \autoref{vkde}, we present the proposed algorithm to detect anomalies based on variable kernel density estimates of manifold embeddings. In this section, we provide justification for the use of Riemannian metric as the bandwidth of variable kernel density estimation, including the comparison with fixed bandwidth.
@@ -105,9 +93,10 @@ In \autoref{vkde}, we present the proposed algorithm to detect anomalies based o
 \autoref{application} contains the application to visualize and identify anomalies in the Irish smart meter dataset.
 Conclusions and discussions are presented in \autoref{conclusion}.
 
+
 # Variable kernel density estimation with manifold embeddings {#vkde}
 
-In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. For a high-dimensional data set, various manifold learning algorithms including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, are applied to get a low-dimensional embedding. The manifold learning algorithms map the points through nonlinear functions that stretches some regions of the space while shrinks others. @Perrault-Joncas2013-pq gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric and the Riemannian metric is a positive simi-definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with lowest density estimates. The proposed schematic is shown in Figure \@ref(fig:vkde).
+In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. @Perrault-Joncas2013-pq gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric and the Riemannian metric is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with lowest density estimates. The proposed schematic is shown in Figure \@ref(fig:vkde). The highlighted two steps in Figure \@ref(fig:vkde) are the main contributions of this main chapter, replacing the bandwidth matrix $\pmb{h}_i$ with the Riemannian metric $\pmb{g}_i$ for each point in variable kernel density estimate, and computing the highest density region plots based on the density estimates, $\hat{f}(\pmb{x})$, for anomaly detection.
 
 (ref:vkdecaption) The proposed schematic for variable kernel density estimation with recovered geometry.
 ```{r vkde, fig.align = 'center', out.width = "95%", fig.cap = "(ref:vkdecaption)", echo = FALSE, eval=TRUE}
@@ -122,7 +111,6 @@ Denote the $s$-dimensional input data with observations $x_i, i = 1, 2, \dots, N
 
 ## Kernel density estimator on Riemannian manifolds
 
-In the case of non-Euclidean sample space, the observations often lie on a manifold with the differentiable structure called the Riemannian manifold. 
 Consider a compact Riemannian manifold $(\mathcal{M}, g)$ of dimension $d$ without boundary and a probability distribution with density $f$ on the manifold. Assume $(\mathcal{M}, d_g)$ is a complete metric space, where $d_g$ is the Riemannian distance induced by $g$ and the strictly positive injectivity radius [@Chavel2006-mp] of the manifold. Denote $A_i, i = 1, 2, \dots, N$, where $A_i \in \mathcal{R}^d$, as i.i.d. random objects on $\mathcal{M}$ with density $f$. For each $p\in \mathcal{M}$, @Pelletier2005-vu proposed the kernel density estimator of $f$ to be
 \begin{equation}
 \label{eq:denriem}
@@ -141,9 +129,10 @@ However, in application, we usually found the observations lie on a $d$-dimensio
 \label{eq:denestimator}
 f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h_i^d |g(\exp_p^{-1}(y_i))|} K(\frac{d_g(p, y_i)}{h_i}),
 \end{equation}
-where $h_i, i = 1, 2, \dots, N$ is the pointwise variable bandwidth matrix and $h_i$ is positive definite with dimension $d\times d$. 
+where $h_i, i = 1, 2, \dots, N$ is the pointwise variable bandwidth matrix and $h_i$ is positive definite with dimension $d\times d$.
 
 An important goal of manifold learning is to recover the local or global features of the data. In order to recover the geometry of the manifold, @Perrault-Joncas2013-pq propose a method to augment any existing reasonable embedding and allow for the computation of geometric values to be calculated with an estimation of the Riemannian metric $g$. This could also be used to fix the geometric distortion in the embedding. It is worth noticing that the Riemannian metric from @Perrault-Joncas2013-pq is a $d\times d$ positive definite matrix for each data point. Therefore, we propose to take the geometric distortion into consideration when estimating the kernel densities of the embedding with Equation \@ref(eq:denestimator). In this way, we present a consistent kernel density estimator with pointwise variable bandwidth as the Riemannian metric. 
+
 
 ## Multivariate kernel density estimation
 
@@ -155,7 +144,7 @@ where $a_i, i = 1, 2, \dots, N$ is the random sample drawn from a density $f$, $
 $$
 K_{\pmb{h}_i}(\pmb{x}-\pmb{a}_i)=(2\pi)^{-d/2}|\pmb{h}|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{x}-\pmb{a}_i)'\pmb{h}_i^{-1}(\pmb{x}-\pmb{a}_i)\right],
 $$
-with $|\pmb{h}_i|$ being the determinant of matrix $\pmb{h}_i$. The bandwidth matrix is important in controlling the smoothing across all data points and the shape is determined by the kernel function $K(\pmb{x})$. An adaptive bandwidth could be used to control the amount of smoothing on the location $\pmb{x}$ [balloon estimator; @Terrell1992-ef] or the data point $\pmb{a}_i$ [sample smoothing estimator; @Terrell1992-ef]. We use the sample smooth estimator for each data point, which make a kernel density estimate with local smoothing.
+with $|\pmb{h}_i|$ being the determinant of matrix $\pmb{h}_i$. The bandwidth matrix is important in controlling the smoothing across all data points and the shape is determined by the kernel function $K(\pmb{x})$. We use the sample smooth estimator for each data point, which make a kernel density estimate with local smoothing.
 @Duong2007-up present an R package *ks* that implement kernel density estimates with fixed bandwidth and variable bandwidth, but it is limited to bandwidth vector or diagonal matrix and is not applicable to full bandwidth matrix.
 
 
@@ -180,8 +169,9 @@ Vol(V)=\int_V \sqrt{\|g\|} dx^1\dots dx^d.
 $$
 Both the concepts of distance and volume are relevant to kernel density estimation.
 
-The Riemannian metric using the method of @Perrault-Joncas2013-pq gives some idea of the distortion of an embedding. Mapping the points through a non-linear function "stretches" some regions of space and "shrinks" others. The Riemannian gives us an idea of the direction and angle of this stretching, which is informative for learning the manifold.
+
 @Perrault-Joncas2013-pq propose the Learn metric algorithm which mainly involves four steps: weighted neighborhood graph construction; geometric graph Laplacian calculation; manifold learning; and Riemannian metric calculation. We restate these four steps in Algorithm \@ref(alg:learnmetric).
+By applying an existing manifold learning algorithm to the data $X\in \mathbb{R}^r$ with $n$ observations, a low-dimensional embedding $f_n \in \mathbb{R}^d$ can be computed. Most manifold learning methods involve the construction of the nearest neighbor graph based on which the Laplace-Beltrami operator $\Delta_\mathcal{M}$ is built. The Laplacian is quite useful because it can be coordinate-free while containing all the important geometry. @Perrault-Joncas2013-pq have stated one way to compute the approximated $\Delta_\mathcal{M}$ with a discrete consistent estimator, the geometric graph Laplacian $\mathcal{L}_{\varepsilon,n}$ [@Zhou2011-za], where $\varepsilon$ is the radius parameter for the nearest neighbor graph. The graph Laplacian together with the embedding can be used in the Metric Learning algorithm to achieve the augmented embedding with the Riemannian metric $(f_n, g_n)$.
 
 As pointed out by @Perrault-Joncas2013-pq, if the embedding dimension $s$ is larger than the manifold intrinsic dimension $d$, the rank of the embedding metric $h_n(p)$ is $d$; otherwise, the Riemannian metric $g_n$ will be returned. 
 This algorithm is also implemented in a Python library *megaman* [@McQueen2016-xz]. It is designed to apply the manifold learning methods to large-scale data sets, as well as computing the Riemannian metric of the manifold. 
