@@ -262,13 +262,22 @@
 
 
 \nocover
-\blind
 
-
+\author{Fan~Cheng, Rob J~Hyndman, Anastasios~Panagiotelis}
+\addresses{\textbf{Fan Cheng}\newline
+Monash University
+\newline{Email: \href{mailto:Fan.Cheng@monash.edu}{\nolinkurl{Fan.Cheng@monash.edu}}}\\[1cm]
+\textbf{Rob J Hyndman}\newline
+Monash University
+\newline{Email: \href{mailto:Rob.Hyndman@monash.edu}{\nolinkurl{Rob.Hyndman@monash.edu}}}\\[1cm]
+\textbf{Anastasios Panagiotelis}\newline
+University of Sydney
+\newline{Email: \href{mailto:Anastasios.Panagiotelis@sydney.edu.au}{\nolinkurl{Anastasios.Panagiotelis@sydney.edu.au}}}\\[1cm]
+}
 
 \date{\sf\Date~\Month~\Year}
 \makeatletter
- \lfoot{\sf\@date}
+ \lfoot{\sf Cheng, Hyndman, Panagiotelis: \@date}
 \makeatother
 
 %% Any special functions or other packages can be loaded here.
@@ -683,6 +692,38 @@ For the electricity consumption data of residential individuals, it would be wor
 
 In this section, we first calculated the same empirical distributions of the \(336\) half-hourly periods of the week for each household, and apply the total variation distance estimator proposed in \textcite{Cheng2021-ex} in the statistical manifold learning to get the 2-D embedding of all households. Algorithm \ref{alg:vkderm} is then used to obtain density estimates with the pointwise variable Riemannian metric as the bandwidth matrix and detect outliers. The data processing steps has been clearly stated in the application section of \textcite{Cheng2021-ex} and they are skipped here. Unlike the simulations in \autoref{simulation}, we know nothing about the true density of the electricity distributions for all periods of week and all households, so it is impossible to compare the estimated densities with the true meta data density as in \autoref{fig:fivedisomapden}. However, we could generate all the density estimates with the existing KDE method with fixed bandwidth, which is an optimal method for density estimation, and compare the densities from our proposed method with them.
 
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{figures/kde_2densities_raw_electricity} 
+
+}
+
+\caption{Electricity usage plots of all 535 days for the most typical household and two anomalies in rows and two bandwidth selection methods in columns.}\label{fig:electricityoutliers}
+\end{figure}
+
+\autoref{fig:electricityoutliers} shows the electricity usage data of three households for both density estimation methods respectively, with the top one being the most typical household with the highest density and the bottom two being the top two outliers with the lowest densities. The typical households in the top row are close except that there are a few spikes for the one with fixed bandwidth. As to the anomalies, variable bandwidth tend to capture the unusual electricity demand volume when the usage is very low or high. It could also capture the unusual usage pattern when there are sudden spikes in ID 3243 or very high base electricity usage for the middle time period in ID 2838. In contrast, fixed bandwidth KDE is more sensitive to spikes even when the spikes happens in certain time window in 7049, or when the usage has an obvious time-of-week pattern with a few low electricity usage periods.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{figures/hdr_electricity_hdrbox_3id_7dow} 
+
+}
+
+\caption{Two smart-meter demand examples, ID 1003 and ID 1539, from the Irish smart meter data set.}\label{fig:electricityhdrsfixed}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{figures/electricity_hdrbox_3id_7dow} 
+
+}
+
+\caption{Two smart-meter demand examples, ID 1003 and ID 1539, from the Irish smart meter data set.}\label{fig:electricityhdrsvkde}
+\end{figure}
+
+Further insights could be gained by comparing the quantile region plots of electricity demand against the time of week for the same typical or anomalous households in \autoref{fig:electricityhdrsfixed} and \autoref{fig:electricityhdrsvkde}.
+Again the distribution of both typical household in the top panel have shown a repeated period-of-the-week usage pattern, with higher usage during meal time on all seven days of the week and slightly higher usage for weekends. However, this repeated pattern in a week window is clearly for the typical household ID 1321. As for the distributions for outliers, the middle row outliers from variable bandwidth has spikes only on Tuesday and Sunday noons, while the fixed bandwidth has an increasing electricity demand across the day of the week. The bottom row outliers both have a repeated time usage pattern, but the electricity usage amount is higher with the highest median above 3kWh. These finding show the difference in finding typical and anomalous households with different bandwidth selection.
+
 \hypertarget{conclusion}{%
 \section{Conclusion}\label{conclusion}}
 
@@ -697,6 +738,8 @@ There are several open questions to be explored. The first involves the selectio
 \addcontentsline{toc}{section}{Acknowledgment}
 
 This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster.
+
+\newpage
 
 \printbibliography
 
