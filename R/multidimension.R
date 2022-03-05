@@ -76,19 +76,36 @@ X_new %>% as_tibble() %>% summarise(x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
 dist2center <- sqrt(r^2 - X_new[,5]^2)
 
+# save(X_new, N, dist2center, r, den, file = "paper/figures/fived_animation.rda")
 # ## Plot 5-d semi-sphere, run once
-# library(tourr)
-# colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
-# pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
-# animate_xy(X_new[,1:5], col = colors, pch = pchs, cex = 0.8, 
-#            axes = "bottomleft", fps=15
-#            )
-# # "figures/tourr_5d_semisphere.png"
-# 
+library(tourr)
+colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
+pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
+animate_xy(X_new[,1:5], col = colors, pch = pchs, cex = 0.8, fps=15
+           # axes = "bottomleft", 
+           )
+# "figures/tourr_5d_semisphere.png"
+
 # # library(geozoo)
 # # sphere <- sphere.hollow(p = 5)
 # # sphere$points <- X_new
 # # sphere
+
+# # Save gif as animation
+# library(gifski)
+# png("frame%03d.png")
+# par(ask = FALSE)
+# # for(i in 1:10)
+# #   plot(rnorm(i * 10), main = i)
+# animate_xy(X_new[,1:5], col = colors, pch = pchs, cex = 0.8, fps=15
+#            # axes = "bottomleft", 
+# )
+# dev.off()
+# png_files <- sprintf("frame%03d.png", 30:80)
+# gif_file <- gifski(png_files)
+# unlink(png_files)
+# utils::browseURL(gif_file)
+
 
 
 ## QR decomposition

@@ -135,7 +135,7 @@ plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den,
         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
 
 # mappings 3D plot, plot once
-par(mfrow=c(1,2))
+# par(mfrow=c(1,2))
 # twinpeak <- swissroll # first run with mapping index is 3
 # pretwinpeak <- preswissroll
 mypalette <- scales::hue_pal()(4)
@@ -228,8 +228,8 @@ metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, inv
 
 
 # ## ----ggellipse, include=FALSE, eval=FALSE---------------------------------------
-# plot_embedding(metric_isomap) +
-#   labs(x = "ISO1", y = "ISO2")
+plot_embedding(metric_isomap) +
+  labs(x = "ISO1", y = "ISO2")
 # plot_ellipse(metric_isomap, add = F, ell.no = 50, ell.size = .5,
 #              color = blues9[5], fill = blues9[5], alpha = 0.2)
 
@@ -241,9 +241,9 @@ E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
 E2 <- fn[,2]
 prob <- c(1,5,50,99) # c(1, 10, 50, 95, 99) #
 p_hdr_isomap <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = noutliers, label = NULL)
-# p_hdr_isomap_p <- p_hdr_isomap$p +
-#   plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = .5,
-#              color = blues9[5], fill = blues9[1], alpha = 0.2)
+p_hdr_isomap_p <- p_hdr_isomap$p +
+  plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = .5,
+             color = blues9[5], fill = blues9[1], alpha = 0.2)
 # p_hdr_isomap
 
 
@@ -277,7 +277,6 @@ cor(preswissroll$den, p_isomap$densities)
 cor(preswissroll$den, p_hdr_isomap$densities)
 
 
-
 # LLE
 
 ## ----le, message=FALSE, warning=FALSE, eval=TRUE------------------------------
@@ -306,6 +305,26 @@ p_hdr_lle <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutlier
   plot_annotation(title = "Left: variable bandwidth; Right: fixed bandwidth", theme = theme(plot.title = element_text(hjust = 0.5)))
 cor(preswissroll$den, p_lle$densities)
 cor(preswissroll$den, p_hdr_lle$densities)
+
+# ellipse plot for slides
+fn <- metric_isomap$embedding
+p_isomap_ell <- fn %>%
+  as_tibble() %>%
+  ggplot(aes(x = E1, y = E2)) +
+  geom_point(color = grey(0.5), size = 1) +
+  plot_ellipse(metric_isomap, add = T, ell.no = 500, ell.size = 0,
+               color = blues9[5], fill = blues9[5], alpha = 0.2)
+fn <- metric_lle$embedding
+p_lle_ell <- fn %>% 
+  as_tibble() %>% 
+  ggplot(aes(x = E1, y = E2)) + 
+  geom_point(color = grey(0.5), size = 1) + 
+  plot_ellipse(metric_isomap, add = T, ell.no = 500, ell.size = 0,
+               color = blues9[5], fill = blues9[5], alpha = 0.2)
+p_isomap_ell + p_lle_ell
+
+
+
 
 
 
@@ -495,8 +514,14 @@ p
 ggsave(paste0("paper/figures/", mapping, "5levels_outliers_comparison_4ml_3cases_riem", format(riem.scale, decimal.mark = "_"), ".png"), p, width = 8, height = 10, dpi = 300)
 
 
-
-
+((p_den_isomap + labs(x = "", y = "ISOMAP", title = "True density") ) |
+  (p_isomap$p + labs(x = "", y = "", title = "Variable bandwidth") ) |
+  (p_hdr_isomap$p + labs(x = "", y = "", title = "Fixed bandwidth") )) +
+  plot_layout(guides = 'collect') &
+  theme(legend.direction = "horizontal", legend.position = "bottom", 
+        legend.box = "horizontal",
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+ggsave(paste0("paper/figures/", mapping, "5levels_outliers_comparison_isomap_3cases_riem", format(riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
 
 ## ----compareDensity---------------------------------------------------------------------------
 fxy <- preswissroll$den
@@ -521,12 +546,12 @@ cor(f$fxy_hdr, f$fxy)
 pf_vkde <- f %>% 
   ggplot(aes(x = fxy, y = fxy_vkde, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
   geom_point() + 
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = "Variable bandwidth") +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("Variable bandwidth correlation", round(cor(f$fxy_vkde, f$fxy), 3)) ) +
   scale_y_continuous(n.breaks = 6)
 pf_hdr <- f %>% 
   ggplot(aes(x = fxy, y = fxy_hdr, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
   geom_point() + 
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = "Fixed bandwidth") +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("Fixed bandwidth correlation", round(cor(f$fxy_hdr, f$fxy), 3))) +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 5)
 
 # pf_vkde_tsne <- f %>% 
@@ -542,13 +567,13 @@ pf_hdr <- f %>%
 
 result <- 
   # ( (pf_vkde + pf_hdr + ylim(0, max(f[,2:3]))) / (pf_vkde_tsne + pf_hdr_tsne + scale_y_continuous(limits = c(0, max(f[,4:5])), n.breaks = 5, labels = scales::comma)) ) + 
-  (pf_vkde + pf_hdr + ylim(0, max(f[,2:3]))) +
+  (pf_vkde + pf_hdr ) + # + ylim(0, max(f[,2:3]))
   plot_layout(guides = 'collect') & 
   theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
 gt <- patchwork::patchworkGrob(result)
 gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
 
-ggsave(paste0("paper/figures/", mapping, "_density_comparison_isomap_riem", format(riem.scale, decimal.mark = "_"), ".png"), gt, width = 10, height = 6, dpi = 300)
+ggsave(paste0("paper/figures/", mapping, "_density_comparison_isomap_riem", format(riem.scale, decimal.mark = "_"), "_samey.png"), gt, width = 10, height = 6, dpi = 300)
 
 
 
