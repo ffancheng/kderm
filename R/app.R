@@ -30,7 +30,7 @@ ml_outlier <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
                        invert.h = TRUE,
                        ell.no = 10, ell.size = 1, gridsize = 20, noutliers = 10,
                        riem.scale = 1, # scaling Riemmanien matrix
-                       prob = c(1, 50, 99), # currently not an input of the app
+                       prob = c(1, 5, 50, 99), # currently not an input of the app
                        ...) {
   
   if (is.null(x) | is.null(method)) return(NULL)
