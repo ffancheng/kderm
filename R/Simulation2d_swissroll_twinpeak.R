@@ -537,21 +537,30 @@ methods <- c("isomap", "lle", "le", "tsne", "umap")
 
 ## scatterplot to compare f_xy for ISOMAP
 f <- tibble(fxy = fxy, # true densities
-            fxy_vkde = p_isomap$densities, fxy_hdr = p_hdr_isomap$densities, # estimated densities with ISOMAP, best
-            fxy_vkde_tsne = p_tsne$densities, fxy_hdr_tsne = p_hdr_tsne$densities, # estimated densities with tSNE, worst
-            )
+            fxy_vkde = p_isomap$densities, fxy_hdr = p_hdr_isomap$densities#, # estimated densities with ISOMAP, best
+            # fxy_vkde_tsne = p_tsne$densities, fxy_hdr_tsne = p_hdr_tsne$densities, # estimated densities with tSNE, worst
+            ) %>% summarise_all(rank) # Comment this part if plotting the density estimates instead of ranks
 f
 cor(f$fxy_vkde, f$fxy)
 cor(f$fxy_hdr, f$fxy)
+cor(f$fxy_vkde, f$fxy, method = "spearman")
+cor(f$fxy_hdr, f$fxy, method = "spearman")
+
+# # Plot ranks instead of densities
+# uncomment when plotting ranks instead of densities
+f <- f %>% summarise_all(rank)
+# cor(af$fxy_vkde, af$fxy, method = "spearman")
+# cor(af$fxy_hdr, af$fxy, method = "spearman")
+
 pf_vkde <- f %>% 
   ggplot(aes(x = fxy, y = fxy_vkde, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
   geom_point() + 
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("Variable bandwidth correlation", round(cor(f$fxy_vkde, f$fxy), 3)) ) +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("Variable bandwidth correlation", round(cor(f$fxy_vkde, f$fxy, method = "spearman"), 3)) ) +
   scale_y_continuous(n.breaks = 6)
 pf_hdr <- f %>% 
   ggplot(aes(x = fxy, y = fxy_hdr, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
   geom_point() + 
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("Fixed bandwidth correlation", round(cor(f$fxy_hdr, f$fxy), 3))) +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("Fixed bandwidth correlation", round(cor(f$fxy_hdr, f$fxy, method = "spearman"), 3))) +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr)), n.breaks = 5)
 
 # pf_vkde_tsne <- f %>% 
@@ -577,9 +586,10 @@ ggsave(paste0("paper/figures/", mapping, "_density_comparison_isomap_riem", form
 
 
 
+
 # Table for density correlations
 fxy <- preswissroll$den
-dencor <- function(x) cor(x$densities, fxy)
+dencor <- function(x) cor(x$densities, fxy, method = "spearman")
 # dencor(p_lle)
 # dencor(p_hdr_lle)
 cors <- cbind(
