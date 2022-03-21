@@ -343,8 +343,84 @@ In \autoref{vkde}, we present the proposed algorithm to detect anomalies based o
 \autoref{application} contains the application to visualize and identify anomalies in the Irish smart meter dataset.
 Conclusions and discussions are presented in \autoref{conclusion}.
 
+\hypertarget{riemgeo}{%
+\section{Notions about Riemannian geometry}\label{riemgeo}}
+
+In this section, we present some notions about the Riemannian geometry used in this paper.
+
+A geodesic is a smooth
+curve that locally joins their points along the shortest path. All
+the geodesics passing through p are called radial geodesics. The
+local coordinates defined by the chart ðU ; exp1 Þ are called p
+(Riemannian) normal coordinates with center p.~Note that normal coordinates preserve the distances on radial geode- sics. For example, unfolding a sphere onto a plane in normal coordinates can preserve the distances on great circles, like paring an orange. Note that for a manifold with complex topology, for example, a torus, multiple normal coordinate charts, rather than one single chart, are needed to cover the whole manifold.
+
+\hypertarget{differentiable-manifolds}{%
+\subsection{Differentiable manifolds}\label{differentiable-manifolds}}
+
+In topology, a \emph{homeomorphism} is a bijective map between two topological spaces that is continuous in both directions.
+A \emph{Hausdorff space} is a topological space where any two distinct points can be separated by disjoint neighborhoods.
+A \(d\)-dimensional (topological) \emph{manifold} \(M\) is a connected Hausdorff space \((M, \mathcal{T}_M)\) where the neighborhood \(U\) for each point \(p\) is homeomorphic to an open subset \(V\) of the Euclidean space \(\mathbb{R}^d\). Such a homeomorphism \(\varphi: U \rightarrow V\) and \(U\) gives a (coordinate) \emph{chart}, denoted as \((U, \varphi)\), with the corresponding local coordinates \((x_1(p),\dots, x_d(p)) := \varphi(p)\). A collection of charts \(\{U_\alpha, \varphi_\alpha\}\) ranging over the manifold \(M\) is called an \emph{atlas}, denoted as \(\mathcal{A}\).
+The manifold \(M\) is a \emph{differentiable manifold} if there exists an atlas of \(M\), \(\{U_\alpha, \varphi_\alpha\}\), such that the \emph{transition maps} between any two charts,
+\[
+\varphi_\beta \circ \varphi_\alpha^{-1}: \varphi_\alpha(U_\alpha \cap U_\beta) \rightarrow \varphi_\beta(U_\alpha \cap U_\beta),
+\]
+are differentiable of class \(C^\infty\) (smooth).
+
+\hypertarget{tangent-vector-and-tangent-space}{%
+\subsection{Tangent vector and tangent space}\label{tangent-vector-and-tangent-space}}
+
+The tangent vector at point \(p\) can be intuitively viewed as the velocity of a curve passing through the point \(p\) or as the directional derivatives at \(p\). Here we define the tangent vector via the velocity of curves.
+
+For any \(p \in M\), let \(\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M\) and \(\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M\) be two smooth curve through \(p\), i.e.~\(\gamma_1(0) = \gamma_2(0) = p\). \(\gamma_1\) and \(\gamma_2\) are equivalent if and only if there exists a chart, \((U,\varphi)\), at \(p\) such that
+\[
+(\varphi \circ \gamma_1)^\prime(0) = (\varphi \circ \gamma_2)^\prime(0).
+\]
+A \emph{tangent vector} to \(M\) at \(p\) is any equivalent class of the differentiable curves initialized at \(p\).
+The set of all tangent vectors at \(p\) defines the \emph{tangent space} of \(M\) at \(p\), denoted as \(T_pM\). The tangent space is vector space of dimension \(d\), equal to the dimension of \(M\), and it does not depend on the charts \(\varphi\) locally at \(p\). The collection of all tangent spaces defines the \emph{tangent bundle} \(TM = \cup_{p \in M}T_pM\).
+Tangent vectors can also be seen as the directionnal derivatives at \(p\). For a given coordinate chart \(\varphi=(x_1,\dots,x_d)\), the tangent vectors defining partial derivatives are denoted as \(\frac{\partial}{\partial x_1}(p),\dots,\frac{\partial}{\partial x_d}(p)\), which define a basis of the tangent space \(T_pM\).
+
+The tangent space \(T_pM\) also admits a dual space \(T^*_pM\) called the cotangent space with corresponding cotangent vector \(z_p: T^*_pM \rightarrow \mathbb{R}^d\), and basis denoted as \(dx_1(p),\dots,dx_d(p)\).
+
+Define the directional derivative \(D_v\) in the direction of \(v\) as
+\[
+\forall f \in C^\infty(M): D_v(f)
+\]
+
+\hypertarget{riemannian-metrics}{%
+\subsection{Riemannian metrics}\label{riemannian-metrics}}
+
+Let \((\mathcal{M}, g)\) be a \(d\)-dimensional Riemannian manifold without boundary. Denote \(d_g\) the Riemannian distance. Assume that \((\mathcal{M}, g)\) is complete, i.e.~\((\mathcal{M}, d_g)\) is a complete metric space, and that the injectivity radius of \((\mathcal{M}, g)\), \(inj_g\mathcal{M}\), is strictly positive.
+
+Denote \(B_s(p)\) the normal ball in \((\mathcal{M}, g)\) centered at point \(p\) with raidus \(s\).
+
+\(d_g\) is induced by \(g\) and by the injectivity radius of \((\mathcal{M}, g)\).
+
+normal ball
+
+\hypertarget{exponential-map-and-logarithmic-map}{%
+\subsection{Exponential map and logarithmic map}\label{exponential-map-and-logarithmic-map}}
+
+\hypertarget{pushforward-and-pullback-metric}{%
+\subsection{Pushforward and pullback metric}\label{pushforward-and-pullback-metric}}
+
+embedding pushforward metric \autocite{Perrault-Joncas2013-pq}
+
+\hypertarget{canonical-metric}{%
+\subsection{Canonical metric}\label{canonical-metric}}
+
+For a compact Kahler manifold M, canonical metric can mean: (i) Kahler-Enstein metric or (ii) metric with constant scalar curvature which is the extremal metric of the Calabi functional.
+
+\hypertarget{isometry}{%
+\subsection{Isometry}\label{isometry}}
+
+\hypertarget{laplace-beltrami-operator}{%
+\subsection{Laplace-Beltrami operator}\label{laplace-beltrami-operator}}
+
+\hypertarget{volumn-density-function}{%
+\subsection{Volumn density function}\label{volumn-density-function}}
+
 \hypertarget{vkde}{%
-\section{Variable kernel density estimation with manifold embeddings}\label{vkde}}
+\section{Kernel density estimation on manifolds}\label{vkde}}
 
 In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. \textcite{Perrault-Joncas2013-pq} gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric and the Riemannian metric is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates. The proposed schematic is shown in Figure \ref{fig:vkde}. The highlighted two steps in Figure \ref{fig:vkde} are the main contributions of this main chapter, replacing the bandwidth matrix \(\pmb{h}_i\) with the Riemannian metric \(\pmb{g}_i\) for each point in variable kernel density estimate, and computing the highest density region plots based on the density estimates, \(\hat{f}(\pmb{x})\), for anomaly detection.
 
@@ -469,8 +545,8 @@ This algorithm is also implemented in a Python library \emph{megaman} \autocite{
   \end{algorithmic}
 \end{algorithm}
 
-\hypertarget{algorithm-for-outlier-detection-on-manifold-learning-embedding}{%
-\subsection{Algorithm for outlier detection on manifold learning embedding}\label{algorithm-for-outlier-detection-on-manifold-learning-embedding}}
+\hypertarget{outlier-detection-on-manifold-learning-embedding}{%
+\section{Outlier detection on manifold learning embedding}\label{outlier-detection-on-manifold-learning-embedding}}
 
 Now we present our proposed algorithm for anomaly detection based on variable kernel density estimates in \ref{alg:vkderm}. There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \ref{alg:learnmetric} to the input high-dimensional data \(x_i,i=1,\ldots,N\) where \(x_i\in \mathcal{R^s}\) to get the low-dimensional embedding \(y_i\), where \(y_i\in \mathcal{R^d}\) and the Riemannian metric \(\pmb{H}_i\) with dimension \(d\times d\) for each observation. Two parameters \(\sqrt{\varepsilon} = 0.4\) and \(c=0.25\) are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \eqref{eq:denestimator}. The top outliers of size \(n\_outliers\) are obtained by ordering the embedding points \(y_i\) according to their density estimates \(f_N(\pmb{y}_i)\).
 
@@ -500,7 +576,7 @@ Now we present our proposed algorithm for anomaly detection based on variable ke
 If the embedding dimension \(d=2\), the HDR plots \autocite{Hyndman1996-lk} could be used to identify the relative location of outliers in the embedding and find which observations lie in the highest density region of specified coverage, eg. 1\%, 50\%, 99\%, \textgreater99\%.
 
 \hypertarget{simulation}{%
-\section{Simulation}\label{simulation}}
+\section{Simulations}\label{simulation}}
 
 In this section, we examine two scenarios for both low and high dimensions to test our proposed algorithm. For visualization purposes, \autoref{twodgaussian} presents a 2-D meta data example. We first simulate the data of size \(N=2,000\) from a mixture of four Gaussian kernels with the same covariance but different means, each consisting of \(500\) points. Different mapping functions are then applied to the 2-D meta data to be mapped in a 3-D feature space, which gives the higher-dimensional input for different manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. The embedded dimension is set as \(d=2\), the same as the meta data dimension. This enables us to compare the manifold learning embedding with the true meta data. We could now apply Algorithm \ref{alg:vkderm} to get the density estimates of all data points and further detect anomalies. As a high-dimensional example, the second simulation in \autoref{fivedgaussian} is based on a 5-D meta data of size \(N=2,000\) embedded in a 100-D space and the corresponding embedding dimension is \(d=5\).
 
