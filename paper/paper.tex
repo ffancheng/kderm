@@ -353,14 +353,14 @@ In this section, we present some notions about the Riemannian geometry used in t
 
 In topology, a \emph{homeomorphism} is a bijective map between two topological spaces that is continuous in both directions.
 A \emph{Hausdorff space} is a topological space where any two distinct points can be separated by disjoint neighborhoods.
-A \(d\)-dimensional (topological) \emph{manifold} \(M\) is a connected Hausdorff space \((M, \mathcal{T}_M)\) where the neighborhood \(U\) for each point \(p\) is homeomorphic to an open subset \(V\) of the Euclidean space \(\mathbb{R}^d\). Such a homeomorphism \(\varphi: U \rightarrow V\) and \(U\) gives a (coordinate) \emph{chart}, denoted as \((U, \varphi)\), with the corresponding local coordinates \((x_1(p),\dots, x_d(p)) := \varphi(p)\). A collection of charts \(\{U_\alpha, \varphi_\alpha\}\) ranging over the manifold \(M\) is called an \emph{atlas}, denoted as \(\mathcal{A}\).
+A \(d\)-dimensional (topological) \emph{manifold} \(M\) is a connected Hausdorff space \((M, \mathcal{T}_M)\) where the neighborhood \(U\) for each point \(p\) is homeomorphic to an open subset \(V\) of the Euclidean space \(\mathbb{R}^d\). Such a homeomorphism \(\varphi: U \rightarrow V\) together with \(U\) gives a (coordinate) \emph{chart}, denoted as \((U, \varphi)\), with the corresponding local coordinates \((x_1(p),\dots, x_d(p)) := \varphi(p)\). A collection of charts \(\{U_\alpha, \varphi_\alpha\}\) ranging over the manifold \(M\) is called an \emph{atlas}, denoted as \(\mathcal{A}\).
 The manifold \(M\) is a \emph{differentiable manifold} if there exists an atlas of \(M\), \(\{U_\alpha, \varphi_\alpha\}\), such that the \emph{transition maps} between any two charts,
 \[
 \varphi_\beta \circ \varphi_\alpha^{-1}: \varphi_\alpha(U_\alpha \cap U_\beta) \rightarrow \varphi_\beta(U_\alpha \cap U_\beta),
 \]
 are differentiable of class \(C^\infty\) (smooth).
 
-Let \(\varphi\) be an injective map \(E \rightarrow \varphi(E)\). Then \(\varphi\) is an embedding of \(E\) into \(M\) if and only if \(\varphi: E \rightarrow \varphi(E)\) is a homeomorphism. \(\varphi(N)\) is called an embedded submanifold of \(M\) with the subspace topology.
+Let \(\varphi\) be an injective map \(E \rightarrow \varphi(E)\). Then \(\varphi\) is an embedding of \(E\) into \(M\) if and only if \(\varphi: E \rightarrow \varphi(E)\) is a homeomorphism, and \(\varphi(E)\) is called an embedded submanifold of \(M\) with the subspace topology.
 
 \hypertarget{tangent-vector-and-tangent-space}{%
 \subsection{Tangent vector and tangent space}\label{tangent-vector-and-tangent-space}}
@@ -371,23 +371,11 @@ For any \(p \in M\), let \(\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M\) an
 \[
 (\varphi \circ \gamma_1)^\prime(0) = (\varphi \circ \gamma_2)^\prime(0).
 \]
-A \emph{tangent vector} to \(M\) at \(p\) is any equivalent class of the differentiable curves initialized at \(p\).
-The set of all tangent vectors at \(p\) defines the \emph{tangent space} of \(M\) at \(p\), denoted as \(T_pM\). The tangent space is vector space of dimension \(d\), equal to the dimension of \(M\), and it does not depend on the charts \(\varphi\) locally at \(p\). The collection of all tangent spaces defines the \emph{tangent bundle} \(TM = \cup_{p \in M}T_pM\).
-Tangent vectors can also be seen as the directional derivatives at \(p\). For a given coordinate chart \(\varphi=(x_1,\dots,x_d)\), the tangent vectors defining partial derivatives are denoted as \(\frac{\partial}{\partial x_1}(p),\dots,\frac{\partial}{\partial x_d}(p)\), which define a \emph{basis} of the tangent space \(T_pM\).
+A \emph{tangent vector} to a manifold \(M\) at point \(p\), \(v_p\), is any equivalent class of the differentiable curves initialized at \(p\).
+The set of all tangent vectors at \(p\) defines the \emph{tangent space} of \(M\) at \(p\), denoted as \(T_pM\). The tangent space is a vector space of dimension \(d\), equal to the dimension of \(M\), and it does not depend on the chart \(\varphi\) locally at \(p\). The collection of all tangent spaces defines the \emph{tangent bundle} \(TM = \cup_{p \in M}T_pM\).
+Tangent vectors can also be seen as the directional derivatives at \(p\). For a given coordinate chart \(\varphi=(x_1,\dots,x_d)\), the tangent vectors defining partial derivatives are denoted as \(\frac{\partial}{\partial x_1}(p),\dots,\frac{\partial}{\partial x_d}(p)\), which define a \emph{basis} of the tangent space.
 
 The tangent space \(T_pM\) also admits a dual space \(T^*_pM\) called the \emph{cotangent space} with corresponding \emph{cotangent vector} \(z_p: T^*_pM \rightarrow \mathbb{R}^d\), and basis denoted as \(dx_1(p),\dots,dx_d(p)\).
-
-\hypertarget{pushforward-and-pullback-metric}{%
-\subsection{Pushforward and pullback metric}\label{pushforward-and-pullback-metric}}
-
-Pushforward and pullback are two notions corresponding to the notions of tangent and cotangent vectors.
-Let \(f\) be an embedding from the Riemannian manifold \((M,g)\) to another smooth manifold \(E\). The pushforward \(h=\varphi*g\) of the Riemannian metric \(g\) along \(\varphi \equiv f^{-1}\) is a linear map \(f_*:TM \rightarrow TE\), which maps the tangent vectors \(u_p\) at point \(p \in M\) to the tangent vectors \(f_*u_p\) at the mapping point \(f(p) \in E\), and satisfies that for \(u, v \in T_f(p)E\),
-\[
-<u,v>_{\varphi*g_p} = <df_p^{-1}u, df_p^{-1}v>_{g_p},
-\]
-where \(df_p^{-1}\) is the Jacobian of \(f^{-1}\).
-The tangent vectors \(f_*u_p\) are equivalent to the velocity vector of a curve \(\gamma: I\rightarrow M\) passing through point \(p\) at time zero with a constant speed \(\gamma^{-1}(0)=u_p\).
-Similarly, the pullback maps the cotangent vectors \(z_{f(p)}\) at \(f(p) \in E\) to cotangent vectors at \(p \in M\) acting on tangent vectors \(u \in T_pM\).
 
 \hypertarget{riemannian-metric-and-geodesic-distance}{%
 \subsection{Riemannian metric and geodesic distance}\label{riemannian-metric-and-geodesic-distance}}
@@ -400,7 +388,7 @@ The Riemannian metric \(g\) can be used to define the norm of a vector \(u\), \(
 \(g\) could also be used to define the line element \(dl^2 = g_{ij}dx_idx_j\) and the volume element \(dV_g = \sqrt{\det(g)}dx_1\dots dx_d\), where \((x_1,\dots,x_d)\) are the local coordinates of the chart \((U, \varphi)\).
 For a curve \(\gamma: I \rightarrow M\), the length of the curve is
 \[l(\gamma) = \sqrt{\int_0^1 \|\gamma\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx_i}{dt} \frac{dx_j}{dt} dt}\],
-where \(\gamma(I) \subset U\). The volume \(W \subset U\) is defined as
+where \(\gamma(I) \subset U\). The volume of \(W \subset U\) is defined as
 \[
 Vol(W) = \int_W \sqrt{\det(g)}dx_1 \dots dx_d,
 \]
@@ -409,15 +397,27 @@ which is also called the \emph{Riemannian measure} on \(M\).
 The \emph{geodesics} of \(M\) are the smooth curves that locally joins the points along the shortest path on the manifold. A curve \(\gamma: I \rightarrow M\) is a geodesic if for all indices \(i,j,k\),
 the second-order ordinary differential equation is satisfied,
 \[
-\frac{d^2 x^i}{dt^2} + \Gamma^i_{jk} \frac{d x_j}{dt} \frac{dx_k}{dt} = 0,
+\frac{d^2 x_i}{dt^2} + \Gamma^i_{jk} \frac{d x_j}{dt} \frac{dx_k}{dt} = 0,
 \]
 where \(\Gamma^i_{jk}\) is the \emph{Christoffel symbol} defined by
 \[
 \Gamma^i_{jk} = \frac{1}{2} \sum_l g_{il} (\frac{\partial g_{il}}{\partial x_k} 
 + \frac{\partial g_{kl}}{\partial x_j} - \frac{\partial g_{jk}}{\partial x_l}).
 \]
-The geodesics have a constant speed with norm \(\| \gamma^\prime(t) \|\), and they are the local minimizers of the arc length functional \(l:\gamma \rightarrow \int_0^1 \| \gamma^\prime(t) \| dt\) when the curves are defined over the interval \([0,1]\). The \emph{geodesic distance} \(d_g\) is the length of the shortest geodesic between two points on the manifold.
+The geodesics have a constant speed with norm \(\| \gamma^\prime(t) \|\), and they are the local minimizers of the arc length functional \(l:\gamma \rightarrow \sqrt{\int_0^1 \| \gamma^\prime(t) \|_g^2 dt}\) when the curves are defined over the interval \([0,1]\). The \emph{geodesic distance} \(d_g\) is the length of the shortest geodesic between two points on the manifold.
 For a point \(p \in M\), when the geodesic distance starting at \(p\) is not minimized, we call such set of points the \emph{cut locus} of \(p\), and the \emph{injectivity radius} at \(p \in M\) is the distance to the cut locus. The injectivity radius of \((M,g)\), \(\textit{inj}_gM\) is the infimum of the injectivity radii over all points on the manifold.
+
+\hypertarget{pushforward-and-pullback-metric}{%
+\subsection{Pushforward and pullback metric}\label{pushforward-and-pullback-metric}}
+
+Pushforward and pullback are two notions corresponding to the notions of tangent and cotangent vectors.
+Let \(f\) be an embedding from the Riemannian manifold \((M,g)\) to another smooth manifold \(E\). The pushforward \(h=\varphi*g\) of the Riemannian metric \(g\) along \(\varphi \equiv f^{-1}\) is a linear map \(f_*:TM \rightarrow TE\), which maps the tangent vectors \(u_p\) at point \(p \in M\) to the tangent vectors \(f_*u_p\) at the mapping point \(f(p) \in E\), and satisfies that for \(u, v \in T_f(p)E\),
+\[
+<u,v>_{\varphi*g_p} = <df_p^{-1}u, df_p^{-1}v>_{g_p},
+\]
+where \(df_p^{-1}\) is the Jacobian of \(f^{-1}\).
+The tangent vectors \(f_*u_p\) are equivalent to the velocity vector of a curve \(\gamma: I\rightarrow M\) passing through point \(p\) at time zero with a constant speed \(\gamma^{-1}(0)=u_p\).
+Similarly, the pullback maps the cotangent vectors \(z_{f(p)}\) at \(f(p) \in E\) to cotangent vectors at \(p \in M\) acting on tangent vectors \(u \in T_pM\).
 
 \hypertarget{exponential-map-and-logarithmic-map}{%
 \subsection{Exponential map and logarithmic map}\label{exponential-map-and-logarithmic-map}}
