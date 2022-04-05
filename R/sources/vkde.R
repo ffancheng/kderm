@@ -4,7 +4,7 @@
 # eval.points by default make grids and generate estimates of grid points; if provided, eg. x, can evaluate density at certain points
 # output long list of x, eval.points (grid points or data points), estimates for density, bandwidth matrix, whether estimates are for grids
 
-vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points, xextend = 0.15, ...){
+vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points, xextend = 0.15, kde.package = "ks", positive = FALSE, opt.method = c("AMISE", "MEAN", "SCALED"), riem.scale = 1, ...){
 
   n <- nrow(x)
   d <- ncol(x)
@@ -16,12 +16,35 @@ vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = app
   if(gridsize <= 0) stop("Gridsize must be positive.")
   if(is_scalar_atomic(gridsize)) gridsize <- rep(gridsize[1], d) # vector of number of grid points
 
-  if(is.null(h) | !is.array(h)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points, ...)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # only works for 2d
+  if(is.null(h) | !is.array(h)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points, positive = positive, ...)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # only works for 2d
   
+  opt.method <- match.arg(opt.method, c("AMISE", "MEAN", "SCALED"), several.ok = FALSE)
   xr <- apply(x, 2, function(x) diff(range(x, na.rm = TRUE)))
   xmin <- xmin - xr * xextend
   xmax <- xmax + xr * xextend
 
+  # bandwidth is a d*d*nx array
+  ## TODO: optimize hi as bandwidth pointwise
+  if(opt.method == "MEAN"){
+    # Option 1: scale hi with mean_i(|hi|) / det(hi)
+    hidet <- apply(h, 3, det)
+    h <- sweep(h, 3, mean(hidet) / hidet, "*")
+  } else
+  
+  if(opt.method == "AMISE"){
+  # Option 2: scale hi as mean(det(hi)) * const = det(hopt) 
+  # Use optimized bandwidth from minimizing AMISE for scaling
+  if (d == 1 & !positive) 
+    H <- ks::hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  if (d > 1 & !positive) 
+    H <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  hidet <- apply(h, 3, det)
+  h <- h * ((de(H) / mean(hidet)))^(1/d)
+  # h <- sweep(h, 3, det(H) / hidet, "*")
+  }
+  # Option 3: scale by a input constant
+  if(opt.method == "SCALED") h <- h * riem.scale
+  
   if(missing(eval.points)) {
     # grid points for multidimension, linear method
     gx <- numeric(0)
@@ -29,8 +52,7 @@ vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = app
       gx <- c(gx, list(seq(xmin[i], xmax[i], length.out = gridsize[i])))
     }
     eval.points <- expand.grid(gx)
-    
-    # bandwidth is a d*d*nx array
+  
     # evaluate density on grid points
     z <- NULL
     for (k in 1:n) {
@@ -54,11 +76,6 @@ vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = app
     
     f <- list(x = x, eval.points = eval.points, estimate = z, H = h, gridded = FALSE)
   }
-
-  
-  ## TODO: optimize hk as bandwidth pointwise
-  # AMISE
   
   return(f)
-  
 }

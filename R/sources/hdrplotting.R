@@ -1,6 +1,6 @@
 # add argument h
 # https://github.com/robjhyndman/hdrcde/blob/f767b441e4338043258bcbcf8a60b281d1fd22c9/R/hdrscatterplot.R#L43
-hdrscatterplot_new <- function(x, y, levels = c(1, 50, 99), kde.package = c("ash", "ks"), noutliers = NULL, label = NULL, h = NULL, den = NULL, ...) {
+hdrscatterplot_new <- function(x, y, levels = c(1, 50, 99), kde.package = "ks", noutliers = NULL, label = NULL, h = NULL, den = NULL, ...) {
   levels <- sort(levels)
   if (missing(y)) {
     data <- x
@@ -96,7 +96,8 @@ hdr.2d <- function(x, y, prob = c(50, 95, 99), den=NULL, kde.package=c("ash","ks
   
   # Estimate bivariate density
   if(is.null(den))
-    den <- hdrcde:::den.estimate.2d(x,y,kde.package,h,xextend,yextend)
+    # den <- hdrcde:::den.estimate.2d(x,y,kde.package,h,xextend,yextend)
+    den <- den.estimate.2d(x,y,kde.package,h,xextend,yextend)
   
   # Calculates falpha needed to compute HDR of bivariate density den.
   # Also finds approximate mode.
@@ -111,7 +112,7 @@ hdr.2d <- function(x, y, prob = c(50, 95, 99), den=NULL, kde.package=c("ash","ks
 # Bivariate density estimate
 # Modified from hdrcde package https://github.com/robjhyndman/hdrcde/blob/master/R/hdr.boxplot.2d.R
 
-den.estimate.2d <- function(x, y, kde.package=c("ash","ks"), h=NULL, xextend=0.15,yextend=0.15) {
+den.estimate.2d <- function(x, y, kde.package=c("ash","ks"), h=NULL, xextend=0.15, yextend=0.15) {
   kde.package <- match.arg(kde.package)
   # Find ranges for estimates
   xr <- diff(range(x,na.rm=TRUE))
@@ -123,18 +124,18 @@ den.estimate.2d <- function(x, y, kde.package=c("ash","ks"), h=NULL, xextend=0.1
     if(is.null(h))
       h <- c(5,5)
     den <- ash::ash2(ash::bin2(cbind(x,y),rbind(xr,yr)),h)
-  } else
+  } else # kde.package=="ks"
   {
     X <- cbind(x,y)
     if(is.null(h))
       h <- ks::Hpi.diag(X,binned=TRUE) # 2*2 diagonal matrix
-    else if(is.vector(h)) # input h as a vector, which was default
-      h <- diag(h) 
+    # else if(is.vector(h)) # input h as a vector, which was default
+    #   h <- diag(h)
     else
-      # h <- diag(h) 
-      # den <- ks::kde(x=X,H=h,xmin=c(xr[1],yr[1]),xmax=c(xr[2],yr[2])) # h is not variable
-      den <- ks:::kde.sp.2d(x=X,H=h,xmin=c(xr[1],yr[1]),xmax=c(xr[2],yr[2])) 
-    den <- list(x=den$eval.points[[1]],y=den$eval.points[[2]],z=den$estimate)
+      h <- diag(h)
+    den <- ks::kde(x=X,H=h,xmin=c(xr[1],yr[1]),xmax=c(xr[2],yr[2])) # h is not variable
+      # den <- ks:::kde.sp.2d(x=X,H=h,xmin=c(xr[1],yr[1]),xmax=c(xr[2],yr[2])) # modified for 2d vkde
+    den <- list(x=den$eval.points[[1]],y=den$eval.points[[2]],z=den$estimate, h = den$H)
   }
   return(den)
 }

@@ -1,10 +1,11 @@
 # f: estimates for all data points x, not grid points
-plot_outlier <- function(x, gridsize = 20, f = NULL, prob = c(1, 50, 99), noutliers = 20, label = NULL, riem.scale = 1, ell.size = 1, ...){
+plot_outlier <- function(x, gridsize = 20, f = NULL, prob = c(1, 50, 99), noutliers = 20, label = NULL, riem.scale = 1, opt.method = c("AMISE", "MEAN", "SCALED")[3], ell.size = 1, ...){
   
+  opt.method <- match.arg(opt.method, c("AMISE", "MEAN", "SCALED"), several.ok = FALSE)
   fn <- x$embedding
   Rn <- x$rmetric
   # if(is.null(f)) f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn * riem.scale, gridsize = gridsize) # works for 2d, use linear interpolation
-  if(is.null(f)) f <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn)
+  if(is.null(f)) f <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale)
   
   den <- f
   E1 <- fn[,1]
