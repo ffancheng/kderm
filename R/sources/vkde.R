@@ -39,8 +39,8 @@ vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = app
   if (d > 1 & !positive) 
     H <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
   hidet <- apply(h, 3, det)
-  h <- h * ((de(H) / mean(hidet)))^(1/d)
-  # h <- sweep(h, 3, det(H) / hidet, "*")
+  # h <- h * ((det(H) / mean(hidet)))#^(1/d)
+  h <- sweep(h, 3, det(H) / hidet, "*")
   }
   # Option 3: scale by a input constant
   if(opt.method == "SCALED") h <- h * riem.scale

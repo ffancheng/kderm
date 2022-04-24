@@ -253,7 +253,7 @@ Rn <- metric_isomap$rmetric # array
 # fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
 # plot_contour(metric_isomap, gridsize = gridsize, riem.scale = riem.scale) # estimate grid densities with vkde()
 
-opt.method <- c("AMISE", "MEAN", "SCALED")[1]
+opt.method <- c("AMISE", "MEAN", "SCALED")[2]
 riem.scale <- .1
 fisomap <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale) # 0.923
 # fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn) # 0.64
