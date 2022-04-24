@@ -342,6 +342,7 @@ In \autoref{vkde}, we present the proposed algorithm to detect anomalies based o
 \autoref{simulation} is composed of two simulations with the proposed algorithm; the first deals with 2-dimensional meta data mapped into a 3-D swiss roll or twin peaks data and the second with a 5-D semi-hypersphere mapped in a 100-D space.
 \autoref{application} contains the application to visualize and identify anomalies in the Irish smart meter dataset.
 Conclusions and discussions are presented in \autoref{conclusion}.
+Readers interested in the the notions of Riemannian geometry mentioned in this paper could use the Appendix in \autoref{riemgeo} as a reference.
 
 \hypertarget{vkde}{%
 \section{Kernel density estimation on manifolds}\label{vkde}}
@@ -360,11 +361,6 @@ In this section, we introduce the proposed method to detect anomalies based on t
 \end{figure}
 
 To start with, we introduce the notations used in this manuscript. Then we introduce the multivariate kernel density estimation method with variable bandwidth matrix and the metric learning algorithm to derive the pointwise Riemannian metric. Readers familiar with these topics could skip the corresponding subsections. Finally, we propose our novel algorithm to estimate densities and detect anomalies for high-dimensional data set.
-
-\hypertarget{notations}{%
-\subsection{Notations}\label{notations}}
-
-Denote the \(s\)-dimensional input data with observations \(X_i, i = 1, 2, \dots, N\), where \(x_i \in \mathcal{R}^s\). The underlying manifold \(M\) has the true density \(f\). Manifold learning takes the input data and finds its \(d\)-dimensional representation of data that lie on the manifold \(M\), with output data points \(Y_i, i = 1, 2, \dots, N\), where \(Y_i \in \mathcal{R}^d\) and \(d \ll s\). The Riemannian metric of the embedding is denoted as \(g_i, i = 1, 2, \dots, N\). In kernel density estimate, the pointwise variable bandwidth matrix \(H_i\) is used to estimate the density of the embedding, \(\hat{f}\).
 
 \hypertarget{multivariate-kernel-density-estimation}{%
 \subsection{Multivariate kernel density estimation}\label{multivariate-kernel-density-estimation}}
@@ -388,13 +384,14 @@ Further, the estimator in Equation \eqref{eq:kde} is only applicable when the sa
 \hypertarget{riemest}{%
 \subsection{Kernel density estimator on Riemannian manifolds}\label{riemest}}
 
-Consider a compact Riemannian manifold \((M, g)\) of dimension \(d\) without boundary and a probability distribution with density \(f\) on the manifold. Assume \((M, d_g)\) is a complete metric space, where \(d_g\) is the Riemannian distance induced by \(g\) and the strictly positive injectivity radius \autocite{Chavel2006-mp} of the manifold. Denote \(A_i, i = 1, 2, \dots, N\), where \(A_i \in \mathcal{R}^d\), as i.i.d. random objects on \(M\) with density \(f\). For each \(p\in M\), \textcite{Pelletier2005-vu} proposed the kernel density estimator of \(f\) to be
+Consider a compact Riemannian manifold \((M, g)\) of dimension \(d\) without boundary and a probability distribution with density \(f\) on the manifold. Assume \((M, d_g)\) is a complete metric space, where \(d_g\) is the Riemannian distance induced by the Riemannian, \(g\), and the strictly positive injectivity radius \autocite{Chavel2006-mp} of the manifold, \(inj_g(M)\).
+Denote \(A_i, i = 1, 2, \dots, N\), where \(\pmb{A}_i \in \mathcal{R}^d\), as i.i.d. random objects on \(M\) with density \(f\). For each \(p\in M\), \textcite{Pelletier2005-vu} proposed the kernel density estimator of \(f\) to be
 \begin{equation}
 \label{eq:denriem}
-f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d \theta_p(A_i)} K(\frac{d_g(p, A_i)}{h}),
+f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d \theta_{A_i}(p)} K(\frac{d_g(p, A_i)}{h}),
 \end{equation}
-where \(\theta_p(x)\) is the volume density function on the manifold, \(K: \mathcal{R}_{+} \rightarrow \mathcal{R}\) is a non-negative function, and \(h\) is the bandwidth.
-\textcite{Pelletier2005-vu} discussed the volume density function \(\theta_p(x)\) defined for \(p\) in a neighborhood of \(x\) on the manifold, with the geodesic normal coordinates at \(x\), \(\theta_p(x)\) is equal to the determinant of the Riemannian metric \(g\) at \(\exp_p^{-1}(x)\). The expression in \eqref{eq:denriem} is also proved to be consistent with the kernel density estimators in the Euclidean case as
+where \(h\) is the bandwidth satisfying \(h \leq h_0\) for fixed \(h_0\) such that \(0\leq h_0\leq inj_g(M)\), \(K: \mathcal{R}_{+} \rightarrow \mathcal{R}\) is a non-negative map, and \(\theta_{q}(p)\) is the volume density function on the manifold.
+\textcite{Pelletier2005-vu} mention that the volume density function \(\theta_q(p)\) defined for \(p\) in a neighborhood of \(q\) on the manifold, with the geodesic normal coordinates at \(q\), is equal to the determinant of the Riemannian metric \(g\) at the logarithm map at q \(\exp_q^{-1}(p)\). The expression in \eqref{eq:denriem} is also proved to be consistent with the kernel density estimators in the Euclidean case as
 \begin{equation}
 \label{eq:denconsist}
 f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d} K(\frac{\|p-A_i\|}{h}),
@@ -745,7 +742,9 @@ There are several open questions to be explored. The first involves the selectio
 This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster.
 
 \clearpage\appendix
-\section{Appendix: Notions about Riemannian geometry}\label{riemgeo}
+
+\hypertarget{riemgeo}{%
+\section{Appendix: Notions about Riemannian geometry}\label{riemgeo}}
 
 In this appendix, we present some notions about the Riemannian geometry used in this paper.
 
@@ -830,9 +829,6 @@ The inverse of the exponential map is called the \emph{logarithm map}, \(\log_p(
 Also define the \emph{geodesic ball} centered at \(p\) of radius \(r > 0\) as the image by the exponential map of \(B(0_p, r) \subset T_pM\) with \(r < \textit{inj}_gM\).
 Then we could interpolate a geodesic \(\gamma\) between two points \(p\) and \(q\) with the exponential map and the logarithmic map, \(\gamma(t) = \exp_p(t\log_p(q))\), and the geodesic distance is given by \(d_g(p,q) = \|\log_p(q)\|_g\).
 
-\hypertarget{canonical-metric}{%
-\subsection{Canonical metric}\label{canonical-metric}}
-
 \hypertarget{volumn-density-function}{%
 \subsection{Volumn density function}\label{volumn-density-function}}
 
@@ -848,8 +844,16 @@ The exponential map \(\exp_p: T_pM \rightarrow M\) induced by pullback of a volu
 d\exp_p^*vol(u) = \theta_p(u)du.
 \]
 
-\hypertarget{laplace-beltrami-operator}{%
-\subsection{Laplace-Beltrami operator}\label{laplace-beltrami-operator}}
+\hypertarget{example}{%
+\paragraph{Example}\label{example}}
+
+Manifold: S2
+
+\(\theta \sim U(0, \pi/2)\)
+
+\(X = \cos(\theta)\)
+
+\$\$
 
 \printbibliography
 
