@@ -1,28 +1,32 @@
+rm(list= ls())
+library(tidyverse)
+library(dimRed)
+# library(viridis)
+# library(hdrcde)
+library(ks)
+# library(patchwork)
+# # library(copula)
+# library(plotly)
+# library(kableExtra)
+Jmisc::sourceAll(here::here("R/sources"))
+
 set.seed(1)
-N <- 100
+N <- 10000
 d <- 2
 theta <- runif(N, 0, pi/2)
+# theta <- rnorm(N, pi / 4, pi / 20)
 # density
 dentheta <- dunif(theta, 0, pi/2) # density = 1/(MAX-MIN) = 0.6366198
 x <- cos(theta)
-fx <- 0
-# r <- ??
-for(i in 1:N){
-  fi <- 1 / r ^ d / sqrt(1 - x[i] ^ 2) * dmvnorm(x = eval.points, mean = x[k,], sigma = hk)
-  fx <- sum(fx, )
-}
+y <- sin(theta)
+plot(x, y, asp = 1)
+# range(x) # [0, 1]
+denx <- 2 / pi * (1 / sqrt(1 - x ^ 2))
+plot(x, denx)
+range(denx)
 
 
-# evaluate density on grid points
-fhat <- NULL
-for (k in 1:N) {
-  # hk <- h[,,k]
-  z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
-}
-z <- rowMeans(z, dims = 2, na.rm = TRUE)
-
-
-# # x ~ U(0,1), theta = acos(x)
+# # If x ~ U(0,1), theta = acos(x)
 # par(mfrow=c(1,2))
 # plot(x, sqrt(1-x^2), main = "Cartesian coordinates", ylim = c(0,1))
 # points(x, rep(0, N), col = grey(0.5), type = "p")
@@ -36,12 +40,12 @@ z <- rowMeans(z, dims = 2, na.rm = TRUE)
 # plot(theta, dentheta, main = "Polar CDF")
 
 
-train <- swissroll
+train <- data.frame(x = x, y = y)
 # Parameters fixed
-x <- train
-N <- nrow(x)
-s <- 2
-k <- 20
+# x <- train
+N <- nrow(train)
+s <- 1
+k <- 10
 method <- "Isomap"
 annmethod <- "kdtree"
 distance <- "euclidean"
@@ -56,32 +60,85 @@ noutliers <- 20
 # ISOMAP
 
 ## ---- message=FALSE-------------------------------------------------------------
-metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
+metric_isomap <- metricML(x = train, s = s, k = k, radius = 2, method = method, invert.h = TRUE, eps = 0,
                           # annmethod = annmethod, distance = distance, treetype = treetype, 
                           searchtype = searchtype
 )
 # summary(metric_isomap)
 
-
-# ## ----ggellipse, include=FALSE, eval=FALSE---------------------------------------
-# plot_embedding(metric_isomap) +
-#   labs(x = "ISO1", y = "ISO2")
-# plot_ellipse(metric_isomap, add = F, ell.no = 50, ell.size = .5,
-#              color = blues9[5], fill = blues9[5], alpha = 0.2)
-
-
 ## -------------------------------------------------------------------------------
 # fixed bandwidth
 fn <- metric_isomap$embedding
 E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
-E2 <- fn[,2]
-prob <- c(1, 50, 95, 99) # c(1, 10, 50, 95, 99) #
-p_hdr_isomap <- hdrscatterplot_new(E1, E2, kde.package = "ks", levels = prob, noutliers = noutliers, label = NULL)
-p_hdr_isomap_p <- p_hdr_isomap$p +
-  plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = 0,
-               color = blues9[5], fill = blues9[1], alpha = 0.2)
-# p_hdr_isomap
-h_hdr_isomap <- p_hdr_isomap$den$den$h
+xr <- diff(range(fn, na.rm=TRUE))
+xextend <- 0.15
+xr <- c(min(x)-xr*xextend,max(x)+xr*xextend)
+h <- hpi(fn, binned = TRUE) # 0.0767
+denks <- ks::kde(x = fn, h = h, xmin = xr[1], xmax = xr[2], gridsize = gridsize, eval.points = fn)
+str(denks)
+denfixed <- denks$estimate
+range(denfixed)
+range(denx)
+cor(denx, denfixed, method = "s") # -0.380
+
+Rn <- metric_isomap$rmetric
+opt.method <- "SCALED"
+riem.scale <- 1
+# fisomap <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale)
+
+
+
+
+
+
+h <- ks::hpi(x, binned = TRUE) # 0.034
+# h <- 0.05
+d <- 1
+fx <- rep(0, N)
+# fx <- 0
+eval.points <- x
+for(i in 1:N){
+  # fi <- sqrt(1 - x[i] ^ 2) * dmvnorm(x = eval.points, mean = x[i], sigma = diag(h, N))
+  # # fx[i, ]
+  # fx <- sum(fx, fi)
+  fi <- sqrt(1 - x[i] ^ 2) * dnorm(x = acos(eval.points), mean = acos(x[i]), sd = h)
+  fx = fx + fi
+}
+fx <- fx / N
+# plot(fx)
+plot(x, denx)
+plot(x, fx)
+
+fkde <- kde(x, eval.points = x)$estimate
+plot(x, fkde)
+hist(x, probability = T)
+
+
+
+# evaluate density on grid points
+fhat <- NULL
+for (k in 1:N) {
+  # hk <- h[,,k]
+  z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
+}
+z <- rowMeans(z, dims = 2, na.rm = TRUE)
+
+
+
+
+
+
+
+
+
+# E2 <- fn[,2]
+# prob <- c(1, 50, 95, 99) # c(1, 10, 50, 95, 99) #
+# p_hdr_isomap <- hdrscatterplot_new(E1, kde.package = "ks", levels = prob, noutliers = noutliers, label = NULL)
+# p_hdr_isomap_p <- p_hdr_isomap$p +
+#   plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = 0,
+#                color = blues9[5], fill = blues9[1], alpha = 0.2)
+# # p_hdr_isomap
+# h_hdr_isomap <- p_hdr_isomap$den$den$h
 
 ## ----outliers-------------------------------------------------------------------
 Rn <- metric_isomap$rmetric # array
