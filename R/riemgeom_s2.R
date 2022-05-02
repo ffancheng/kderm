@@ -26,6 +26,51 @@ plot(x, denx)
 range(denx)
 
 
+h <- ks::hpi(x, binned = TRUE) # 0.034
+# h <- 0.05
+fxkde <- kde(x, eval.points = x)$estimate
+plot(x, fxkde)
+
+d <- 1
+fx <- rep(0, N)
+# eval.points <- x
+for(i in 1:N){
+  # fi <- sqrt(1 - x[i] ^ 2) * dmvnorm(x = eval.points, mean = x[i], sigma = diag(h, N))
+  # fx <- sum(fx, fi)
+  fi <- 1 / sqrt(1 - x[i] ^ 2) * dnorm(x = acos(x), mean = acos(x[i]), sd = h)
+  fx <- fx + fi
+}
+fx <- fx / N
+
+par(mfrow=c(2,2))
+plot(x, denx)
+plot(x, fx)
+plot(x, fxkde)
+plot(x, dentheta)
+
+cor(denx, fx, method = "s")
+cor(denx, fxkde, method = "s")
+
+hist(x, probability = T)
+
+
+
+# evaluate density on grid points
+fhat <- NULL
+for (k in 1:N) {
+  # hk <- h[,,k]
+  z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
+}
+z <- rowMeans(z, dims = 2, na.rm = TRUE)
+
+
+
+
+
+
+
+
+
 # # If x ~ U(0,1), theta = acos(x)
 # par(mfrow=c(1,2))
 # plot(x, sqrt(1-x^2), main = "Cartesian coordinates", ylim = c(0,1))
@@ -90,38 +135,6 @@ riem.scale <- 1
 
 
 
-
-h <- ks::hpi(x, binned = TRUE) # 0.034
-# h <- 0.05
-d <- 1
-fx <- rep(0, N)
-# fx <- 0
-eval.points <- x
-for(i in 1:N){
-  # fi <- sqrt(1 - x[i] ^ 2) * dmvnorm(x = eval.points, mean = x[i], sigma = diag(h, N))
-  # # fx[i, ]
-  # fx <- sum(fx, fi)
-  fi <- sqrt(1 - x[i] ^ 2) * dnorm(x = acos(eval.points), mean = acos(x[i]), sd = h)
-  fx = fx + fi
-}
-fx <- fx / N
-# plot(fx)
-plot(x, denx)
-plot(x, fx)
-
-fkde <- kde(x, eval.points = x)$estimate
-plot(x, fkde)
-hist(x, probability = T)
-
-
-
-# evaluate density on grid points
-fhat <- NULL
-for (k in 1:N) {
-  # hk <- h[,,k]
-  z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
-}
-z <- rowMeans(z, dims = 2, na.rm = TRUE)
 
 
 
