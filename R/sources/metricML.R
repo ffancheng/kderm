@@ -182,7 +182,7 @@ riemann_metric <- function(Y, laplacian, d, invert.h = FALSE){
     Hsvals <- eigen(H[ , ,i])
     Huu <- Hsvals$vectors
     Hvv <- Hsvals$values[1:d] # top d largest eigenvalues, already sorted in decreasing order
-    Hvv1 <- diag(x = 1 / Hvv)
+    Hvv1 <- diag(x = 1 / Hvv, nrow = d)
     H[ , ,i] <- Huu %*% Hvv1 %*% t(Huu)
     H[, , i] <- 0.5 * (H[, , i] + t(H[, , i])) # fix not symmetric issue
   }
