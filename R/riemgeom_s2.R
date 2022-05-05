@@ -5,7 +5,7 @@ library(ks)
 Jmisc::sourceAll(here::here("R/sources"))
 
 set.seed(1)
-N <- 10000
+N <- 1000
 d <- 1
 theta <- runif(N, 0, pi/2)
 # density
@@ -137,6 +137,7 @@ fhat <- rep(0, N)
 h <- h
 for(i in 1:N){
   hk <- rmetric[,,k]
+  # fi <- hk ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, TODO: true volume density function
   # fi <- hk ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance
   fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hk)) # approximate geodesic distance with inner product adjusted by Riem metric
   # fi <- hk ^ (-1/2) * h ^ (-1) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # approximate geodesic distance with shortest path graph distance
@@ -165,7 +166,8 @@ plot(rank(denx), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(
 mean((fhat - dentheta)^2)
 mean((ffixed - dentheta)^2)
 
-
+## reduce N to test
+## optimize h using AMSE for our estimator
 
 
 
