@@ -4,15 +4,17 @@ library(dimRed)
 library(ks)
 Jmisc::sourceAll(here::here("R/sources"))
 
-set.seed(1)
-N <- 1000
+set.seed(123)
+N <- 100
 d <- 1
 theta <- runif(N, 0, pi/2)
 # density
 dentheta <- dunif(theta, 0, pi/2) # density = 1/(MAX-MIN) = 0.6366198
-# theta <- rnorm(N, pi / 4, pi / 20)
-# dentheta <- dnorm(theta, pi / 4, pi / 20)
-# denx <- 1 / sqrt(1 - x ^ 2) * dnorm(theta, pi / 4, pi / 20)
+theta <- rnorm(N, 0, pi / 20)
+theta <- exp(theta)
+hist(theta)
+dentheta <- dnorm(theta, pi / 4, pi / 20)
+denx <- 1 / sqrt(1 - x ^ 2) * dnorm(theta, pi / 4, pi / 20)
 x <- cos(theta)
 y <- sin(theta)
 plot(x, y, asp = 1)
@@ -127,6 +129,7 @@ riem.scale <- 1
 adj_matrix <- metric_isomap$adj_matrix
 dim(adj_matrix)
 summary(metric_isomap)
+nn.idx <- metric_isomap$nn2res$nn.idx
 
 # geodesic distance estimation
 # Option 1: true geodesic distance d_g
@@ -134,17 +137,27 @@ summary(metric_isomap)
 # Option 3: approximate geodesic distance with shortest path graph distance d_G
 d <- 1
 fhat <- rep(0, N)
-h <- h
+h <- h # N=100, h=0.147
+# h <- 0.35
+hidet <- apply(rmetric, 3, det) %>% mean()
+# hidetmean <- mean(hidet)
 for(i in 1:N){
-  hk <- rmetric[,,k]
-  # fi <- hk ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, TODO: true volume density function
-  # fi <- hk ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance
-  fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hk)) # approximate geodesic distance with inner product adjusted by Riem metric
-  # fi <- hk ^ (-1/2) * h ^ (-1) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # approximate geodesic distance with shortest path graph distance
+  hi <- rmetric[,,i]
+  # fi <- (1 - fn[i]^2) ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, true volume density function \theta = \sqrt{1-x^2}
+  # fi <- hi ^ (-1) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, estimated Riem metric
+  # fi <- hi ^ (-1/2) * h ^ (-1) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # approximate geodesic distance with shortest path graph distance, estimated Riem metric
+  # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric
+  
+  # h <- sweep(hi, 1, hidetmean / hi, "*")
+  hineighbor <- mean(rmetric[,,nn.idx[i, (2:(k+1))]])
+  # print(c(hi, hineighbor))
+  hi <- hi * hineighbor / hi
+  # hi <- hidet # gives the lowest MSE
+  fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance, average hi using the hi's of the neighborhood of fn[i], i.e. hi/sum(hi_neighbors)
   fhat <- fhat + fi
 }
 fhat <- fhat / N
-plot(fn, fhat)
+plot(fn, fhat, main = paste("Estimated density of embedding", "h=", round(h,3)))
 abline(h = dentheta, col = "red", lty = "dashed")
 text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
 summary(fhat)
@@ -155,19 +168,24 @@ abline(h = dentheta, col = "red", lty = "dashed")
 text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
 summary(ffixed)
 
-
-# How to compare rank of density estimates???
-cor(denx, fhat, method = "s")
-cor(denx, ffixed, method = "s")
-plot(rank(denx), rank(fhat), main = paste("Rank correlation:", round(cor(rank(denx), rank(fhat), method = "s"), 3)))
-plot(rank(denx), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(denx), rank(ffixed), method = "s"), 3)))
-
-
 mean((fhat - dentheta)^2)
 mean((ffixed - dentheta)^2)
 
-## reduce N to test
+## reduce N to test， N= 100， 
+# true, 0.017 > 0.016
+# 0.022 > 0.016
+## h is optimized for kde fixed
 ## optimize h using AMSE for our estimator
+
+
+
+
+
+# # How to compare rank of density estimates???
+# cor(denx, fhat, method = "s")
+# cor(denx, ffixed, method = "s")
+# plot(rank(denx), rank(fhat), main = paste("Rank correlation:", round(cor(rank(denx), rank(fhat), method = "s"), 3)))
+# plot(rank(denx), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(denx), rank(ffixed), method = "s"), 3)))
 
 
 
@@ -175,9 +193,9 @@ mean((ffixed - dentheta)^2)
 # # d <- 1
 # # z <- NULL
 # # rmetric <- metric_isomap$rmetric
-# # for (k in 1:N) {
-# #   hk <- as.matrix(rmetric[,,k])
-# #   z <-  abind::abind(z, array(h ^ (- d / 2) * mvtnorm::dmvnorm(x = fn, mean = fn[k,], sigma = h * hk), dim = rep(N, d)), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
+# # for (i in 1:N) {
+# #   hi <- as.matrix(rmetric[,,k])
+# #   z <-  abind::abind(z, array(h ^ (- d / 2) * mvtnorm::dmvnorm(x = fn, mean = fn[k,], sigma = h * hi), dim = rep(N, d)), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
 # # }
 # # # fhat <- rowMeans(z, dims = 2, na.rm = TRUE)
 # # fhat <- rowMeans(z, na.rm = TRUE)
