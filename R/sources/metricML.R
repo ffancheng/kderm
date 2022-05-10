@@ -135,7 +135,8 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
               rmetric=hn, 
               weighted_graph=g,
               adj_matrix=Kn,
-              laplacian=Ln))
+              laplacian=Ln,
+              nn2res = nn2res))
 }
 
 
