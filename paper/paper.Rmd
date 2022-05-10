@@ -1210,22 +1210,37 @@ $\Psi^{-1}: B_\pi(0) \rightarrow S^2 \backslash \{-p\}$ given by $$
 $$ if $(s,t) \neq (0,0)$ and $\Psi^{-1}(0,0)=p$ where
 $r=\sqrt{s^2 + t^2}$. Note that $r=d_g(p,q)$ if $q = \exp_p(sv+tw)$.
 Then we take the partial derivatives of \$\\Psi\^{-1}(s,t)\$ with
-respect to \$s\$ and \$t\$ and have that$$
-A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}s}{r}p + \frac{\cos(r)rs^2+t^2\sin(r)}{r^3}v + \frac{(\cos(r)r-\sin(r))st}{r^3}w, \\
+respect to \$s\$ and \$t\$ and have that
+$$
+A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}s}{r}p + \frac{\cos(r)rs^2+t^2\sin(r)}{r^3}v + \frac{(\cos(r)r-\sin(r))st}{r^3}w,
+$$
+$$
 B(s,t) = \frac{\partial}{\partial \Psi_2} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}t}{r}p + \frac{(\cos(r)r-\sin(r))st}{r^3}v + \frac{\cos(r)rt^2+\sin(r)s^2}{r^3}w.
-$$ Then each component of the riemannian metric could be calculated as
+$$ 
+Then each component of the riemannian metric could be calculated as
 $g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))$. We obtain
 that the volume density on the sphere is $$
 \theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2} \\
 = \frac{|\sin(d_g(p,q))|}{d_g(p,g)},
 $$ for $q \neq p, -p$, and $\theta_p(p) = 1$.
 
-In $S^1$, we could let \$\\{v, p\\}\$ be the basis of
-\$\\mathbb{R}\^2\$. Then the exponential chart induced
+Similarly in $S^1$, we could let $\{v, p\}$ be the basis of
+$\mathbb{R}^2$. Then the exponential chart induced
 
-Polar coordinates: $\phi(\exp_p{vt})^{\prime}(0) = v$
+Polar coordinates:
+$\phi(\exp_p{vt})^{\prime}(0) = (\alpha + vt)^\prime\bigg|_{t=0} = v$.
 
 Cartesian coordinates:
-$\psi(\exp_p{vt})^{\prime}(0) = (x_p \cos{v} - \sqrt{1-x_p^2} \sin{v})^\prime  \bigg|_{t=0} = - \sqrt{1 - x_p^2}v$
-
-\newpage
+$$
+\psi(\exp_p{vt})^{\prime}(0) = (\cos(\arccos(p)+vt))^\prime\bigg|_{t=0} \\
+= (p \cos{v} - \sqrt{1-p^2} \sin{v})^\prime \bigg|_{t=0} \\
+= - \sqrt{1 - p^2}v
+$$
+Then the volume density function is
+$$
+\theta_p(q) = \sqrt{(-\sqrt{1-p^2})^2} = \sqrt{1-p^2},
+$$
+and the geodesic distance is
+$$
+d_g(p,q) = \arccos(p) - \arccos(q).
+$$
