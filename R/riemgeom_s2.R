@@ -60,6 +60,7 @@ plot(x, y, asp = 1)
 plot(x, denx)
 # range(denx)
 
+
 # KDE with fixed bandwidth
 h <- ks::hpi(x, binned = TRUE) # 0.034
 # h <- 0.05
@@ -133,7 +134,7 @@ noutliers <- 20
 # ISOMAP
 
 ## ---- message=FALSE-------------------------------------------------------------
-metric_isomap <- metricML(x = train, s = s, k = k, radius = 2, method = method, invert.h = TRUE, eps = 0,
+metric_isomap <- metricML(x = train, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
                           # annmethod = annmethod, distance = distance, treetype = treetype, 
                           searchtype = searchtype
 )
@@ -144,11 +145,11 @@ metric_isomap <- metricML(x = train, s = s, k = k, radius = 2, method = method, 
 fn <- metric_isomap$embedding
 # fn <- fn+0.45
 # E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
-xr <- diff(range(fn, na.rm = TRUE))
-xextend <- 0.15
-xr <- c(min(fn) - xr * xextend, max(fn) + xr * xextend)
+# xr <- diff(range(fn, na.rm = TRUE))
+# xextend <- 0.15
+# xr <- c(min(fn) - xr * xextend, max(fn) + xr * xextend)
 h <- hpi(fn, binned = TRUE) # 0.0767
-denks <- ks::kde(x = fn, h = h, xmin = xr[1], xmax = xr[2], gridsize = gridsize, eval.points = fn)
+denks <- ks::kde(x = fn, h = h, eval.points = fn)
 str(denks)
 ffixed <- denks$estimate
 summary(ffixed)
@@ -168,52 +169,73 @@ dim(adj_matrix)
 summary(metric_isomap)
 nn.idx <- metric_isomap$nn2res$nn.idx
 
+### Bandwidth selection https://bookdown.org/egarpor/NP-EAFIT/dens-bwd.html
+## Plug-in rule
+# Rule-of-thumb
+h <- bw.nrd0(x = fn)
+h <- bw.nrd(x = fn)
+h <- hpi(fn, binned = TRUE) # same as KernSmooth::dpik(fn)
+## Cross-validation
+h <- bw.ucv(x = fn)
+h <- bw.bcv(x = fn)
+# Polot estimation from Sheather & Jones (1991) 
+h <- bw.SJ(x = fn)
+
+cor(theta, fn) # 1, meaning that fn is a good embedding of theta. Now we estimate the density of fn as an approximation of density estimates of theta.
+# The geodesic distance now is fn[i] - fn[j]
+# The estimated Riemannian metric for each point i is a scalar
+summary(rmetric) # riem metric are smaller than the fixed bandwidth h, too squiggly; 10 times difference
+mean(rmetric)
+h
+
 # geodesic distance estimation
 # Option 1: true geodesic distance d_g
 # Option 2: approximate geodesic distance with inner product adjusted by Riem metric (x-x_i)'h_i^(-1)(x-xi)
 # Option 3: approximate geodesic distance with shortest path graph distance d_G
 d <- 1
 fhat <- rep(0, N)
-h <- h # N=100, h=0.147
-# h <- 0.35
+# h <- h # N=100, h=0.147
+print(h)
 hidet <- apply(rmetric, 3, det) %>% mean()
 # hidetmean <- mean(hidet)
+h <- 1 # N(fn[i], sqrt(hi)) gives lowest MSE !!!!
 for(i in 1:N){
   hi <- rmetric[,,i]
-  
-  fi <- (1 - fn[i]^2) ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, true volume density function \theta = \sqrt{1-x^2}
+  # fi <- (1 - fn[i]^2) ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, true volume density function \theta = \sqrt{1-x^2}
+  # fi <- dnorm(x = fn, mean = fn[i], sd = h) # KDE with fixed bandwidth, very close to the above fi
   
   # fi <- hi ^ (-1) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, estimated Riem metric
   # fi <- hi ^ (-1/2) * h ^ (-1) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # approximate geodesic distance with shortest path graph distance, estimated Riem metric
   
-  # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric
+  # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric #### SET h=1 gives a better estimation
   
-  # # h <- sweep(hi, 1, hidetmean / hi, "*")
-  # hineighbor <- mean(rmetric[ , , nn.idx[i, (2:(k+1))]])
-  # # print(c(hi, hineighbor))
-  # hi <- hi * hineighbor / hi
-  # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance, average hi using the hi's of the neighborhood of fn[i], i.e. hi/sum(hi_neighbors)
+  # h <- sweep(hi, 1, hidetmean / hi, "*")
+  hineighbor <- mean(rmetric[ , , nn.idx[i, (2:(k+1))]]) # very close to the one above
+  # print(c(hi, hineighbor))
+  hi <- hi * hineighbor / hi
+  fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance, average hi using the hi's of the neighborhood of fn[i], i.e. hi/sum(hi_neighbors)
+
   fhat <- fhat + fi
 }
 fhat <- fhat / N
 
-plot(fn, fhat, main = paste("Estimated density of fn", "h=", round(h,3)))
-points(theta, dentheta, col = "red", lty = "dashed", cex = .2)
+par(mfrow=c(1,1))
+plot(fn, fhat, main = paste("Estimated density of fn", "h=", round(h,3)), cex = .2, col = "red")
+points(theta - 0.45, dentheta, lty = "dashed", cex = .2)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
-summary(fhat)
-mean((fhat - dentheta)^2)
-
-plot(fn, ffixed)
-points(theta, dentheta, col = "red", lty = "dashed", cex = .2)
+points(fn, ffixed, col = "blue", lty = "dashed", cex = .2)
+# points(theta, dentheta, col = "red", lty = "dashed", cex = .2)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
-summary(ffixed)
+# summary(fhat)
+# summary(ffixed)
 mean((ffixed - dentheta)^2)
-
-# How to compare rank of density estimates???
+mean((fhat - dentheta)^2)
+# How to compare rank of density estimates
 cor(dentheta, fhat, method = "s")
 cor(dentheta, ffixed, method = "s")
-plot(rank(dentheta), rank(fhat), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fhat), method = "s"), 3)))
-plot(rank(dentheta), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(ffixed), method = "s"), 3)))
+
+# plot(rank(dentheta), rank(fhat), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fhat), method = "s"), 3)))
+# plot(rank(dentheta), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(ffixed), method = "s"), 3)))
 
 
 ## reduce N to test， N= 100， 
