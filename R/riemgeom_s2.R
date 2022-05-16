@@ -4,31 +4,68 @@ library(dimRed)
 library(ks)
 Jmisc::sourceAll(here::here("R/sources"))
 
-set.seed(123)
-N <- 100
+set.seed(1)
+N <- 1000
 d <- 1
-theta <- runif(N, 0, pi/2)
-# density
-dentheta <- dunif(theta, 0, pi/2) # density = 1/(MAX-MIN) = 0.6366198
-theta <- rnorm(N, 0, pi / 20)
-theta <- exp(theta)
-hist(theta)
-dentheta <- dnorm(theta, pi / 4, pi / 20)
-denx <- 1 / sqrt(1 - x ^ 2) * dnorm(theta, pi / 4, pi / 20)
-x <- cos(theta)
+distribution <- c("uniform", "normal", "beta")[3] # CHANGE DISTRIBUTION OF THETA
+switch(distribution,
+       "uniform" = {
+         # 1. theta ~ U(0, pi/2)
+         theta <- runif(N, 0, pi/2)
+         # density
+         dentheta <- dunif(theta, 0, pi/2) # density = 1/(MAX-MIN) = 0.6366198
+         # plot(theta, dentheta)
+       },
+       "normal" = {
+         # 2. theta ~ N(0, pi/20)
+         mu <- 0
+         sd <- pi / 20
+         theta <- rnorm(N, mu, sd)
+         # theta <- exp(theta)
+         # hist(theta)
+         dentheta <- dnorm(theta, mu, sd)
+         # plot(theta, dentheta)
+       },
+       "beta" = {
+         # 3. theta ~ Beta(a, b) \in [0,1]
+         shape1 <- 2
+         shape2 <- 5
+         theta <- rbeta(N, shape1, shape2)
+         dentheta <- dbeta(theta, shape1, shape2)
+         theta <- theta * (pi / 2)
+         dentheta <- dentheta / (pi / 2)
+         # plot(theta, dentheta)
+       })
+plot(theta, dentheta)
+
+# # NOT USED If x ~ U(0,1), theta = acos(x)
+# par(mfrow=c(1,2))
+# plot(x, sqrt(1-x^2), main = "Cartesian coordinates", ylim = c(0,1))
+# points(x, rep(0, N), col = grey(0.5), type = "p")
+# plot(x, denx, main = "U(0,1) CDF")
+# # polar coordinates
+# # theta <- acos(x)
+# dentheta <- 1 - cos(theta)
+# plot(cos(theta), sin(theta), main = "Polar coordinates", ylim = c(0,1))
+# points(theta, rep(0, N), col = grey(0.5), type = "p")
+# plot(theta, dentheta, main = "Polar CDF")
+
+# Transformation
+x <- cos(theta) # |dtheta/dx| = |-1/sqrt(1-x^2)|
+# True density of x, f(x) = f(theta) * |dtheta/dx|
+denx <- dentheta * 1 / sqrt(1 - x ^ 2)
 y <- sin(theta)
 plot(x, y, asp = 1)
 # range(x) # [0, 1]
-# True density of x
-denx <- 2 / pi * (1 / sqrt(1 - x ^ 2))
 plot(x, denx)
-range(denx)
+# range(denx)
 
 # KDE with fixed bandwidth
 h <- ks::hpi(x, binned = TRUE) # 0.034
 # h <- 0.05
 fxkde <- kde(x, eval.points = x)$estimate
 plot(x, fxkde)
+
 # KDE with Riemannian metric
 d <- 1
 fx <- rep(0, N)
@@ -41,38 +78,36 @@ fx <- fx / N
 
 # Plotting
 par(mfrow=c(2,2))
+plot(theta, dentheta, main = "True density of theta")
 plot(x, denx, main = "True density of x")
 plot(x, fxkde, main = paste("Estimated f(x) with KDE, h = ", round(h, 3)))
 plot(x, fx, main = "Estimated f(x) with riemannian metric")
-abline(h = dentheta, col = "red", lty = "dashed")
+# points(x, dentheta, col = "red", lty = "dashed")
 
-plot(x[order(x)][1:N*.6], fx[order(x)][1:N*.6], type = "b", cex = .5, main = "Estimated f(x)[1:.6*N] with riemannian metric")
-abline(h = dentheta, col = "red", lty = "dashed")
-text(x = 0.7, y = 0.55, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
+# plot(x[order(x)][1:N*.6], fx[order(x)][1:N*.6], type = "b", cex = .5, main = "Estimated f(x)[1:.6*N] with riemannian metric")
+# abline(h = dentheta, col = "red", lty = "dashed")
+# text(x = 0.7, y = 0.55, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
 
 summary(denx)
 summary(fxkde)
 summary(fx)
+# summary(dentheta)
 
 # rank correlation
+# our estimator is better than kde
 cor(denx, fx, method = "s")
 cor(denx, fxkde, method = "s")
+mean((denx - fx) ^ 2)
+mean((denx - fxkde) ^ 2)
+# mean((rank(denx) - rank(fx)) ^ 2)
+# mean((rank(denx) - rank(fxkde)) ^ 2)
 
+par(mfrow=c(2,2))
 plot(rank(denx), rank(fx), main = paste("Rank correlation:", round(cor(rank(denx), rank(fx), method = "s"), 3)))
 plot(rank(denx), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(denx), rank(fxkde), method = "s"), 3)))
+plot(denx, fx); abline(0, 1, lty = "dashed")
+plot(denx, fxkde); abline(0, 1, lty = "dashed")
 
-# # If x ~ U(0,1), theta = acos(x)
-# par(mfrow=c(1,2))
-# plot(x, sqrt(1-x^2), main = "Cartesian coordinates", ylim = c(0,1))
-# points(x, rep(0, N), col = grey(0.5), type = "p")
-# plot(x, denx, main = "U(0,1) CDF")
-# 
-# # polar coordinates
-# # theta <- acos(x)
-# dentheta <- 1 - cos(theta)
-# plot(cos(theta), sin(theta), main = "Polar coordinates", ylim = c(0,1))
-# points(theta, rep(0, N), col = grey(0.5), type = "p")
-# plot(theta, dentheta, main = "Polar CDF")
 
 
 
@@ -108,7 +143,7 @@ metric_isomap <- metricML(x = train, s = s, k = k, radius = 2, method = method, 
 # fixed bandwidth
 fn <- metric_isomap$embedding
 # E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
-xr <- diff(range(fn, na.rm=TRUE))
+xr <- diff(range(fn, na.rm = TRUE))
 xextend <- 0.15
 xr <- c(min(fn) - xr * xextend, max(fn) + xr * xextend)
 h <- hpi(fn, binned = TRUE) # 0.0767
@@ -117,10 +152,11 @@ str(denks)
 ffixed <- denks$estimate
 summary(ffixed)
 summary(denx)
-cor(denx, ffixed, method = "s") # -0.380
+summary(dentheta)
+cor(dentheta, ffixed, method = "s") # -0.380
 plot(fn, ffixed)
-# plot(theta, dentheta)
-plot(x, denx)
+plot(theta, dentheta)
+# plot(x, denx)
 
 rmetric <- metric_isomap$rmetric
 opt.method <- "SCALED"
@@ -158,18 +194,25 @@ for(i in 1:N){
 }
 fhat <- fhat / N
 plot(fn, fhat, main = paste("Estimated density of embedding", "h=", round(h,3)))
-abline(h = dentheta, col = "red", lty = "dashed")
-text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
+points(theta, dentheta, col = "red", lty = "dashed")
+# text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
 summary(fhat)
-cor(denx, fhat, method = "s")
+cor(dentheta, fhat, method = "s")
 
 plot(fn, ffixed)
-abline(h = dentheta, col = "red", lty = "dashed")
-text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
+points(theta, dentheta, col = "red", lty = "dashed")
+# text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
 summary(ffixed)
 
 mean((fhat - dentheta)^2)
 mean((ffixed - dentheta)^2)
+
+# How to compare rank of density estimates???
+cor(dentheta, fhat, method = "s")
+cor(dentheta, ffixed, method = "s")
+plot(rank(dentheta), rank(fhat), main = paste("Rank correlation:", round(cor(rank(denx), rank(fhat), method = "s"), 3)))
+plot(rank(dentheta), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(denx), rank(ffixed), method = "s"), 3)))
+
 
 ## reduce N to test， N= 100， 
 # true, 0.017 > 0.016
@@ -181,11 +224,6 @@ mean((ffixed - dentheta)^2)
 
 
 
-# # How to compare rank of density estimates???
-# cor(denx, fhat, method = "s")
-# cor(denx, ffixed, method = "s")
-# plot(rank(denx), rank(fhat), main = paste("Rank correlation:", round(cor(rank(denx), rank(fhat), method = "s"), 3)))
-# plot(rank(denx), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(denx), rank(ffixed), method = "s"), 3)))
 
 
 
