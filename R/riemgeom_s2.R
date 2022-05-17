@@ -7,7 +7,7 @@ Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1)
 N <- 1000
 d <- 1
-distribution <- c("uniform", "normal", "beta")[3] # CHANGE DISTRIBUTION OF THETA
+distribution <- c("uniform", "normal", "beta", "lognormal", "mixed")[5] # CHANGE DISTRIBUTION OF THETA
 switch(distribution,
        "uniform" = {
          # 1. theta ~ U(0, pi/2)
@@ -27,16 +27,36 @@ switch(distribution,
          # plot(theta, dentheta)
        },
        "beta" = {
-         # 3. theta ~ Beta(a, b) \in [0,1]
-         shape1 <- 2
-         shape2 <- 5
+         # 3. theta ~ Beta(a, b) \in [0,1]; (2,5), (5,1)
+         shape1 <- .5
+         shape2 <- .5
+         # shape1 <- 2
+         # shape2 <- 5
          theta <- rbeta(N, shape1, shape2)
          dentheta <- dbeta(theta, shape1, shape2)
          theta <- theta * (pi / 2)
          dentheta <- dentheta / (pi / 2)
          # plot(theta, dentheta)
+       },
+       "lognormal" = {
+         meanlog <- 0
+         sdlog <- .15
+         theta <- rlnorm(N, meanlog, sdlog)
+         dentheta <- dlnorm(theta, meanlog, sdlog)
+       },
+       "mixed" = {
+         components <- sample(1:3, prob = c(0.3, 0.5, 0.2), size = 5*N, replace = TRUE)
+         mus <- c(.1, .5, 1)
+         sds <- sqrt(c(.3, 1, .1) / pi)
+         theta <- rnorm(n=N,mean=mus[components],sd=sds[components])
+         dentheta <- .3 * dnorm(theta, mean=mus[1], sd=sds[1]) + .5 * dnorm(theta, mean=mus[2], sd=sds[2]) + .2 * dnorm(theta, mean=mus[3], sd=sds[3])
+         keep <- theta >= 0 & theta <= pi / 2 # only keep points within 0 and pi/2
+         theta <- theta[keep]
+         dentheta <- dentheta[keep]
+         N <- length(theta)
        })
 plot(theta, dentheta)
+# lines(density(abs(theta)))
 
 # # NOT USED If x ~ U(0,1), theta = acos(x)
 # par(mfrow=c(1,2))
@@ -103,11 +123,11 @@ mean((denx - fxkde) ^ 2)
 # mean((rank(denx) - rank(fx)) ^ 2)
 # mean((rank(denx) - rank(fxkde)) ^ 2)
 
-par(mfrow=c(2,2))
-plot(rank(denx), rank(fx), main = paste("Rank correlation:", round(cor(rank(denx), rank(fx), method = "s"), 3)))
-plot(rank(denx), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(denx), rank(fxkde), method = "s"), 3)))
-plot(denx, fx); abline(0, 1, lty = "dashed")
-plot(denx, fxkde); abline(0, 1, lty = "dashed")
+# par(mfrow=c(2,2))
+# plot(rank(denx), rank(fx), main = paste("Rank correlation:", round(cor(rank(denx), rank(fx), method = "s"), 3)))
+# plot(rank(denx), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(denx), rank(fxkde), method = "s"), 3)))
+# plot(denx, fx); abline(0, 1, lty = "dashed")
+# plot(denx, fxkde); abline(0, 1, lty = "dashed")
 
 
 
@@ -125,14 +145,13 @@ annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 2 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
 gridsize <- 20
 noutliers <- 20
 # riem.scale <- .1 # .1 # scale Riemmanian
 
 # ISOMAP
-
 ## ---- message=FALSE-------------------------------------------------------------
 metric_isomap <- metricML(x = train, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
                           # annmethod = annmethod, distance = distance, treetype = treetype, 
@@ -156,9 +175,9 @@ summary(ffixed)
 summary(denx)
 summary(dentheta)
 cor(dentheta, ffixed, method = "s") # -0.380
-plot(fn, ffixed)
-points(theta, dentheta, col = "red", cex = 0.3)
-# plot(x, denx)
+# plot(fn, ffixed)
+# points(theta, dentheta, col = "red", cex = 0.3)
+# # plot(x, denx)
 
 rmetric <- metric_isomap$rmetric
 opt.method <- "SCALED"
@@ -169,17 +188,17 @@ dim(adj_matrix)
 summary(metric_isomap)
 nn.idx <- metric_isomap$nn2res$nn.idx
 
-### Bandwidth selection https://bookdown.org/egarpor/NP-EAFIT/dens-bwd.html
-## Plug-in rule
-# Rule-of-thumb
-h <- bw.nrd0(x = fn)
-h <- bw.nrd(x = fn)
-h <- hpi(fn, binned = TRUE) # same as KernSmooth::dpik(fn)
-## Cross-validation
-h <- bw.ucv(x = fn)
-h <- bw.bcv(x = fn)
-# Polot estimation from Sheather & Jones (1991) 
-h <- bw.SJ(x = fn)
+# ### Bandwidth selection https://bookdown.org/egarpor/NP-EAFIT/dens-bwd.html
+# ## Plug-in rule
+# # Rule-of-thumb
+# h <- bw.nrd0(x = fn)
+# h <- bw.nrd(x = fn)
+# h <- hpi(fn, binned = TRUE) # same as KernSmooth::dpik(fn)
+# ## Cross-validation
+# h <- bw.ucv(x = fn)
+# h <- bw.bcv(x = fn)
+# # Polot estimation from Sheather & Jones (1991) 
+# h <- bw.SJ(x = fn)
 
 cor(theta, fn) # 1, meaning that fn is a good embedding of theta. Now we estimate the density of fn as an approximation of density estimates of theta.
 # The geodesic distance now is fn[i] - fn[j]
@@ -198,7 +217,7 @@ fhat <- rep(0, N)
 print(h)
 hidet <- apply(rmetric, 3, det) %>% mean()
 # hidetmean <- mean(hidet)
-h <- 1 # N(fn[i], sqrt(hi)) gives lowest MSE !!!!
+# h <- 1 # N(fn[i], sqrt(hi)) gives lowest MSE !!!!
 for(i in 1:N){
   hi <- rmetric[,,i]
   # fi <- (1 - fn[i]^2) ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, true volume density function \theta = \sqrt{1-x^2}
@@ -207,106 +226,47 @@ for(i in 1:N){
   # fi <- hi ^ (-1) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, estimated Riem metric
   # fi <- hi ^ (-1/2) * h ^ (-1) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # approximate geodesic distance with shortest path graph distance, estimated Riem metric
   
-  # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric #### SET h=1 gives a better estimation
+  fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric #### SET h=1 gives a better estimation
   
-  # h <- sweep(hi, 1, hidetmean / hi, "*")
-  hineighbor <- mean(rmetric[ , , nn.idx[i, (2:(k+1))]]) # very close to the one above
-  # print(c(hi, hineighbor))
-  hi <- hi * hineighbor / hi
-  fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance, average hi using the hi's of the neighborhood of fn[i], i.e. hi/sum(hi_neighbors)
+  # # h <- sweep(hi, 1, hidetmean / hi, "*")
+  # hineighbor <- mean(rmetric[ , , nn.idx[i, (2:(k+1))]]) # very close to the one above
+  # # print(c(hi, hineighbor))
+  # hi <- hi * hineighbor / hi
+  # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance, average hi using the hi's of the neighborhood of fn[i], i.e. hi/sum(hi_neighbors)
 
   fhat <- fhat + fi
 }
 fhat <- fhat / N
 
 par(mfrow=c(1,1))
-plot(fn, fhat, main = paste("Estimated density of fn", "h=", round(h,3)), cex = .2, col = "red")
-points(theta - 0.45, dentheta, lty = "dashed", cex = .2)
+plot(fn, fhat, main = paste("Estimated density of fn", "h=", round(h,3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
+     # ylim = c(0, max(dentheta))
+     )
+points(theta, dentheta, lty = 1, cex = .2, col = 1)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
-points(fn, ffixed, col = "blue", lty = "dashed", cex = .2)
+points(fn, ffixed, col = 3, lty = 2, cex = .2)
 # points(theta, dentheta, col = "red", lty = "dashed", cex = .2)
+legend(x = "topright",          # Position
+       legend = c("True density", "Estimates with riemannian", "Estimates with kde"),  # Legend texts
+       lty = c(1, 2, 3),           # Line types
+       col = c(1, 2, 3),           # Line colors
+       lwd = 2)                 # Line width
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
 # summary(fhat)
 # summary(ffixed)
 mean((ffixed - dentheta)^2)
 mean((fhat - dentheta)^2)
-# How to compare rank of density estimates
+
+# # How to compare rank of density estimates
 cor(dentheta, fhat, method = "s")
 cor(dentheta, ffixed, method = "s")
+# # plot(rank(dentheta), rank(fhat), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fhat), method = "s"), 3)))
+# # plot(rank(dentheta), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(ffixed), method = "s"), 3)))
 
-# plot(rank(dentheta), rank(fhat), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fhat), method = "s"), 3)))
-# plot(rank(dentheta), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(ffixed), method = "s"), 3)))
 
-
-## reduce N to test， N= 100， 
+## Use heavy tailed distribution or mixed normal distribution when KDE fails
+## reduce N to test， N= 100 
 # true, 0.017 > 0.016
 # 0.022 > 0.016
 ## h is optimized for kde fixed
 ## optimize h using AMSE for our estimator
-
-
-
-
-
-
-
-
-# # # evaluate density on grid points
-# # d <- 1
-# # z <- NULL
-# # rmetric <- metric_isomap$rmetric
-# # for (i in 1:N) {
-# #   hi <- as.matrix(rmetric[,,k])
-# #   z <-  abind::abind(z, array(h ^ (- d / 2) * mvtnorm::dmvnorm(x = fn, mean = fn[k,], sigma = h * hi), dim = rep(N, d)), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
-# # }
-# # # fhat <- rowMeans(z, dims = 2, na.rm = TRUE)
-# # fhat <- rowMeans(z, na.rm = TRUE)
-# # plot(fn, fhat)
-# 
-# 
-# 
-# 
-# # E2 <- fn[,2]
-# # prob <- c(1, 50, 95, 99) # c(1, 10, 50, 95, 99) #
-# # p_hdr_isomap <- hdrscatterplot_new(E1, kde.package = "ks", levels = prob, noutliers = noutliers, label = NULL)
-# # p_hdr_isomap_p <- p_hdr_isomap$p +
-# #   plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = 0,
-# #                color = blues9[5], fill = blues9[1], alpha = 0.2)
-# # # p_hdr_isomap
-# # h_hdr_isomap <- p_hdr_isomap$den$den$h
-# 
-# ## ----outliers-------------------------------------------------------------------
-# Rn <- metric_isomap$rmetric # array
-# # fisomap <- vkde2d(x = fn[,1], y = fn[,2], h = Rn*riem.scale, gridsize = gridsize) # $x $y $z
-# # fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
-# # plot_contour(metric_isomap, gridsize = gridsize, riem.scale = riem.scale) # estimate grid densities with vkde()
-# 
-# opt.method <- c("AMISE", "MEAN", "SCALED")[2]
-# riem.scale <- .1
-# fisomap <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale) # 0.923
-# # fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn) # 0.64
-# # # if scaling the bandwidth
-# # fisomap_MEAN <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = "MEAN") # 0.964
-# # fisomap_AMISE <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = "AMISE") # 0.941
-# # h_isomap <- fisomap$H
-# # str(fisomap)
-# # summary(fisomap$estimate)
-# # all.equal(fisomap$estimate, p_isomap$densities)
-# 
-# # check if vkde with grid estimate is the same as hdrcde::interp.2d
-# # fixgrid_isomap <- vkde(x = fn, h = NULL, gridsize = gridsize)
-# # summary(fixgrid_isomap)
-# # interpden_fix <- hdrcde:::interp.2d(fixgrid_isomap$eval.points[[1]], fixgrid_isomap$eval.points[[2]], fixgrid_isomap$estimate, x0 = E1, y0 = E2)
-# # all.equal(interpden_fix, fisomap$estimate)
-# 
-# ## ----hdroutliers----------------------------------------------------------------
-# p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
-# # all.equal(fxy_isomap, p_isomap$densities)
-# 
-# ## ----compoutlier, eval = FALSE--------------------------------------------------
-# (p_isomap$p + p_hdr_isomap$p) + coord_fixed() + 
-#   plot_annotation(title = "Left: variable bandwidth; Right: fixed bandwidth", theme = theme(plot.title = element_text(hjust = 0.5)))
-# 
-# cormethod <- c("pearson", "kendall", "spearman")[3]
-# cor(preswissroll$den, p_isomap$densities, method = cormethod)
-# cor(preswissroll$den, p_hdr_isomap$densities, method = cormethod)
