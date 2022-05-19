@@ -82,9 +82,9 @@ plot(x, denx)
 
 
 # KDE with fixed bandwidth
-h <- ks::hpi(x, binned = TRUE) # 0.034
+h <- ks::hpi(theta, binned = TRUE) # 0.034
 # h <- 0.05
-fxkde <- kde(x, eval.points = x)$estimate
+fxkde <- kde(theta, eval.points = theta)$estimate
 plot(x, fxkde)
 
 # KDE with Riemannian metric
@@ -100,9 +100,9 @@ fx <- fx / N
 # Plotting
 par(mfrow=c(2,2))
 plot(theta, dentheta, main = "True density of theta")
-plot(x, denx, main = "True density of x")
-plot(x, fxkde, main = paste("Estimated f(x) with KDE, h = ", round(h, 3)))
-plot(x, fx, main = "Estimated f(x) with riemannian metric")
+plot(acos(x), denx, main = "True density of x")
+plot(theta, fxkde, main = paste("Estimated f(x) with KDE, h = ", round(h, 3)))
+plot(acos(x), fx, main = "Estimated f(x) with riemannian metric")
 # points(x, dentheta, col = "red", lty = "dashed")
 
 # plot(x[order(x)][1:N*.6], fx[order(x)][1:N*.6], type = "b", cex = .5, main = "Estimated f(x)[1:.6*N] with riemannian metric")
@@ -116,18 +116,20 @@ summary(fx)
 
 # rank correlation
 # our estimator is better than kde
-cor(denx, fx, method = "s")
-cor(denx, fxkde, method = "s")
-mean((denx - fx) ^ 2)
-mean((denx - fxkde) ^ 2)
-# mean((rank(denx) - rank(fx)) ^ 2)
-# mean((rank(denx) - rank(fxkde)) ^ 2)
+cor(dentheta, fx, method = "s")
+cor(dentheta, fxkde, method = "s")
+mean((dentheta - fx) ^ 2)
+mean((dentheta - fxkde) ^ 2)
+mean((rank(dentheta) - rank(fx)) ^ 2)
+mean((rank(dentheta) - rank(fxkde)) ^ 2)
 
-# par(mfrow=c(2,2))
-# plot(rank(denx), rank(fx), main = paste("Rank correlation:", round(cor(rank(denx), rank(fx), method = "s"), 3)))
-# plot(rank(denx), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(denx), rank(fxkde), method = "s"), 3)))
-# plot(denx, fx); abline(0, 1, lty = "dashed")
-# plot(denx, fxkde); abline(0, 1, lty = "dashed")
+plot()
+
+par(mfrow=c(2,2))
+plot(rank(dentheta), rank(fx), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fx), method = "s"), 3)))
+plot(rank(dentheta), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fxkde), method = "s"), 3)))
+plot(dentheta, fx); abline(0, 1, lty = "dashed")
+plot(dentheta, fxkde); abline(0, 1, lty = "dashed")
 
 
 
