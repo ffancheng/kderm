@@ -18,6 +18,12 @@ vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = app
 
   if(is.null(h) | !is.array(h)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points, positive = positive, ...)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # only works for 2d
   
+  # Use optimized bandwidth from minimizing AMISE as r in the estimator
+  if (d == 1 & !positive) 
+    H <- ks::hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  if (d > 1 & !positive) 
+    H <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  
   opt.method <- match.arg(opt.method, c("AMISE", "MEAN", "SCALED"), several.ok = FALSE)
   xr <- apply(x, 2, function(x) diff(range(x, na.rm = TRUE)))
   xmin <- xmin - xr * xextend
@@ -33,14 +39,15 @@ vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = app
   
   if(opt.method == "AMISE"){
   # Option 2: scale hi as mean(det(hi)) * const = det(hopt) 
-  # Use optimized bandwidth from minimizing AMISE for scaling
-  if (d == 1 & !positive) 
-    H <- ks::hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
-  if (d > 1 & !positive) 
-    H <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  # # Use optimized bandwidth from minimizing AMISE for scaling
+  # if (d == 1 & !positive) 
+  #   H <- ks::hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  # if (d > 1 & !positive) 
+  #   H <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
   hidet <- apply(h, 3, det)
   # h <- h * ((det(H) / mean(hidet)))#^(1/d)
   h <- sweep(h, 3, det(H) / hidet, "*")
+  # h <- h * det(H)
   }
   # Option 3: scale by a input constant
   if(opt.method == "SCALED") h <- h * riem.scale
@@ -57,7 +64,7 @@ vkde <- function(x, h = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = app
     z <- NULL
     for (k in 1:n) {
       hk <- h[,,k]
-      z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
+      z <-  abind::abind(z, array(mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = r * hk), dim = gridsize), along = d + 1)  # stack array of dimension (gridsize*gridsize) with abind
     }
     z <- rowMeans(z, dims = 2, na.rm = TRUE)
     

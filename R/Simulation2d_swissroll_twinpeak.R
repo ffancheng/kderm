@@ -137,10 +137,10 @@ plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den,
 
 # # metadata plotting (run once for different mappings)
 # metaplot <- preswissroll %>%
-#   as_tibble() %>% 
-#   mutate(label = as.factor(label)) %>% 
-#   ggplot(aes(X1, X2, col = den, shape = label)) + 
-#   geom_point() + 
+#   as_tibble() %>%
+#   mutate(label = as.factor(label)) %>%
+#   ggplot(aes(X1, X2, col = den, shape = label)) +
+#   geom_point() +
 #   scale_color_viridis(option = "B") +
 #   labs(color = "Density", shape = "Kernels")
 # metaplot
@@ -245,7 +245,7 @@ p_hdr_isomap_p <- p_hdr_isomap$p +
   plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = 0,
              color = blues9[5], fill = blues9[1], alpha = 0.2)
 # p_hdr_isomap
-h_hdr_isomap <- p_hdr_isomap$den$den$h
+h_hdr_isomap <- p_hdr_isomap$den$den$h # same as ks::Hpi.diag(fn)
 
 ## ----outliers-------------------------------------------------------------------
 Rn <- metric_isomap$rmetric # array
@@ -253,8 +253,8 @@ Rn <- metric_isomap$rmetric # array
 # fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
 # plot_contour(metric_isomap, gridsize = gridsize, riem.scale = riem.scale) # estimate grid densities with vkde()
 
-opt.method <- c("AMISE", "MEAN", "SCALED")[2]
-riem.scale <- .1
+opt.method <- c("AMISE", "MEAN", "SCALED")[3]
+riem.scale <- 1 # h_hdr_isomap
 fisomap <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale) # 0.923
 # fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn) # 0.64
 # # if scaling the bandwidth
@@ -282,7 +282,8 @@ p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, ri
 cormethod <- c("pearson", "kendall", "spearman")[3]
 cor(preswissroll$den, p_isomap$densities, method = cormethod)
 cor(preswissroll$den, p_hdr_isomap$densities, method = cormethod)
-
+mean((preswissroll$den - p_isomap$densities) ^ 2)
+mean((preswissroll$den - p_hdr_isomap$densities) ^ 2)
 
 # LLE
 
