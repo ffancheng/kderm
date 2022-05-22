@@ -461,7 +461,7 @@ to real-life data sets.
 <!-- The aim of the project is not to evaluate different manifold learning algorithms.  Although ISOMAP worked OK here it is still distorted and in real examples, you will never 'know' that the data are uniform on the sphere.  Instead, the idea of this project is to do kernel density estimation in a way that takes distortion into account.
 -->
 
-# Acknowledgment {.unnumbered}
+# Acknowledgment {-}
 
 This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster.
 
@@ -475,156 +475,78 @@ This research was supported in part by the Monash eResearch Centre and eSolution
 
 # Appendix: Notions about Riemannian geometry {#riemgeo}
 
-In this appendix, we present some notions about the Riemannian geometry
-used in this paper.
+In this appendix, we present some notions about the Riemannian geometry used in this paper.
 
 ## Differentiable manifolds
 
-In topology, a *homeomorphism* is a bijective map between two
-topological spaces that is continuous in both directions. A *Hausdorff
-space* is a topological space where any two distinct points can be
-separated by disjoint neighborhoods. A $d$-dimensional (topological)
-*manifold* $M$ is a connected Hausdorff space $(M, \mathcal{T}_M)$ where
-the neighborhood $U$ for each point $p$ is homeomorphic to an open
-subset $V$ of the Euclidean space $\mathbb{R}^d$. Such a homeomorphism
-$\varphi: U \rightarrow V$ together with $U$ gives a (coordinate)
-*chart*, denoted as $(U, \varphi)$, with the corresponding local
-coordinates $(x_1(p),\dots, x_d(p)) := \varphi(p)$. A collection of
-charts $\{U_\alpha, \varphi_\alpha\}$ ranging over the manifold $M$ is
-called an *atlas*, denoted as $\mathcal{A}$. The manifold $M$ is a
-*differentiable manifold* if there exists an atlas of $M$,
-$\{U_\alpha, \varphi_\alpha\}$, such that the *transition maps* between
-any two charts, $$
+In topology, a *homeomorphism* is a bijective map between two topological spaces that is continuous in both directions. A *Hausdorff space* is a topological space where any two distinct points can be separated by disjoint neighborhoods. A $d$-dimensional (topological) *manifold* $M$ is a connected Hausdorff space $(M, \mathcal{T}_M)$ where the neighborhood $U$ for each point $p$ is homeomorphic to an open subset $V$ of the Euclidean space $\mathbb{R}^d$. Such a homeomorphism $\varphi: U \rightarrow V$ together with $U$ gives a (coordinate) *chart*, denoted as $(U, \varphi)$, with the corresponding local
+coordinates $(x_1(p),\dots, x_d(p)) := \varphi(p)$. A collection of charts $\{U_\alpha, \varphi_\alpha\}$ ranging over the manifold $M$ is called an *atlas*, denoted as $\mathcal{A}$. The manifold $M$ is a *differentiable manifold* if there exists an atlas of $M$, $\{U_\alpha, \varphi_\alpha\}$, such that the *transition maps* between any two charts, 
+$$
 \varphi_\beta \circ \varphi_\alpha^{-1}: \varphi_\alpha(U_\alpha \cap U_\beta) \rightarrow \varphi_\beta(U_\alpha \cap U_\beta),
 $$ are differentiable of class $C^\infty$ (smooth).
 
-Let $\varphi$ be an injective map $E \rightarrow \varphi(E)$. Then
-$\varphi$ is an embedding of $E$ into $M$ if and only if
-$\varphi: E \rightarrow \varphi(E)$ is a homeomorphism, and $\varphi(E)$
-is called an embedded submanifold of $M$ with the subspace topology.
+Let $\varphi$ be an injective map $E \rightarrow \varphi(E)$. Then $\varphi$ is an embedding of $E$ into $M$ if and only if
+$\varphi: E \rightarrow \varphi(E)$ is a homeomorphism, and $\varphi(E)$ is called an embedded submanifold of $M$ with the subspace topology.
 
 ## Tangent vector and tangent space
 
-The tangent vector at point $p$ can be intuitively viewed as the
-velocity of a curve passing through the point $p$ or as the directional
-derivatives at $p$. Here we define the tangent vector via the velocity
-of curves.
+The tangent vector at point $p$ can be intuitively viewed as the velocity of a curve passing through the point $p$ or as the directional derivatives at $p$. Here we define the tangent vector via the velocity of curves.
 
-For any $p \in M$, let
-$\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M$ and
-$\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M$ be two smooth curve
-through $p$, i.e. $\gamma_1(0) = \gamma_2(0) = p$. $\gamma_1$ and
-$\gamma_2$ are *equivalent* if and only if there exists a chart,
-$(U,\varphi)$, at $p$ such that $$
+For any $p \in M$, let $\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M$ and $\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M$ be two smooth curve through $p$, i.e. $\gamma_1(0) = \gamma_2(0) = p$. $\gamma_1$ and $\gamma_2$ are *equivalent* if and only if there exists a chart, $(U,\varphi)$, at $p$ such that 
+$$
 (\varphi \circ \gamma_1)^\prime(0) = (\varphi \circ \gamma_2)^\prime(0).
-$$ A *tangent vector* to a manifold $M$ at point $p$, $v_p$, is any
-equivalent class of the differentiable curves initialized at $p$. The
-set of all tangent vectors at $p$ defines the *tangent space* of $M$ at
-$p$, denoted as $T_pM$. The tangent space is a vector space of dimension
-$d$, equal to the dimension of $M$, and it does not depend on the chart
-$\varphi$ locally at $p$. The collection of all tangent spaces defines
-the *tangent bundle* $TM = \cup_{p \in M}T_pM$. Tangent vectors can also
-be seen as the directional derivatives at $p$. For a given coordinate
-chart $\varphi=(x_1,\dots,x_d)$, the tangent vectors defining partial
-derivatives are denoted as
-$\frac{\partial}{\partial x_1}(p),\dots,\frac{\partial}{\partial x_d}(p)$,
-which define a *basis* of the tangent space.
+$$ 
+A *tangent vector* to a manifold $M$ at point $p$, $v_p$, is any equivalent class of the differentiable curves initialized at $p$. The set of all tangent vectors at $p$ defines the *tangent space* of $M$ at $p$, denoted as $T_pM$. The tangent space is a vector space of dimension $d$, equal to the dimension of $M$, and it does not depend on the chart $\varphi$ locally at $p$. The collection of all tangent spaces defines the *tangent bundle* $TM = \cup_{p \in M}T_pM$. Tangent vectors can also be seen as the directional derivatives at $p$. For a given coordinate chart $\varphi=(x_1,\dots,x_d)$, the tangent vectors defining partial
+derivatives are denoted as $\frac{\partial}{\partial x_1}(p),\dots,\frac{\partial}{\partial x_d}(p)$, which define a *basis* of the tangent space.
 
-The tangent space $T_pM$ also admits a dual space $T^*_pM$ called the
-*cotangent space* with corresponding *cotangent vector*
-$z_p: T^*_pM \rightarrow \mathbb{R}^d$, and basis denoted as
-$dx_1(p),\dots,dx_d(p)$.
+The tangent space $T_pM$ also admits a dual space $T^\star_pM$ called the *cotangent space* with corresponding *cotangent vector*
+$z_p: T^\star_pM \rightarrow \mathbb{R}^d$, and basis denoted as $dx_1(p),\dots,dx_d(p)$.
 
 ## Riemannian metric and geodesic distance
 
-A Riemannian metric $g_p$ defined on the tangent space $T_pM$ at each
-point $p$ is a local inner product
-$T_pM \times T_pM \rightarrow \mathbb{R}$, where $g_p$ is $d\times d$
-symmetric positive definite and varies smoothly at $p$. Generally, we
-omit the subscript $p$ and refer to $g$ as the Riemannian metric. The
-inner product for two vectors $u, v \in T_pM$ is written as
-$<u, v>_g = g_{ij}u^iv^j$ using the Einstein summation convention where
-implicit summation over all indices, $\sum_{i,j}$, is assumed. A
-differentiable manifold $M$ endowed with the Riemannian metric $g$ on
-each tangent space $T_pM$ is called a *Riemannian manifold* $(M,g)$.
+A Riemannian metric $g_p$ defined on the tangent space $T_pM$ at each point $p$ is a local inner product $T_pM \times T_pM \rightarrow \mathbb{R}$, where $g_p$ is $d\times d$ symmetric positive definite and varies smoothly at $p$. Generally, we
+omit the subscript $p$ and refer to $g$ as the Riemannian metric. The inner product for two vectors $u, v \in T_pM$ is written as $<u, v>_g = g_{ij}u^iv^j$ using the Einstein summation convention where implicit summation over all indices, $\sum_{i,j}$, is assumed. A differentiable manifold $M$ endowed with the Riemannian metric $g$ on each tangent space $T_pM$ is called a *Riemannian manifold* $(M,g)$.
 
-The Riemannian metric $g$ can be used to define the norm of a vector
-$u$, $\|u\| = \sqrt{<u,v>_g}$ and the angle between two vectors $u$ and
-$v$, $\cos\theta = \frac{<u,v>_g}{\|u\| \|v\|}$, which are the geometric
-quantities induced by $g$. $g$ could also be used to define the line
-element $dl^2 = g_{ij}dx_idx_j$ and the volume element
-$dV_g = \sqrt{\det(g)}dx_1\dots dx_d$, where $(x_1,\dots,x_d)$ are the
-local coordinates of the chart $(U, \varphi)$. For a curve
-$\gamma: I \rightarrow M$, the length of the curve is
-$$l(\gamma) = \sqrt{\int_0^1 \|\gamma\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx_i}{dt} \frac{dx_j}{dt} dt}$$,
+The Riemannian metric $g$ can be used to define the norm of a vector $u$, $\|u\| = \sqrt{<u,v>_g}$ and the angle between two vectors $u$ and $v$, $\cos\theta = \frac{<u,v>_g}{\|u\| \|v\|}$, which are the geometric quantities induced by $g$. $g$ could also be used to define the line element $dl^2 = g_{ij}dx_idx_j$ and the volume element $dV_g = \sqrt{\det(g)}dx_1\dots dx_d$, where $(x_1,\dots,x_d)$ are the local coordinates of the chart $(U, \varphi)$. 
+For a curve $\gamma: I \rightarrow M$, the length of the curve is
+$$
+l(\gamma) = \sqrt{\int_0^1 \|\gamma\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx_i}{dt} \frac{dx_j}{dt} dt},
+$$
 where $\gamma(I) \subset U$. The volume of $W \subset U$ is defined as
 $$
 Vol(W) = \int_W \sqrt{\det(g)}dx_1 \dots dx_d,
-$$ which is also called the *Riemannian measure* on $M$.
+$$
+which is also called the *Riemannian measure* on $M$.
 
-The *geodesics* of $M$ are the smooth curves that locally joins the
-points along the shortest path on the manifold. A curve
-$\gamma: I \rightarrow M$ is a geodesic if for all indices $i,j,k$, the
-second-order ordinary differential equation is satisfied, $$
+The *geodesics* of $M$ are the smooth curves that locally joins the points along the shortest path on the manifold. A curve
+$\gamma: I \rightarrow M$ is a geodesic if for all indices $i,j,k$, the second-order ordinary differential equation is satisfied, 
+$$
 \frac{d^2 x_i}{dt^2} + \Gamma^i_{jk} \frac{d x_j}{dt} \frac{dx_k}{dt} = 0,
-$$ where $\Gamma^i_{jk}$ is the *Christoffel symbol* defined by $$
+$$ 
+where $\Gamma^i_{jk}$ is the *Christoffel symbol* defined by 
+$$
 \Gamma^i_{jk} = \frac{1}{2} \sum_l g_{il} (\frac{\partial g_{il}}{\partial x_k} 
 + \frac{\partial g_{kl}}{\partial x_j} - \frac{\partial g_{jk}}{\partial x_l}).
-$$ The geodesics have a constant speed with norm
-$\| \gamma^\prime(t) \|$, and they are the local minimizers of the arc
-length functional
-$l:\gamma \rightarrow \sqrt{\int_0^1 \| \gamma^\prime(t) \|_g^2 dt}$
-when the curves are defined over the interval $[0,1]$. The *geodesic
-distance* $d_g$ is the length of the shortest geodesic between two
-points on the manifold. For a point $p \in M$, when the geodesic
-distance starting at $p$ is not minimized, we call such set of points
-the *cut locus* of $p$, and the *injectivity radius* at $p \in M$ is the
-distance to the cut locus. The injectivity radius of $(M,g)$,
-$\textit{inj}_gM$ is the infimum of the injectivity radii over all
-points on the manifold.
+$$ 
+The geodesics have a constant speed with norm $\| \gamma^\prime(t) \|$, and they are the local minimizers of the arc
+length functional $l:\gamma \rightarrow \sqrt{\int_0^1 \| \gamma^\prime(t) \|_g^2 dt}$ when the curves are defined over the interval $[0,1]$. 
+The *geodesic distance* $d_g$ is the length of the shortest geodesic between two points on the manifold. For a point $p \in M$, when the geodesic distance starting at $p$ is not minimized, we call such set of points the *cut locus* of $p$, and the *injectivity radius* at $p \in M$ is the distance to the cut locus. The injectivity radius of $(M,g)$, $\textit{inj}_gM$ is the infimum of the injectivity radii over all points on the manifold.
 
 <!-- ### Isometry -->
 
 ## Pushforward and pullback metric
 
-Pushforward and pullback are two notions corresponding to the notions of
-tangent and cotangent vectors. Let $f$ be an embedding from the
-Riemannian manifold $(M,g)$ to another smooth manifold $E$. The
-pushforward $h=\varphi*g$ of the Riemannian metric $g$ along
-$\varphi \equiv f^{-1}$ is a linear map $f_*:TM \rightarrow TE$, which
-maps the tangent vectors $u_p$ at point $p \in M$ to the tangent vectors
-$f_*u_p$ at the mapping point $f(p) \in E$, and satisfies that for
-$u, v \in T_f(p)E$, $$
+Pushforward and pullback are two notions corresponding to the notions of tangent and cotangent vectors. Let $f$ be an embedding from the Riemannian manifold $(M,g)$ to another smooth manifold $E$. The pushforward $h=\varphi*g$ of the Riemannian metric $g$ along $\varphi \equiv f^{-1}$ is a linear map $f_*:TM \rightarrow TE$, which maps the tangent vectors $u_p$ at point $p \in M$ to the tangent vectors $f_*u_p$ at the mapping point $f(p) \in E$, and satisfies that for $u, v \in T_f(p)E$, 
+$$
 <u,v>_{\varphi*g_p} = <df_p^{-1}u, df_p^{-1}v>_{g_p},
-$$ where $df_p^{-1}$ is the Jacobian of $f^{-1}$. The tangent vectors
-$f_*u_p$ are equivalent to the velocity vector of a curve
-$\gamma: I\rightarrow M$ passing through point $p$ at time zero with a
-constant speed $\gamma^{-1}(0)=u_p$. Similarly, the pullback maps the
-cotangent vectors $z_{f(p)}$ at $f(p) \in E$ to cotangent vectors at
-$p \in M$ acting on tangent vectors $u \in T_pM$.
+$$ 
+where $df_p^{-1}$ is the Jacobian of $f^{-1}$. The tangent vectors $f_\star u_p$ are equivalent to the velocity vector of a curve $\gamma: I\rightarrow M$ passing through point $p$ at time zero with a constant speed $\gamma^{-1}(0)=u_p$. Similarly, the pullback maps the cotangent vectors $z_{f(p)}$ at $f(p) \in E$ to cotangent vectors at $p \in M$ acting on tangent vectors $u \in T_pM$.
 
 <!-- embedding pushforward metric [@Perrault-Joncas2013-pq] -->
 
 ## Exponential map and logarithmic map
 
-Denote $B(p, r) \subset T_pM$ as an open ball centered at point $p$ with
-raidus $r$. Then $B(0_p, r) = exp_p^{-1}(B(p,r))$ is an open
-neighborhood of $0_p$ in the tangent space at $p$, $T_pM$. Define
-$exp_p$ as the *exponential map* at point $p$, where $exp_p$ is a
-differentiable, bijective map of differentiable inverse (i.e.
-*diffeomorphism*) that maps a tangent vector $u \in B(0_p, r)$ to the
-endpoint of the geodesic $\gamma: I \rightarrow M$ satisfying
-$\gamma(0)=p, \gamma^{-1}(0)=u$, and $\gamma(1)=exp_p(u)$. The
-exponential map moves point $p$ from $p$ at speed $u$ to an endpoint
-after covering the length of $\|u\|$ along the geodesic in one time
-unit. The inverse of the exponential map is called the *logarithm map*,
-$\log_p(q):= \exp^{-1}_p(q)$, which gives the vector from point $p$ to
-$q$. Also define the *geodesic ball* centered at $p$ of radius $r > 0$
-as the image by the exponential map of $B(0_p, r) \subset T_pM$ with
-$r < \textit{inj}_gM$. Then we could interpolate a geodesic $\gamma$
-between two points $p$ and $q$ with the exponential map and the
-logarithmic map, $\gamma(t) = \exp_p(t\log_p(q))$, and the geodesic
-distance is given by $d_g(p,q) = \|\log_p(q)\|_g$.
+Denote $B(p, r) \subset T_pM$ as an open ball centered at point $p$ with raidus $r$. Then $B(0_p, r) = exp_p^{-1}(B(p,r))$ is an open neighborhood of $0_p$ in the tangent space at $p$, $T_pM$. Define $exp_p$ as the *exponential map* at point $p$, where $exp_p$ is a differentiable, bijective map of differentiable inverse (i.e. *diffeomorphism*) that maps a tangent vector $u \in B(0_p, r)$ to the endpoint of the geodesic $\gamma: I \rightarrow M$ satisfying $\gamma(0)=p, \gamma^{-1}(0)=u$, and $\gamma(1)=exp_p(u)$. The exponential map moves point $p$ from $p$ at speed $u$ to an endpoint after covering the length of $\|u\|$ along the geodesic in one time unit. The inverse of the exponential map is called the *logarithm map*, $\log_p(q):= \exp^{-1}_p(q)$, which gives the vector from point $p$ to $q$. Also define the *geodesic ball* centered at $p$ of radius $r > 0$ as the image by the exponential map of $B(0_p, r) \subset T_pM$ with $r < \textit{inj}_gM$. Then we could interpolate a geodesic $\gamma$ between two points $p$ and $q$ with the exponential map and the logarithmic map, $\gamma(t) = \exp_p(t\log_p(q))$, and the geodesic distance is given by $d_g(p,q) = \|\log_p(q)\|_g$.
 
 <!-- ## Canonical metric -->
 
@@ -632,21 +554,15 @@ distance is given by $d_g(p,q) = \|\log_p(q)\|_g$.
 
 ## Volume density function
 
-For any $u \in T_pM$, let
-$\gamma(u): t \rightarrow \exp(\frac{tu}{\|u\|})$ and let
-$w_i, i=1,\dots,d$ be Jacobi fields along $\gamma$ such that $w_i(0)=0$,
-for all $i=1,\dots,d$, $Dw_1/dt(0)=u/\|u\|$ and $Dw_i/dt(0)$ forms an
-orthonomal basis of the tangent space $T_pM$. Define
-$\theta_p(q): T_pM \rightarrow \mathbb{R}$ the volume density function
-on $M$ as $$
+For any $u \in T_pM$, let $\gamma(u): t \rightarrow \exp(\frac{tu}{\|u\|})$ and let $w_i, i=1,\dots,d$ be Jacobi fields along $\gamma$ such that $w_i(0)=0$, for all $i=1,\dots,d$, $Dw_1/dt(0)=u/\|u\|$ and $Dw_i/dt(0)$ forms an orthonomal basis of the tangent space $T_pM$. Define $\theta_p(q): T_pM \rightarrow \mathbb{R}$ the volume density function on $M$ as 
+$$
 \theta_p(u) = \|u\|^{d-1} \det(w_1(\|u\|),\dots,w_d(\|u\|)).
-$$ <!-- $$ -->
+$$ 
+<!-- $$ -->
 <!-- \theta_p: q \rightarrow \theta_p(q)=\frac{\mu_{\exp_p{g}}}{\mu_{g_p}}(\exp^{-1}_p(q)), -->
-<!-- $$ --> Rewrite $\theta_p(u) = \theta_p(\log_p(u))$. The exponential
-map $\exp_p: T_pM \rightarrow M$ induced by pullback of a volume form
-$\exp_p^*\textit{Vol}$ on $T_pM$, and $\theta_p$ is its density with
-respect to the Lebesgue measure of the Euclidean structure on $T_pM$,
-which gives in normal coordinates $$
+<!-- $$ --> 
+Rewrite $\theta_p(u) = \theta_p(\log_p(u))$. The exponential map $\exp_p: T_pM \rightarrow M$ induced by pullback of a volume form $\exp_p^*\textit{Vol}$ on $T_pM$, and $\theta_p$ is its density with respect to the Lebesgue measure of the Euclidean structure on $T_pM$, which gives in normal coordinates 
+$$
 d\exp_p^*\textit{Vo}l(u) = \theta_p(u)du.
 $$
 
@@ -660,26 +576,27 @@ Manifold: $S^1$ with center 0 and radius $r=1$
 
 Polar coordinates: $(r, \theta)$
 
-Uniformly distributed angle: $\theta \sim U(0, \pi/2)$ with
-$f(\theta) = 2 / \pi$ for $\theta \in [0, \pi /2]$.
+Uniformly distributed angle: $\theta \sim U(0, \pi/2)$ with $f(\theta) = 2 / \pi$ for $\theta \in [0, \pi /2]$.
 
-Cartesian coordinates: $(x, y)$ where $x = \cos(\theta) \in [0, 1]$ and
-$y = \sin(\theta) \in [0, 1]$
+Cartesian coordinates: $(x, y)$ where $x = \cos(\theta) \in [0, 1]$ and $y = \sin(\theta) \in [0, 1]$
 
 Density of $\theta$: $f(\theta) = 2 / \pi$
 
 Density of $x$: $f(x) = \frac{2}{\pi \sqrt{1-x^2}}$
 
-The CDF of X is given by $$
+The CDF of X is given by 
+$$
 P(X \leq x) = P(\cos(\theta) \leq x) \\
 = P(\theta \geq \arccos(x)) \\
 = \int_{\arccos(x)}^{\pi/2} f(\theta) d\theta \\
 =  \frac{2}{\pi} (\frac{\pi}{2} - \arccos(x) ) \\
 = 1 - \frac{2}{\pi} \arccos(x).
-$$ Then the density of X is the derivative of the CDF w.r.t. $x$ $$
+$$ 
+Then the density of X is the derivative of the CDF w.r.t. $x$ $$
 f(x) = -\frac{2}{\pi} (-\frac{1}{\sqrt{1 - x^2}}) \\
 = \frac{2}{\pi \sqrt{1 - x^2}}.
-$$ Given $(x, y) \in \mathbb{R}^2$ as sample points from $S^1$, we could
+$$ 
+Given $(x, y) \in \mathbb{R}^2$ as sample points from $S^1$, we could
 estimate the density of each sample point $X_i \in S^1, i = 1, \dots, N$
 and compare it with its true density $f(x)$.
 
@@ -687,71 +604,63 @@ and compare it with its true density $f(x)$.
 
 <!-- First, we use the kernel density estimator in @ref(equ:kde) with a fixed bandwidth using the plug-in bandwidth selector in the R package *ks*.  -->
 
-We use the density estimator in @Pelletier2005-vu. For point
-$p \in S^1$, the density at $p$ is estimated by
-<!-- \begin{equation} --> <!-- \label{eq:pelletier} --> $$
+We use the density estimator in @Pelletier2005-vu. For point $p \in S^1$, the density at $p$ is estimated by
+<!-- \begin{equation} --> 
+<!-- \label{eq:pelletier} --> 
+$$
 f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{X_i}(p)} K(\frac{d_g(p, X_i)}{r}),
-$$ <!-- \end{equation} --> where $d=1$, $h$ is the bandwidth,
-$\theta_{X_i}(p)$ is the volume density function at sample point $X_i$,
-and $d_g(p, X_i)$ is the geodesic distance between $p$ and $X_i$ along
-the manifold $S^1$.
+$$ 
+<!-- \end{equation} --> 
+where $d=1$, $h$ is the bandwidth, $\theta_{X_i}(p)$ is the volume density function at sample point $X_i$, and $d_g(p, X_i)$ is the geodesic distance between $p$ and $X_i$ along the manifold $S^1$.
 
-Since the manifold is known ($S^1$), we know the geodesic distance is
-the arc length between two points on the manifold, which is given by
-$L(\gamma) = r(\beta - \alpha)$ with $r=1$. Therefore, the geodesic
-distance is $$
+Since the manifold is known ($S^1$), we know the geodesic distance is the arc length between two points on the manifold, which is given by $L(\gamma) = r(\beta - \alpha)$ with $r=1$. Therefore, the geodesic distance is 
+$$
 d_g(p, X_i) = \arccos(p) - \arccos(X_i)
-$$ As stated in @Pelletier2005-vu, in terms of *geodesic normal
-coordinates* at $X_i$, the volume density function $\theta_{X_i}(p)$
-equals the determinant of the metric $g$ expressed in these coordinates
-at the logarithm map $\exp_{X_i}^{-1}(p)$, i.e. $|g(\exp_p^{-1}(x_i))|$.
+$$ 
+As stated in @Pelletier2005-vu, in terms of *geodesic normal coordinates* at $X_i$, the volume density function $\theta_{X_i}(p)$ equals the determinant of the metric $g$ expressed in these coordinates at the logarithm map $\exp_{X_i}^{-1}(p)$, i.e. $|g(\exp_p^{-1}(x_i))|$.
 
-[When using normal coordinates(orthogonal basis) for tangent vector in
-$T_{X_i}S^1$, the exponential map has *geodesic normal coordinates*.]
+[When using normal coordinates(orthogonal basis) for tangent vector in $T_{X_i}S^1$, the exponential map has *geodesic normal coordinates*.]
 
-The Riemannian metric $g$ for $S^1$ is given by the inner products on
-the tangent spaces of $S^1$. For each $X_i \in M$, $$
+The Riemannian metric $g$ for $S^1$ is given by the inner products on the tangent spaces of $S^1$. For each $X_i \in M$, 
+$$
 g_{X_i}: T_{X_i}M \times T_{X_i}M \rightarrow \pmb{R},
-$$ is smooth in a local neighborhood $U$ of $M$.
+$$ 
+is smooth in a local neighborhood $U$ of $M$.
 
-Then the volume density function $\theta_{X_i}(p)$ is the inner product
-of the tangent vectors produced by the logarithm map from $X_i$ to $p$,
-which is given by $$
+Then the volume density function $\theta_{X_i}(p)$ is the inner product of the tangent vectors produced by the logarithm map from $X_i$ to $p$, which is given by 
+$$
 \theta_{X_i}(p) = \sqrt{1 - X_i^2}.
-$$ Therefore, the estimator for $p \in S^1$ is given by $$
+$$ 
+Therefore, the estimator for $p \in S^1$ is given by 
+$$
 f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r \sqrt{1 - X_i^2}} K\bigg(\frac{\|\arccos(p) - \arccos(X_i))\|}{r}\bigg),
-$$ where the bandwidth $r$ is selected by the plug-in bandwidth selector
-implemented by the R package *ks*.
+$$ 
+where the bandwidth $r$ is selected by the plug-in bandwidth selector implemented by the R package *ks*.
 
 ### How to derive volume density function $\theta_{X_i}(p)$
 
 Example of $S^2$ in @Henry2009-om.
 
-Let $S^2$ be the two-dimensional sphere of radius 1 and $p \in S^2$. Let
-$v$ and $w$ be vectors such that $\|v\| = \|w\| = 1$ and $\{v, w, p\}$
-is the orthonormal basis of $\mathbb{R}^3$. Consider the exponential
-chart $(U, \Psi)$ induced by the parametrisation
-$\Psi^{-1}: B_\pi(0) \rightarrow S^2 \backslash \{-p\}$ given by $$
+Let $S^2$ be the two-dimensional sphere of radius 1 and $p \in S^2$. Let $v$ and $w$ be vectors such that $\|v\| = \|w\| = 1$ and $\{v, w, p\}$ is the orthonormal basis of $\mathbb{R}^3$. Consider the exponential chart $(U, \Psi)$ induced by the parametrisation $\Psi^{-1}: B_\pi(0) \rightarrow S^2 \backslash \{-p\}$ given by 
+$$
 \Psi^{-1}(s,t) = \cos(r)p + \sin(r)(sv+tw)r^{-1},
-$$ if $(s,t) \neq (0,0)$ and $\Psi^{-1}(0,0)=p$ where
-$r=\sqrt{s^2 + t^2}$. Note that $r=d_g(p,q)$ if $q = \exp_p(sv+tw)$.
-Then we take the partial derivatives of \$\\Psi\^{-1}(s,t)\$ with
-respect to \$s\$ and \$t\$ and have that
+$$ 
+if $(s,t) \neq (0,0)$ and $\Psi^{-1}(0,0)=p$ where $r=\sqrt{s^2 + t^2}$. Note that $r=d_g(p,q)$ if $q = \exp_p(sv+tw)$.
+Then we take the partial derivatives of \$\\Psi\^{-1}(s,t)\$ with respect to \$s\$ and \$t\$ and have that
 $$
 A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}s}{r}p + \frac{\cos(r)rs^2+t^2\sin(r)}{r^3}v + \frac{(\cos(r)r-\sin(r))st}{r^3}w,
 $$
 $$
 B(s,t) = \frac{\partial}{\partial \Psi_2} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}t}{r}p + \frac{(\cos(r)r-\sin(r))st}{r^3}v + \frac{\cos(r)rt^2+\sin(r)s^2}{r^3}w.
 $$ 
-Then each component of the riemannian metric could be calculated as
-$g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))$. We obtain
-that the volume density on the sphere is $$
+Then each component of the riemannian metric could be calculated as $g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))$. We obtain that the volume density on the sphere is 
+$$
 \theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2} \\
 = \frac{|\sin(d_g(p,q))|}{d_g(p,g)},
-$$ for $q \neq p, -p$, and $\theta_p(p) = 1$.
+$$ 
+for $q \neq p, -p$, and $\theta_p(p) = 1$.
 
-Similarly in $S^1$, we could let $\{v, p\}$ be the basis of
-$\mathbb{R}^2$. Then the exponential chart induced
+Similarly in $S^1$, we could let $\{v, p\}$ be the basis of $\mathbb{R}^2$. Then the exponential chart induced
 
 Polar coordinates:
 $\phi(\exp_p{vt})^{\prime}(0) = (\alpha + vt)^\prime\bigg|_{t=0} = v$.
