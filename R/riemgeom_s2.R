@@ -75,7 +75,7 @@ x <- cos(theta) # |dtheta/dx| = |-1/sqrt(1-x^2)|
 # True density of x, f(x) = f(theta) * |dtheta/dx|
 denx <- dentheta * 1 / sqrt(1 - x ^ 2)
 y <- sin(theta)
-plot(x, y, asp = 1)
+# plot(x, y, asp = 1)
 # range(x) # [0, 1]
 plot(x, denx)
 # range(denx)
@@ -85,34 +85,38 @@ plot(x, denx)
 h <- ks::hpi(theta, binned = TRUE) # 0.034
 # h <- 0.05
 fxkde <- kde(theta, eval.points = theta)$estimate
-plot(x, fxkde)
+plot(theta, fxkde)
 
 # KDE with Riemannian metric
+# theta_p(q) = sqrt(|cos(dg(p, q|)
+print(h)
+# h <- 1
 d <- 1
 fx <- rep(0, N)
 # eval.points <- x
 for(i in 1:N){
-  fi <- 1 / sqrt(1 - x[i] ^ 2) * dnorm(x = acos(x), mean = acos(x[i]), sd = h)
+  # fi <- 1 / sqrt(1 - x[i] ^ 2) * dnorm(x = acos(x), mean = acos(x[i]), sd = h)
+  fi <- 1 / sqrt((cos(acos(x) - acos(x[i])))) * dnorm(x = acos(x), mean = acos(x[i]), sd = h)
   fx <- fx + fi
 }
 fx <- fx / N
+plot(theta, fx, main = "Estimated f(x) with riemannian metric")
 
 # Plotting
 par(mfrow=c(2,2))
 plot(theta, dentheta, main = "True density of theta")
-plot(acos(x), denx, main = "True density of x")
+plot(x, denx, main = "True density of x")
 plot(theta, fxkde, main = paste("Estimated f(x) with KDE, h = ", round(h, 3)))
-plot(acos(x), fx, main = "Estimated f(x) with riemannian metric")
+plot(theta, fx, main = "Estimated f(x) with riemannian metric")
 # points(x, dentheta, col = "red", lty = "dashed")
 
 # plot(x[order(x)][1:N*.6], fx[order(x)][1:N*.6], type = "b", cex = .5, main = "Estimated f(x)[1:.6*N] with riemannian metric")
 # abline(h = dentheta, col = "red", lty = "dashed")
 # text(x = 0.7, y = 0.55, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
 
-summary(denx)
+summary(dentheta)
 summary(fxkde)
 summary(fx)
-# summary(dentheta)
 
 # rank correlation
 # our estimator is better than kde
@@ -123,7 +127,7 @@ mean((dentheta - fxkde) ^ 2)
 mean((rank(dentheta) - rank(fx)) ^ 2)
 mean((rank(dentheta) - rank(fxkde)) ^ 2)
 
-plot()
+
 
 par(mfrow=c(2,2))
 plot(rank(dentheta), rank(fx), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fx), method = "s"), 3)))
@@ -176,7 +180,7 @@ ffixed <- denks$estimate
 summary(ffixed)
 summary(denx)
 summary(dentheta)
-cor(dentheta, ffixed, method = "s") # -0.380
+cor(dentheta, ffixed, method = "s")
 # plot(fn, ffixed)
 # points(theta, dentheta, col = "red", cex = 0.3)
 # # plot(x, denx)
@@ -228,7 +232,7 @@ for(i in 1:N){
   # fi <- hi ^ (-1) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, estimated Riem metric
   # fi <- hi ^ (-1/2) * h ^ (-1) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # approximate geodesic distance with shortest path graph distance, estimated Riem metric
   
-  fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric #### SET h=1 gives a better estimation
+  fi <- 1 / sqrt(abs()) * dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric #### SET h=1 gives a better estimation
   
   # # h <- sweep(hi, 1, hidetmean / hi, "*")
   # hineighbor <- mean(rmetric[ , , nn.idx[i, (2:(k+1))]]) # very close to the one above
