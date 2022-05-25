@@ -6,14 +6,14 @@ author:
   address: Monash University
   email: Fan.Cheng@monash.edu
   # correspondingauthor: true
-- familyname: Hyndman
-  othernames: Rob J
-  address: Monash University
-  email: Rob.Hyndman@monash.edu
 - familyname: Panagiotelis
   othernames: Anastasios
   address: University of Sydney
   email: Anastasios.Panagiotelis@sydney.edu.au
+- familyname: Hyndman
+  othernames: Rob J
+  address: Monash University
+  email: Rob.Hyndman@monash.edu
 abstract: "Manifold learning can be used to obtain a low-dimensional representation of the underlying manifold given the high-dimensional data. However, kernel density estimates of the low-dimensional embedding with a fixed bandwidth fail to account for the way manifold learning algorithms distort the geometry of the underlying Riemannian manifold. We propose a novel kernel density estimator for any manifold learning embedding by introducing the estimated Riemannian metric of the manifold as the variable bandwidth matrix for each point. The geometric information of the manifold guarantees a more accurate density estimation of the true manifold, which subsequently could be used for anomaly detection. To compare our proposed estimator with a fixed-bandwidth kernel density estimator, we run two simulations with 2-D metadata mapped into a 3-D swiss roll or twin peaks shape and a 5-D semi-hypersphere mapped in a 100-D space, and demonstrate that the proposed estimator could improve the density estimates given a good manifold learning embedding and has higher rank correlations between the true and estimated manifold density. A shiny app in R is also developed for various simulation scenarios. The proposed method is applied to density estimation in statistical manifolds of electricity usage with the Irish smart meter data. This demonstrates our estimator's capability to fix the distortion of the manifold geometry and to be further used for anomaly detection in high-dimensional data."
 keywords: "manifold learning, variable bandwidth, Riemannian metric, highest density region, Gaussian kernels"
 # wpnumber: 03/2021
@@ -639,43 +639,63 @@ where the bandwidth $r$ is selected by the plug-in bandwidth selector implemente
 
 ### How to derive volume density function $\theta_{X_i}(p)$
 
-Example of $S^2$ in @Henry2009-om.
+#### Example of $S^2$ in @Henry2009-om.
 
 Let $S^2$ be the two-dimensional sphere of radius 1 and $p \in S^2$. Let $v$ and $w$ be vectors such that $\|v\| = \|w\| = 1$ and $\{v, w, p\}$ is the orthonormal basis of $\mathbb{R}^3$. Consider the exponential chart $(U, \Psi)$ induced by the parametrisation $\Psi^{-1}: B_\pi(0) \rightarrow S^2 \backslash \{-p\}$ given by 
 $$
-\Psi^{-1}(s,t) = \cos(r)p + \sin(r)(sv+tw)r^{-1},
+\Psi^{-1}(s,t) = \cos(r)p + \frac{\sin(r)}{r}(sv+tw),
 $$ 
-if $(s,t) \neq (0,0)$ and $\Psi^{-1}(0,0)=p$ where $r=\sqrt{s^2 + t^2}$. Note that $r=d_g(p,q)$ if $q = \exp_p(sv+tw)$.
-Then we take the partial derivatives of \$\\Psi\^{-1}(s,t)\$ with respect to \$s\$ and \$t\$ and have that
+if $(s,t) \neq (0,0)$ and $\Psi^{-1}(0,0)=p$ where $r=\sqrt{s^2 + t^2}$. 
+Note that $r=d_g(p,q)$ if $q = \exp_p(sv+tw)$.
+Then we take the partial derivatives of $\Psi^{-1}(s,t)$ with respect to the basis of the tangent space, $s$ and $t$, and have that
 $$
 A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}s}{r}p + \frac{\cos(r)rs^2+t^2\sin(r)}{r^3}v + \frac{(\cos(r)r-\sin(r))st}{r^3}w,
 $$
 $$
 B(s,t) = \frac{\partial}{\partial \Psi_2} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}t}{r}p + \frac{(\cos(r)r-\sin(r))st}{r^3}v + \frac{\cos(r)rt^2+\sin(r)s^2}{r^3}w.
 $$ 
-Then each component of the riemannian metric could be calculated as $g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))$. We obtain that the volume density on the sphere is 
+The coefficients for $v$ and $w$ gives the local coordinates of two tangent vectors.
+Further, since the riemannian metric is defined as the inner product between two tangent vectors, each component of the riemannian metric could be calculated as $g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))$. 
+Therefore, we obtain that the volume density on the sphere is 
 $$
 \theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2} \\
 = \frac{|\sin(d_g(p,q))|}{d_g(p,g)},
 $$ 
 for $q \neq p, -p$, and $\theta_p(p) = 1$.
 
-Similarly in $S^1$, we could let $\{v, p\}$ be the basis of $\mathbb{R}^2$. Then the exponential chart induced
+#### $S^1$
 
-Polar coordinates:
-$\phi(\exp_p{vt})^{\prime}(0) = (\alpha + vt)^\prime\bigg|_{t=0} = v$.
+Similarly in $S^1$, we could let $\{v, p\}$ be the orthonormal basis of $\mathbb{R}^2$. Then the exponential chart is induced by the parametrization 
+$$
+\Psi^{-1}(s) = \cos(r)p + \frac{\sin(r)}{r}sv,
+$$
+and $\Psi^{-1}(0) = p$ where $r = s$. Again $r = d_g(p,q)$ if $q = \exp_p(sv)$. Then we have
+$$
+A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = - \sin(r)p + \cos(r)v.
+$$
+So the riemannian metric is $g_q = \cos(r)$ and further, 
+$$
+\theta_p(q) = \sqrt{|\cos(r)|} = \sqrt{|\cos(d_g(p,q))|},
+$$
+where the geodesic distance is $d_g(p,q) = \arccos(p) - \arccos(q)$, and $\theta_p(p) = 1$.
 
-Cartesian coordinates:
-$$
-\psi(\exp_p{vt})^{\prime}(0) = (\cos(\arccos(p)+vt))^\prime\bigg|_{t=0} \\
-= (p \cos{v} - \sqrt{1-p^2} \sin{v})^\prime \bigg|_{t=0} \\
-= - \sqrt{1 - p^2}v
-$$
-Then the volume density function is
-$$
-\theta_p(q) = \sqrt{(-\sqrt{1-p^2})^2} = \sqrt{1-p^2},
-$$
-and the geodesic distance is
-$$
-d_g(p,q) = \arccos(p) - \arccos(q).
-$$
+
+
+
+<!-- Polar coordinates: -->
+<!-- $\phi(\exp_p{vt})^{\prime}(0) = (\alpha + vt)^\prime\bigg|_{t=0} = v$. -->
+
+<!-- Cartesian coordinates: -->
+<!-- $$ -->
+<!-- \psi(\exp_p{vt})^{\prime}(0) = (\cos(\arccos(p)+vt))^\prime\bigg|_{t=0} \\ -->
+<!-- = (p \cos{v} - \sqrt{1-p^2} \sin{v})^\prime \bigg|_{t=0} \\ -->
+<!-- = - \sqrt{1 - p^2}v -->
+<!-- $$ -->
+<!-- Then the volume density function is -->
+<!-- $$ -->
+<!-- \theta_p(q) = \sqrt{(-\sqrt{1-p^2})^2} = \sqrt{1-p^2}, -->
+<!-- $$ -->
+<!-- and the geodesic distance is -->
+<!-- $$ -->
+<!-- d_g(p,q) = \arccos(p) - \arccos(q). -->
+<!-- $$ -->

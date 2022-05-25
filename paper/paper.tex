@@ -263,21 +263,21 @@
 
 \nocover
 
-\author{Fan~Cheng, Rob J~Hyndman, Anastasios~Panagiotelis}
+\author{Fan~Cheng, Anastasios~Panagiotelis, Rob J~Hyndman}
 \addresses{\textbf{Fan Cheng}\newline
 Monash University
 \newline{Email: \href{mailto:Fan.Cheng@monash.edu}{\nolinkurl{Fan.Cheng@monash.edu}}}\\[1cm]
-\textbf{Rob J Hyndman}\newline
-Monash University
-\newline{Email: \href{mailto:Rob.Hyndman@monash.edu}{\nolinkurl{Rob.Hyndman@monash.edu}}}\\[1cm]
 \textbf{Anastasios Panagiotelis}\newline
 University of Sydney
 \newline{Email: \href{mailto:Anastasios.Panagiotelis@sydney.edu.au}{\nolinkurl{Anastasios.Panagiotelis@sydney.edu.au}}}\\[1cm]
+\textbf{Rob J Hyndman}\newline
+Monash University
+\newline{Email: \href{mailto:Rob.Hyndman@monash.edu}{\nolinkurl{Rob.Hyndman@monash.edu}}}\\[1cm]
 }
 
 \date{\sf\Date~\Month~\Year}
 \makeatletter
- \lfoot{\sf Cheng, Hyndman, Panagiotelis: \@date}
+ \lfoot{\sf Cheng, Panagiotelis, Hyndman: \@date}
 \makeatother
 
 %% Any special functions or other packages can be loaded here.
@@ -910,46 +910,47 @@ where the bandwidth \(r\) is selected by the plug-in bandwidth selector implemen
 \hypertarget{how-to-derive-volume-density-function-theta_x_ip}{%
 \subsubsection{\texorpdfstring{How to derive volume density function \(\theta_{X_i}(p)\)}{How to derive volume density function \textbackslash theta\_\{X\_i\}(p)}}\label{how-to-derive-volume-density-function-theta_x_ip}}
 
-Example of \(S^2\) in \textcite{Henry2009-om}.
+\hypertarget{example-of-s2-in-henry2009-om.}{%
+\paragraph{\texorpdfstring{Example of \(S^2\) in \textcite{Henry2009-om}.}{Example of S\^{}2 in @Henry2009-om.}}\label{example-of-s2-in-henry2009-om.}}
 
 Let \(S^2\) be the two-dimensional sphere of radius 1 and \(p \in S^2\). Let \(v\) and \(w\) be vectors such that \(\|v\| = \|w\| = 1\) and \(\{v, w, p\}\) is the orthonormal basis of \(\mathbb{R}^3\). Consider the exponential chart \((U, \Psi)\) induced by the parametrisation \(\Psi^{-1}: B_\pi(0) \rightarrow S^2 \backslash \{-p\}\) given by
 \[
-\Psi^{-1}(s,t) = \cos(r)p + \sin(r)(sv+tw)r^{-1},
+\Psi^{-1}(s,t) = \cos(r)p + \frac{\sin(r)}{r}(sv+tw),
 \]
-if \((s,t) \neq (0,0)\) and \(\Psi^{-1}(0,0)=p\) where \(r=\sqrt{s^2 + t^2}\). Note that \(r=d_g(p,q)\) if \(q = \exp_p(sv+tw)\).
-Then we take the partial derivatives of \$\textbackslash Psi\^{}\{-1\}(s,t)\$ with respect to \$s\$ and \$t\$ and have that
+if \((s,t) \neq (0,0)\) and \(\Psi^{-1}(0,0)=p\) where \(r=\sqrt{s^2 + t^2}\).
+Note that \(r=d_g(p,q)\) if \(q = \exp_p(sv+tw)\).
+Then we take the partial derivatives of \(\Psi^{-1}(s,t)\) with respect to the basis of the tangent space, \(s\) and \(t\), and have that
 \[
 A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}s}{r}p + \frac{\cos(r)rs^2+t^2\sin(r)}{r^3}v + \frac{(\cos(r)r-\sin(r))st}{r^3}w,
 \]
 \[
 B(s,t) = \frac{\partial}{\partial \Psi_2} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}t}{r}p + \frac{(\cos(r)r-\sin(r))st}{r^3}v + \frac{\cos(r)rt^2+\sin(r)s^2}{r^3}w.
 \]
-Then each component of the riemannian metric could be calculated as \(g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))\). We obtain that the volume density on the sphere is
+The coefficients for \(v\) and \(w\) gives the local coordinates of two tangent vectors.
+Further, since the riemannian metric is defined as the inner product between two tangent vectors, each component of the riemannian metric could be calculated as \(g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))\).
+Therefore, we obtain that the volume density on the sphere is
 \[
 \theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2} \\
 = \frac{|\sin(d_g(p,q))|}{d_g(p,g)},
 \]
 for \(q \neq p, -p\), and \(\theta_p(p) = 1\).
 
-Similarly in \(S^1\), we could let \(\{v, p\}\) be the basis of \(\mathbb{R}^2\). Then the exponential chart induced
+\hypertarget{s1}{%
+\paragraph{\texorpdfstring{\(S^1\)}{S\^{}1}}\label{s1}}
 
-Polar coordinates:
-\(\phi(\exp_p{vt})^{\prime}(0) = (\alpha + vt)^\prime\bigg|_{t=0} = v\).
-
-Cartesian coordinates:
+Similarly in \(S^1\), we could let \(\{v, p\}\) be the orthonormal basis of \(\mathbb{R}^2\). Then the exponential chart is induced by the parametrization
 \[
-\psi(\exp_p{vt})^{\prime}(0) = (\cos(\arccos(p)+vt))^\prime\bigg|_{t=0} \\
-= (p \cos{v} - \sqrt{1-p^2} \sin{v})^\prime \bigg|_{t=0} \\
-= - \sqrt{1 - p^2}v
+\Psi^{-1}(s) = \cos(r)p + \frac{\sin(r)}{r}sv,
 \]
-Then the volume density function is
+and \(\Psi^{-1}(0) = p\) where \(r = s\). Again \(r = d_g(p,q)\) if \(q = \exp_p(sv)\). Then we have
 \[
-\theta_p(q) = \sqrt{(-\sqrt{1-p^2})^2} = \sqrt{1-p^2},
+A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = - \sin(r)p + \cos(r)v.
 \]
-and the geodesic distance is
+So the riemannian metric is \(g_q = \cos(r)\) and further,
 \[
-d_g(p,q) = \arccos(p) - \arccos(q).
+\theta_p(q) = \sqrt{|\cos(r)|} = \sqrt{|\cos(d_g(p,q))|},
 \]
+where the geodesic distance is \(d_g(p,q) = \arccos(p) - \arccos(q)\), and \(\theta_p(p) = 1\).
 
 \printbibliography
 
