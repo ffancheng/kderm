@@ -31,9 +31,9 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
                      method, 
                      annmethod = c("kdtree", "annoy", "hnsw"),
                      eps = 0, nt = 50, nlinks = 16, ef.construction = 200, ef.search = 10,
-                     distance = c("euclidean", "manhattan"), diag = FALSE,
-                     treetype = c("kd", "bd"),
-                     searchtype = c("standard", "priority", "radius"),
+                     distance = c("euclidean", "manhattan")[1], diag = FALSE,
+                     treetype = c("kd", "bd")[1],
+                     searchtype = c("standard", "priority", "radius")[1],
                      perplexity = round(k/3), theta = 0.5, # t-SNE
                      invert.h = TRUE,
                      ...
@@ -67,24 +67,24 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
     ##--------------------------
     # Step3: embedding coordinates fn
     ##--------------------------
-    e <- dimRed::embed(x,
-                       .method = method,
-                       knn = k,
-                       ndim = s,
-                       annmethod = annmethod,
-                       radius = radius,
-                       eps = eps,
-                       nt = nt,
-                       nlinks = nlinks,
-                       ef.construction = ef.construction,
-                       ef.search = ef.search,
-                       distance = distance,
-                       treetype = treetype,
-                       searchtype = searchtype,
-                       perplexity = perplexity,
-                       theta = theta,
-                       .mute = c("output"),
-                       # ...
+    e <- embed(x,
+               .method = method,
+               knn = k,
+               ndim = s,
+               annmethod = annmethod,
+               radius = radius,
+               eps = eps,
+               nt = nt,
+               nlinks = nlinks,
+               ef.construction = ef.construction,
+               ef.search = ef.search,
+               distance = distance,
+               treetype = treetype,
+               searchtype = searchtype,
+               perplexity = perplexity,
+               theta = theta,
+               .mute = c("output"),
+               # ...
                        
     )
     fn <- e@data@data
@@ -95,7 +95,7 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
     
     N <- nrow(x)
     if (searchtype == "radius") {  
-      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges
+      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges; in nn2(), k is the maximum number of NNs to compute, so k is set as N even if radius is large
     }
     
     ###--------------------------
@@ -136,7 +136,9 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
               weighted_graph=g,
               adj_matrix=Kn,
               laplacian=Ln,
-              nn2res = nn2res))
+              nn2res = nn2res
+              # nn2res = e@nn.idx # nn.idx not added as dimRedResult-class
+              ))
 }
 
 
