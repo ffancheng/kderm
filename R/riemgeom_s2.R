@@ -16,7 +16,7 @@ Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1)
 N <- 1000
 d <- 1
-distribution <- c("uniform", "normal", "beta", "lognormal", "mixed")[4] # CHANGE DISTRIBUTION OF THETA
+distribution <- c("uniform", "normal", "beta", "lognormal", "mixed")[3] # CHANGE DISTRIBUTION OF THETA
 switch(distribution,
        "uniform" = {
          # 1. theta ~ U(0, pi/2)
@@ -160,7 +160,7 @@ annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 2 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 1 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k; riemann_metric() requires eigen() on each H
 
 gridsize <- 20
 noutliers <- 20
@@ -199,7 +199,7 @@ rmetric <- metric_isomap$rmetric
 opt.method <- "SCALED"
 riem.scale <- 1
 # fisomap <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale)
-adj_matrix <- metric_isomap$adj_matrix
+adj_matrix <- metric_isomap$adj_matrix # NN distance matrix
 dim(adj_matrix)
 summary(metric_isomap)
 nn.idx <- metric_isomap$nn2res$nn.idx
@@ -250,10 +250,11 @@ for(i in 1:N){
   # fi <- hi ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, estimated Riem metric
   
   # fi <- hi ^ (-1/2) * (1 / h) * (2 * pi) ^ (-1/2) * exp(- 1 / 2 / (h ^ 2) * (fn - fn[i]) ^ 2 / hi)  # estimated geodesic distance, estimated volume density function sqrt(det(h*i))
-  fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric # set h=.2 to give a less wiggly estimation
+  # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric # set h=.2 to give a less wiggly estimation
   
-  if(abs(fn - fn[i]) <= h) 
-  
+  fi <- rep(0, N)
+  bindex <- adj_matrix[i,] <= h # only smooth over points within the bandwidth radius
+  fi[bindex] <- dnorm(x = fn[bindex], mean = fn[i], sd = h * sqrt(hi))
   
   # fi <- hi ^ (-1/2) * (1 / h) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # estimated geodesic distance with shortest path graph distance, estimated Riem metric
   
@@ -281,11 +282,12 @@ h <- hpi(fn, binned = TRUE)
 f <- matrix(0, N, N)
 for(i in 1:N){
   hi <- rmetric[,,i]
-  for(j in 1:N){
+  bindex <- which(adj_matrix[i,] <= h) # only smooth over points within the bandwidth radius
+  # fi[bindex] <- dnorm(x = fn[bindex], mean = fn[i], sd = h * sqrt(hi))
+  
+  for(j in bindex){
     hj <- rmetric[,,j]
-    if(fn[i] - fn[j] )
-    
-    f[i,j] <- (hi / hj) ^ (-1/2) * (1 / h) * (2 * pi) ^ (-1/2) * exp(-1/2 / (h^2) * (fn[i] - fn[j]) ^ 2 / hi)
+    f[i,j] <- (hj / hi) ^ (-1/2) * (1 / h) * (2 * pi) ^ (-1/2) * exp(-1/2 / (h^2) * (fn[i] - fn[j]) ^ 2 / hi) / (pnorm(1) - pnorm(0)) # suppK = [0,1], scale to integral to 1
   }
   # fi <- dnorm(x = fn, mean = fn[i], sd = h) # KDE with fixed bandwidth, very close to the above fi
   
@@ -324,7 +326,7 @@ points(fn, ffixed, col = 3, lty = 2, cex = .2)
 # points(theta, dentheta, col = "red", lty = "dashed", cex = .2)
 legend(x = "topright",          # Position
        legend = c("True density", "Estimates with riemannian", "Estimates with kde"),  # Legend texts
-       lty = c(1, 2, 3),           # Line types
+       # lty = c(1, 2, 3),           # Line types
        col = c(1, 2, 3),           # Line colors
        lwd = 2)                 # Line width
 points(density(fn, kernel = "rectangular"), col = "blue", cex = .2)
@@ -348,21 +350,24 @@ plot(rank(dentheta), rank(ffixed), main = paste("Rank correlation:", round(cor(r
 
 
 # Plot MSE and rank correlation for different h
-hs <- seq(0, 3, 0.01)
+hs <- seq(0, 1, 0.01)[-1]
 hmse <- rep(NA, length(hs))
 rcors <- rep(NA, length(hs))
 fhat <- matrix(0, length(hs), N)
 
-for (j in 1:length(hs)) {
-  h <- hs[j]
+for (k in 1:length(hs)) {
+  h <- hs[k]
   
+  f <- matrix(0, N, N)
   for(i in 1:N){
     hi <- rmetric[,,i]
-    # fi <- dnorm(x = fn, mean = fn[i], sd = h) # KDE with fixed bandwidth, very close to the above fi
+    bindex <- which(adj_matrix[i,] <= h) # only smooth over points within the bandwidth radius
+    # fi[bindex] <- dnorm(x = fn[bindex], mean = fn[i], sd = h * sqrt(hi))
     
-    # fi <- abs(cos(acos(fn) - acos(fn[i]))) ^ (-1/2) * dnorm(x = acos(fn), mean = acos(fn[i]), sd = h) # true geodesic distance, true volume density function \theta = \sqrt{abs(cos(d_g))}
-    
-    fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric # set h=.2 to give a less wiggly estimation
+    for(j in bindex){
+      hj <- rmetric[,,j]
+      f[i,j] <- (hi / hj) ^ (-1/2) * (1 / h) * (2 * pi) ^ (-1/2) * exp(-1/2 / (h^2) * (fn[i] - fn[j]) ^ 2 / hi) / (pnorm(1) - pnorm(0)) # suppK = [0,1], scale to integral to 1
+    }
     
     # fi <- hi ^ (-1/2) * h ^ (-1) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # estimated geodesic distance with shortest path graph distance, estimated Riem metric
     
@@ -372,11 +377,10 @@ for (j in 1:length(hs)) {
     # hi <- hi * hineighbor / hi
     # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance, average hi using the hi's of the neighborhood of fn[i], i.e. hi/sum(hi_neighbors)
     
-    fhat[j,] <- fhat[j,] + fi
   }
-  fhat[j,] <- fhat[j,] / N
-  hmse[j] <- mean((fhat[j,] - dentheta)^2)
-  rcors[j] <- cor(dentheta, fhat[j,], method = "s")
+  fhat[k,] <- colMeans(f)
+  hmse[k] <- mean((fhat[k,] - dentheta)^2)
+  rcors[k] <- cor(dentheta, fhat[k,], method = "s")
 }
 plot(hs, hmse, type = "b")
 abline(h = mean((ffixed - dentheta)^2), col = "red")
@@ -388,7 +392,7 @@ hs[which.max(rcors)] # when rank correlation is maximized
 # optimized MSE
 par(mfrow=c(1,1))
 plot(fn, fhat[which.min(hmse),], main = paste("Estimated density of fn", "h=", round(hs[which.min(hmse)],3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
-     ylim = c(0, 1)
+     ylim = c(0, max(dentheta, ffixed, fhat))
 )
 points(theta, dentheta, lty = 1, cex = .2, col = 1)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
@@ -403,7 +407,7 @@ legend(x = "topright",          # Position
 # optimized rank correlation
 par(mfrow=c(1,1))
 plot(fn, fhat[which.min(rcors),], main = paste("Estimated density of fn", "h=", round(hs[which.min(rcors)],3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
-     ylim = c(0, 1)
+     ylim = c(0, max(dentheta, ffixed, fhat))
 )
 points(theta, dentheta, lty = 1, cex = .2, col = 1)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
@@ -416,10 +420,10 @@ legend(x = "topright",          # Position
        lwd = 2)                 # Line width
 
 # Another h value in between
-j <- 25
+j <- 5
 par(mfrow=c(1,1))
 plot(fn, fhat[j,], main = paste("Estimated density of fn", "h=", round(hs[j],3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
-     ylim = c(0, 1)
+     ylim = c(0, max(dentheta, ffixed, fhat))
 )
 points(theta, dentheta, lty = 1, cex = .2, col = 1)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
