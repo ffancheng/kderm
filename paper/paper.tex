@@ -361,20 +361,20 @@ To start with, we introduce the notations used in this manuscript. Then we intro
 \hypertarget{multivariate-kernel-density-estimation}{%
 \subsection{Multivariate kernel density estimation}\label{multivariate-kernel-density-estimation}}
 
-In general, given a multivariate random sample \(\pmb{Y}_i=(Y_{i1}, Y_{i2}, \dots, Y_{id})^\prime \in \mathcal{R}^d\), \(i = 1, 2, \dots, N\) drawn from a density \(f\), the variable kernel density estimate of \(f\) at point \(\pmb{y}=(y_1, y_2, \dots, y_d)^\prime \in \mathcal{R}^d\) is given by
+In general, given a multivariate random sample \(\pmb{X}_i=(X_{i1}, X_{i2}, \dots, X_{id})^\prime \in \mathcal{R}^d\), \(i = 1, 2, \dots, N\) drawn from a density \(f\), the variable kernel density estimate of \(f\) at point \(\pmb{x}=(x_1, x_2, \dots, x_d)^\prime \in \mathcal{R}^d\) is given by
 \begin{equation}
 \label{eq:kde}
-\hat{f}(\pmb{y})=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{y}-\pmb{Y}_i),
+\hat{f}(\pmb{x})=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i),
 \end{equation}
-where \(\pmb{H}_i\) is called the bandwidth matrix which is a \(d\times d\) symmetric positive definite matrix variable at each \(i\), \(K(\pmb{y})\) is the kernel function, and \(K_{\pmb{H}_i}(\pmb{y}) = |\pmb{H_i}|^{-1/2} K(\pmb{H_i}^{-1/2}\pmb{y})\).
-When using the standard gaussian kernel, \(K(\pmb{y}) = (2\pi)^{-d/2}\exp(-\frac{1}{2}\pmb{y}'\pmb{y})\), we have
+where \(\pmb{H}_i\) is called the bandwidth matrix which is a \(d\times d\) symmetric positive definite matrix variable at each \(i\), \(K(\pmb{x})\) is the kernel function, and \(K_{\pmb{H}_i}(\pmb{x}) = |\pmb{H_i}|^{-1/2} K(\pmb{H_i}^{-1/2}\pmb{x})\).
+When using the standard gaussian kernel, \(K(\pmb{x}) = (2\pi)^{-d/2}\exp(-\frac{1}{2}\pmb{x}'\pmb{x})\), we have
 \begin{equation}
 \label{eq:kernel}
-K_{\pmb{H}_i}(\pmb{y}-\pmb{Y}_i)=(2\pi)^{-d/2}|\pmb{H_i}|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{y}-\pmb{Y}_i)'\pmb{H}_i^{-1}(\pmb{y}-\pmb{Y}_i)\right],
+K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i)=(2\pi)^{-d/2}|\pmb{H_i}|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{x}-\pmb{X}_i)'\pmb{H}_i^{-1}(\pmb{x}-\pmb{X}_i)\right],
 \end{equation}
 with \(|\pmb{H}_i|\) being the determinant of matrix \(\pmb{H}_i\).
 
-The bandwidth matrix is important in controlling the smoothing across all data points and the shape is determined by the kernel function \(K(\pmb{y})\). We consider the sample smooth estimator for each data point, which gives a kernel density estimate with local smoothing.
+The bandwidth matrix is important in controlling the smoothing across all data points and the shape is determined by the kernel function \(K(\pmb{x})\). We consider the sample smooth estimator for each data point, which gives a kernel density estimate with local smoothing.
 \textcite{Duong2007-up} implements the kernel density estimates for data from 1 to 6 dimensions in the R package \emph{ks}. However, for variable kernel density estimation where the bandwidth is no longer a constant matrix, the implementation is limited to 2-dimension and the bandwidth can either be a vector or a diagonal matrix instead of a full bandwidth matrix.
 Further, the estimator in Equation \eqref{eq:kde} is only applicable when the sample space is Euclidean. In the cases of a Riemannian manifold, the sample space used for kernel density estimation is no longer Euclidean and we need to use the estimator described in \autoref{riemest}.
 
