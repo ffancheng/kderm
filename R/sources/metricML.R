@@ -182,8 +182,9 @@ riemann_metric <- function(Y, laplacian, d, invert.h = FALSE){
   ## Array H corresponds to \tilde{H} in Step 4(a)
   ## The embedding metric H is the pseudo inverse of \tilde{H}
   for (i in 1:nrow(Y)) {
-    Hsvals <- tryCatch(eigen(H[ , ,i]))
-    if(class(Hsvals) != "list") browser()
+    Hsvals <- tryCatch(eigen(H[ , ,i])) # could use ginv()
+    # if(class(Hsvals) != "list") browser()
+    if(class(Hsvals) != "eigen") stop("Please choose a larger radius for nearest neighbor search for a connected neighborhood graph!")
     Huu <- Hsvals$vectors
     Hvv <- Hsvals$values[1:d] # top d largest eigenvalues, already sorted in decreasing order
     Hvv1 <- diag(x = 1 / Hvv, nrow = d)

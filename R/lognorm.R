@@ -19,8 +19,8 @@ r <- 1
 fhat <- rep(0, N)
 for(i in 1:N){
   fi <- rep(0, N)
-  bindex <- which(abs(y - y[i]) / r <= 1)
-  fi[bindex] <- 1 / r * (2 * pi) ^ (-1/2) * exp(- 1 / 2 / r * ((y[bindex] - y[i]) ^ 2)) / (pnorm(1) - pnorm(-1)) * y[bindex]
+  bindex <- which((abs(y - y[i]) / r) <= 1) # use only neighbors within radius r
+  fi[bindex] <- 1 / r * (2 * pi) ^ (-1/2) * exp( - 1 / 2 / r * ((y[bindex] - y[i]) ^ 2) ) / (pnorm(1) - pnorm(-1)) * y[bindex] # scale to integral to 1
   fhat <- fhat + fi
 }
 fhat <- fhat / N
@@ -28,7 +28,7 @@ plot(y, fhat, cex = .2)
 
 # Plot together
 par(mfrow=c(1,1))
-plot(x, fhat, main = paste("Estimated density of y", "r=", round(r,3)), cex = .2, col = "red", lty = 3, xlim = c(min(y), max(y)),
+plot(x, fhat, main = paste("Estimated density of y", "r=", round(r,3)), cex = .2, col = "red", lty = 3, xlim = c(min(x), max(x)),
      ylim = c(0, max(denx, ffixed, fhat))
 )
 points(x, denx, lty = 1, cex = .2, col = 1)
@@ -39,3 +39,11 @@ legend(x = "topright",          # Position
        # lty = c(1, 2, 3),           # Line types
        col = c(1, 2, 3),           # Line colors
        lwd = 2)                 # Line width
+
+# Our estimator is better than the fixed bandwidth KDE
+mean((fhat - denx)^2)
+mean((ffixed - denx)^2)
+cor(fhat, denx, method = "s")
+cor(ffixed, denx, method = "s")
+plot(rank(denx), rank(fhat), main = paste("Rank correlation:", round(cor(rank(denx), rank(fhat), method = "s"), 3)))
+plot(rank(denx), rank(ffixed), main = paste("Rank correlation:", round(cor(rank(denx), rank(ffixed), method = "s"), 3)))
