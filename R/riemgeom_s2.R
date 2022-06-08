@@ -98,25 +98,28 @@ fxkde <- kde(theta, eval.points = theta)$estimate
 
 # KDE with Riemannian metric
 # theta_p(q) = sqrt(|cos(dg(p, q|)
-print(h)
-# h <- 1
+# print(h)
+h <- .1
 d <- 1
 fx <- rep(0, N)
 # eval.points <- x
 for(i in 1:N){
-  # fi <- 1 / sqrt(1 - x[i] ^ 2) * dnorm(x = acos(x), mean = acos(x[i]), sd = h)
-  fi <- 1 / sqrt((cos(acos(x) - acos(x[i])))) * dnorm(x = acos(x), mean = acos(x[i]), sd = h)
+  fi <- rep(0, N)
+  bindex <- which((abs(acos(x) - acos(x[i])) / h) <= 1) # use only neighbors within radius r
+  fi[bindex] <- 1 / sqrt((cos(acos(x[bindex]) - acos(x[i])))) * dnorm(x = acos(x[5]), mean = acos(x[i]), sd = h) / (pnorm(1) - pnorm(-1))
+  # OR use the true theta and true dg and use all data points for a weighted estimation
+  # fi <- 1 / sqrt((cos(acos(x) - acos(x[i])))) * dnorm(x = acos(x), mean = acos(x[i]), sd = h)
   fx <- fx + fi
 }
 fx <- fx / N
 # plot(theta, fx, main = "Estimated f(x) with riemannian metric")
 
 # Plotting
-par(mfrow=c(2,2))
+# par(mfrow=c(1,1))
 plot(theta, dentheta, main = "True density of theta")
-plot(x, denx, main = "True density of x")
-plot(theta, fxkde, main = paste("Estimated f(x) with KDE, h = ", round(h, 3)))
-plot(theta, fx, main = "Estimated f(x) with riemannian metric")
+# plot(x, denx, main = "True density of x")
+points(theta, fxkde, main = paste("Estimated f(x) with KDE, h = ", round(h, 3)), col = "green")
+points(theta, fx, main = "Estimated f(x) with riemannian metric", col = "red")
 # points(x, dentheta, col = "red", lty = "dashed")
 
 # plot(x[order(x)][1:N*.6], fx[order(x)][1:N*.6], type = "b", cex = .5, main = "Estimated f(x)[1:.6*N] with riemannian metric")
@@ -137,12 +140,11 @@ mean((rank(dentheta) - rank(fx)) ^ 2)
 mean((rank(dentheta) - rank(fxkde)) ^ 2)
 
 
-
-par(mfrow=c(2,2))
-plot(rank(dentheta), rank(fx), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fx), method = "s"), 3)))
-plot(rank(dentheta), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fxkde), method = "s"), 3)))
-plot(dentheta, fx); abline(0, 1, lty = "dashed")
-plot(dentheta, fxkde); abline(0, 1, lty = "dashed")
+# par(mfrow=c(2,2))
+# plot(rank(dentheta), rank(fx), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fx), method = "s"), 3)))
+# plot(rank(dentheta), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fxkde), method = "s"), 3)))
+# plot(dentheta, fx); abline(0, 1, lty = "dashed")
+# plot(dentheta, fxkde); abline(0, 1, lty = "dashed")
 
 
 # Summary: Pelletier's estimator gives a similar result as the fixed bandwidth KDE.
@@ -160,7 +162,7 @@ annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 0.1 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k; riemann_metric() requires eigen() on each H
+radius <- .5 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k; riemann_metric() requires eigen() on each H
 
 gridsize <- 20
 noutliers <- 20
@@ -254,7 +256,8 @@ for(i in 1:N){
   # fi <- dnorm(x = fn, mean = fn[i], sd = h * sqrt(hi)) # approximate geodesic distance with inner product adjusted by Riem metric # set h=.2 to give a less wiggly estimation
   
   fi <- rep(0, N)
-  bindex <- adj_matrix[i,] <= h # only smooth over points within the bandwidth radius
+  # bindex <- adj_matrix[i,] <= h # only smooth over points within the bandwidth radius
+  bindex <- (abs(x - x[i]) / h) <= h
   fi[bindex] <- dnorm(x = fn[bindex], mean = fn[i], sd = h * sqrt(hi))
   
   # fi <- hi ^ (-1/2) * (1 / h) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # estimated geodesic distance with shortest path graph distance, estimated Riem metric
