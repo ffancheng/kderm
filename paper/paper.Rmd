@@ -110,7 +110,7 @@ To start with, we introduce the notations used in this manuscript. Then we intro
 
 ## Multivariate kernel density estimation
 
-Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the density of the data based on weighted kernels centered at the data. @Scott1992-cj and @Scott2015-vl discussed a number of techniques for estimating the kernel densities of multivariate data. 
+Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the density of the data based on weighted kernels centered at the data. @Scott1992-cj and @Scott2015-vl covered a wide range of techniques for estimating the kernel densities of multivariate data. 
 In general, given a multivariate random sample $\pmb{X}_1, \dots, \pmb{X}_N \in \mathcal{R}^d$
 <!-- $\pmb{X}_i=(X_{i1}, X_{i2}, \dots, X_{id})^\prime \in \mathcal{R}^d$, $i = 1, 2, \dots, N$  -->
 drawn from a density $f$, the kernel density estimate of $f$ at point $\pmb{x}=(x_1, x_2, \dots, x_d)^\prime \in \mathcal{R}^d$ is given by
@@ -125,20 +125,23 @@ When using the standard gaussian kernel, we have $K(\pmb{x}) = (2\pi)^{-d/2}\exp
 K_{\pmb{H}}(\pmb{x}-\pmb{X}_i)=(2\pi)^{-d/2}|\pmb{H}|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{x}-\pmb{X}_i)'\pmb{H}^{-1}(\pmb{x}-\pmb{X}_i)\right],
 \end{equation} 
 with $|\pmb{H}|$ being the determinant of matrix $\pmb{H}$.
-Intuitively, KDE smooths out each data point $\pmb{X}_i$ into a smooth bump with the shape determined by the kernel function. And an average over all data points is taken as the estimated density $\hat{f}$. KDE is a local smooth estimator because the nearby points contributes more to the density value compared to points that are far away from the estimated data point $\pmb{x}$. 
+Intuitively, KDE smooths out each data point $\pmb{X}_i$ into a smooth bump with the shape determined by the kernel function. Then an average over all data points is taken as the estimated density $\hat{f}$. KDE is a local smooth estimator because the nearby points contributes more to the density value compared to points that are far away from the estimated data point $\pmb{x}$. 
 
-The choice of the the bandwidth matrix $\pmb{H}$ is crucial in the accuracy of $\hat{f}$. It controls the smoothing across all sample data points. For a given kernel function $K(\pmb{x})$, the shape of the local smoothing at each point is determined. Then the performance of the density estimate $\hat{f}$ depends on the choice of $\pmb{H}$. When $\pmb{H}$ is too small, the density estimates will apprear to be wiggly. While with $\pmb{H}$ being too large, the density estimates will smooth out some local feathers of $f$. So the accuracy of $\hat{f}$ depends strongly on the bandwidth matrix.
-Many bandwidth selection methods has been proposed in the literature, including the rule-of-thumb, cross-validation and plug-in methods [See @Heidenreich2013-bl; @Scott2015-vl for details]. For univariate kernel density estimation, the bandwidth selection problem has been thoroughly investigated [See @Jones1992-ef; @Cao1994-st; @Jones1996-cb; @Wand1994-xu for reviews]. The generalization to multivariate case could mainly be found in @Duong2003-sp, @Duong2004-rh, and @Chacon2010-wm. 
+The choice of the the bandwidth matrix $\pmb{H}$ is crucial in the accuracy of $\hat{f}$ because it controls the smoothing across the sample data points. For a given kernel function $K(\pmb{x})$, the shape of the local smoothing at each point is determined. Then the performance of the density estimate $\hat{f}$ depends on the choice of $\pmb{H}$. When $\pmb{H}$ is too small, the density estimates will apprear to be wiggly. On the contrary, when $\pmb{H}$ is too large, the density estimates might smooth out some local feathers of $f$. So the accuracy of $\hat{f}$ depends strongly on the bandwidth matrix.
+Many bandwidth selection methods has been proposed in the literature, including the rule-of-thumb, cross-validation and plug-in methods [See @Heidenreich2013-bl; @Scott2015-vl for details]. For univariate kernel density estimation, the bandwidth selection problem has been thoroughly investigated [See @Jones1992-ef; @Cao1994-st; @Jones1996-cb; @Wand1994-xu for reviews]. The generalization to multivariate case could mostly be found in @Duong2003-sp, @Duong2004-rh, and @Chacon2010-wm. In this paper, we consider the multivariate kernel density estimation.
 
-Note that the bandwidth matrix in \@ref(eq:kde) is a global smoothing parameter for all data points. However, when the local data structure is not universal for all sample data, an adaptive bandwidth matrix that is varying rather than fixed at each data point is needed. This is ususally referred to as variable kernel density estimation [VKDE; @Breiman1977-qc; @Jones1990-oe; @Terrell1992-ut]. In VKDE, the estimator in Equation \@ref(eq:vkde) is similar to that in \@ref(eq:kde) except that the bandwidth is a variable matrix $\pmb{H}_i$ for each $i$ instead of a fixed $\pmb{H}$ as below,
+Note that the bandwidth matrix in \@ref(eq:kde) is a global smoothing parameter for all data points. However, when the local data structure is not universal for all sample data, an adaptive bandwidth matrix that is varying rather than fixed at each data point is needed. This is ususally referred to as variable kernel density estimation [VKDE; @Breiman1977-qc; @Jones1990-oe; @Terrell1992-ut], where the bandwidth is varied depending on either the location of the sample points or that of the estimated points [Section 6.6 of @Scott2015-vl]. In this paper, the densities are estimated at the sample points themselves, so we only need to consider the case where the bandwidth changes for each sample point $\pmb{X}_i$ and will refer to this as the variable/adaptive kernel density estimation unless otherwise stated. 
+
+In multivariate VKDE, the estimator in Equation \@ref(eq:vkde) is similar to that in \@ref(eq:kde) except that the bandwidth is a variable matrix $\pmb{H}_i$ for each $\pmb{X}_i$,
 \begin{equation}
 \label{eq:vkde}
 \hat{f}(\pmb{x};\pmb{H}_i)=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i),
 \end{equation}
+Compared to a global fixed $\pmb{H}$, a variable bandwidth matrix is able to account for the pointwise adaptive local structure at each point and generate an estimate more applicable to the case where the distortion at each point is different at each point in the manifold learning embedding.
 
 For computational purposes, @Duong2007-up implements the kernel density estimates for data from 1 to 6 dimensions in the R package *ks*. 
-However, for variable kernel density estimation where the bandwidth is no longer a constant matrix, the *ks* implementation is limited to 2-dimension and the bandwidth can either be a vector or a diagonal matrix instead of a full bandwidth matrix, which limits the full flexibility of the kernel function.
-Further, the estimator in Equation \@ref(eq:kde) is only applicable when the sample space is Euclidean. In the cases of a Riemannian manifold, the underlying density is supported on a single manifold, the fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion. Therefore, there is a need for an estimator for Riemannian manifolds as described in \autoref{riemest}.
+However, for variable kernel density estimation where the bandwidth is no longer a constant matrix, the *ks* implementation is limited to 2-dimension and the bandwidth can either be a diagonal matrix or a vector with the diagonal elements, which limits the full flexibility of the kernel function.
+More importantly, the estimator in Equation \@ref(eq:vkde) is only applicable when the sample space is Euclidean. In the cases of a Riemannian manifold, the underlying density is supported on a single manifold. The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. Therefore, there is a need for an adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}.
 
 ## Kernel density estimator on Riemannian manifolds {#riemest}
 
@@ -158,7 +161,7 @@ and converges at the same rate as the Euclidean kernel density estimator [@Henry
 
 ### Volume density function
 
-However, in application, we usually found the observations lie on a $d$-dimensional manifold embedded in a $s$-dimensional space, where $d \ll s$. Then manifold learning can be applies to find the $d$-dimensional representation of the manifold $M$. Therefore, based on the estimator in \@ref(eq:denriem), we propose a kernel density estimator of f with the manifold embedding $y_i, i = 1, 2, \dots, N$ to be 
+However, in application, we usually found the observations lie on a $d$-dimensional manifold embedded in a $s$-dimensional space, where $d \ll s$. Then manifold learning can be applies to find the $d$-dimensional representation of the manifold $M$. Therefore, based on the estimator in \@ref(eq:denriem), we propose a kernel density estimator of $f$ with the manifold embedding $y_i, i = 1, 2, \dots, N$ to be 
 \begin{equation}
 \label{eq:denestimator}
 \hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h_i^d |g(\exp_p^{-1}(y_i))|} K(\frac{d_g(p, y_i)}{h_i}),

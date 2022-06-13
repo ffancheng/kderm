@@ -2,6 +2,7 @@
 references/
 data/
 reports/swissroll/
+paper/untitled.Rmd
 
 # Jupyter notebook files
 .ipynb_checkpoints/
