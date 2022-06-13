@@ -106,7 +106,7 @@ fx <- rep(0, N)
 for(i in 1:N){
   fi <- rep(0, N)
   bindex <- which((abs(acos(x) - acos(x[i])) / h) <= 1) # use only neighbors within radius r
-  fi[bindex] <- 1 / sqrt((cos(acos(x[bindex]) - acos(x[i])))) * dnorm(x = acos(x[5]), mean = acos(x[i]), sd = h) / (pnorm(1) - pnorm(-1))
+  fi[bindex] <- 1 / sqrt((cos(acos(x[bindex]) - acos(x[i])))) * dnorm(x = acos(x[bindex]), mean = acos(x[i]), sd = h) / (pnorm(1) - pnorm(-1))
   # OR use the true theta and true dg and use all data points for a weighted estimation
   # fi <- 1 / sqrt((cos(acos(x) - acos(x[i])))) * dnorm(x = acos(x), mean = acos(x[i]), sd = h)
   fx <- fx + fi
