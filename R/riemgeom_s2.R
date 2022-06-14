@@ -16,7 +16,7 @@ Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1)
 N <- 1000
 d <- 1
-distribution <- c("uniform", "normal", "beta", "lognormal", "mixed")[4] # CHANGE DISTRIBUTION OF THETA
+distribution <- c("uniform", "normal", "beta", "lognormal", "mixed")[3] # CHANGE DISTRIBUTION OF THETA
 switch(distribution,
        "uniform" = {
          # 1. theta ~ U(0, pi/2)
@@ -88,7 +88,8 @@ y <- sin(theta)
 # range(x) # [0, 1]
 # plot(x, denx)
 # range(denx)
-
+idx <- order(x)
+sum(diff(x[idx])*rollmean(denx[idx],2)) # 0.9984189
 
 # KDE with fixed bandwidth
 h <- ks::hpi(theta, binned = TRUE) # 0.034
@@ -117,7 +118,7 @@ fx <- fx / N
 # Plotting
 # par(mfrow=c(1,1))
 plot(theta, dentheta, main = "True density of theta")
-# plot(x, denx, main = "True density of x")
+# points(x, fxkde, main = "True density of x")
 points(theta, fxkde, main = paste("Estimated f(x) with KDE, h = ", round(h, 3)), col = "green")
 points(theta, fx, main = "Estimated f(x) with riemannian metric", col = "red")
 # points(x, dentheta, col = "red", lty = "dashed")
@@ -130,21 +131,48 @@ summary(dentheta)
 summary(fxkde)
 summary(fx)
 
+
+
+
+
+## Check area under the curve
+# trapz(theta, dentheta)
+id <- order(theta)
+sum(diff(theta[id])*rollmean(dentheta[id],2)) # 0.99899 for true densities
+sum(diff(theta[id])*rollmean(fxkde[id],2)) # 0.98569 for kde
+AUC <- sum(diff(theta[id])*rollmean(fx[id],2)) # 0.98690 for dc-kde
+
+# # using sintegral in Bolstad2
+# require(Bolstad2)
+# sintegral(theta[id],dentheta[id])
+# # using auc in MESS
+# require(MESS)
+# auc(theta[id],dentheta[id], type = 'spline')
+# # using integrate.xy in sfsmisc
+# require(sfsmisc)
+# integrate.xy(theta[id],dentheta[id])
+# # The trapezoidal method is less accurate than the spline method, so MESS::auc (uses spline method) or Bolstad2::sintegral (uses Simpson's rule) should probably be preferred.
+
+
+
 # rank correlation
 # our estimator (fx) is similar to kde (fxkde)
+# larger MSE, smaller mean rank error
 cor(dentheta, fx, method = "s")
 cor(dentheta, fxkde, method = "s")
 mean((dentheta - fx) ^ 2)
+mean((dentheta - fx/AUC) ^ 2)
 mean((dentheta - fxkde) ^ 2)
-mean((rank(dentheta) - rank(fx)) ^ 2)
+mean((rank(dentheta) - rank(fx/AUC)) ^ 2)
 mean((rank(dentheta) - rank(fxkde)) ^ 2)
 
 
-# par(mfrow=c(2,2))
-# plot(rank(dentheta), rank(fx), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fx), method = "s"), 3)))
-# plot(rank(dentheta), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fxkde), method = "s"), 3)))
-# plot(dentheta, fx); abline(0, 1, lty = "dashed")
-# plot(dentheta, fxkde); abline(0, 1, lty = "dashed")
+
+par(mfrow=c(2,2))
+plot(rank(dentheta), rank(fx), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fx), method = "s"), 3)))
+plot(rank(dentheta), rank(fxkde), main = paste("Rank correlation:", round(cor(rank(dentheta), rank(fxkde), method = "s"), 3)))
+plot(dentheta, fx); abline(0, 1, lty = "dashed")
+plot(dentheta, fxkde); abline(0, 1, lty = "dashed")
 
 
 # Summary: Pelletier's estimator gives a similar result as the fixed bandwidth KDE.
@@ -240,7 +268,7 @@ hidet <- apply(rmetric, 3, det) %>% mean()
 
 
 # h <- hpi(fn, binned = TRUE)
-h <- .2
+h <- .15
 fhat <- rep(0, N)
 for(i in 1:N){
   hi <- rmetric[,,i]
@@ -257,7 +285,7 @@ for(i in 1:N){
   
   fi <- rep(0, N)
   # bindex <- adj_matrix[i,] <= h # only smooth over points within the bandwidth radius
-  bindex <- (abs(x - x[i]) / h) <= h
+  bindex <- (abs(x - x[i]) / h) <= 1
   fi[bindex] <- dnorm(x = fn[bindex], mean = fn[i], sd = h * sqrt(hi))
   
   # fi <- hi ^ (-1/2) * (1 / h) * (2 * pi) ^ (-1/2) * exp(- adj_matrix[,i]^2 / (2 * h ^ 2)) # estimated geodesic distance with shortest path graph distance, estimated Riem metric
@@ -272,7 +300,7 @@ for(i in 1:N){
 }
 fhat <- fhat / N
 par(mfrow=c(1,1))
-plot(fn, fhat, main = paste("Estimated density of fn", "h=", round(h,3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
+plot(fn, fhat/AUC, main = paste("Estimated density of fn", "h=", round(h,3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
      ylim = c(0, max(dentheta, ffixed, fhat))
 )
 points(theta, dentheta, lty = 1, cex = .2, col = 1)
@@ -286,11 +314,27 @@ legend(x = "topright",          # Position
 
 
 
+# check AUC
+id <- order(theta)
+(trueAUC <- sum(diff(theta[id])*rollmean(dentheta[id],2))) # 0.99899 for true densities
+sum(diff(theta[id])*rollmean(ffixed[id],2)) # 0.98569 for kde
+(AUC <- sum(diff(theta[id])*rollmean(fhat[id],2))) # 0.881 for dc-kde
+# check MSE
+mean((ffixed - dentheta)^2)
+mean((fhat / AUC - dentheta)^2)
+# rank correlation of density estimates
+cor(dentheta, ffixed, method = "s")
+cor(dentheta, fhat, method = "s")
+
+
+
+
 
 ## Different volume density function, \theta = sqrt(det(hi) / det(hj))
 # truncated normal distribution, suppK = [0,1]
 # h <- hpi(fn, binned = TRUE)
 # fhat <- rep(0, N)
+h <- .18
 f <- matrix(0, N, N)
 for(i in 1:N){
   hi <- rmetric[,,i]
@@ -307,8 +351,22 @@ for(i in 1:N){
 }
 # fhat <- fhat / N
 fhat <- colMeans(f)
-summary(colMeans(f))
-summary(rowMeans(f))
+# summary(colMeans(f))
+# summary(rowMeans(f))
+
+
+# check AUC
+id <- order(theta)
+(trueAUC <- sum(diff(theta[id])*rollmean(dentheta[id],2))) # 0.99899 for true densities
+sum(diff(theta[id])*rollmean(ffixed[id],2)) # 0.98569 for kde
+(AUC <- sum(diff(theta[id])*rollmean(fhat[id],2))) # 0.881 for dc-kde
+# check MSE
+mean((ffixed - dentheta)^2)
+mean((fhat - dentheta)^2)
+mean((fhat / AUC - dentheta)^2)
+# rank correlation of density estimates
+cor(dentheta, ffixed, method = "s")
+cor(dentheta, fhat, method = "s")
 
 
 
@@ -327,16 +385,17 @@ legend(x = "topright",          # Position
        lwd = 2)                 # Line width
 # points(density(fn, kernel = "rectangular"), col = "blue", cex = .2)
 
-# text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
 
+
+# check how is the geodesic distances estimated
 ## extract geodesic distances
 dg <- matrix(0, N, N)
 truedg <- matrix(0, N,N)
 for(i in 1:N) {   
   hi <- rmetric[,,i]
   # bindex <- which(adj_matrix[i,] <= h) # only smooth over points within the bandwidth radius
-  #bindex <- which(abs(fn - fn[i]) / sqrt(hi) / h <= 1)
-  bindex<-1:N
+  bindex <- which(abs(fn - fn[i]) / sqrt(hi) / h <= 1)
+  # bindex <- 1:N
   # hi <- hi / mean(rmetric[,,bindex])
   for(j in bindex) {
     #hj <- rmetric[,,j]
@@ -345,8 +404,8 @@ for(i in 1:N) {
   }
 }
 
-plot(as.vector(truedg)[as.vector(truedg)<0.00001], as.vector(dg)[as.vector(truedg)<0.00001])
-abline(0,1)
+plot(as.vector(truedg)[as.vector(truedg) < 1e-5], as.vector(dg)[as.vector(truedg) < 1e-5])
+abline(0,1, col = "red")
 
 mean(as.vector(dg) - as.vector(truedg))
 # Our estimates: fhat
@@ -355,6 +414,7 @@ mean(as.vector(dg) - as.vector(truedg))
 # summary(ffixed)
 mean((ffixed - dentheta)^2)
 mean((fhat - dentheta)^2)
+mean((fhat/AUC - dentheta)^2)
 
 # # How to compare rank of density estimates
 cor(dentheta, ffixed, method = "s")
@@ -371,10 +431,12 @@ plot(rank(dentheta), rank(ffixed), main = paste("Rank correlation:", round(cor(r
 
 # Use a series of different hs
 # Plot MSE and rank correlation for different h, optimize MSE or rank correlations
-hs <- seq(0, 1, 0.01)[-1]
+hs <- seq(0, .5, 0.01)[-1]
 hmse <- rep(NA, length(hs))
 rcors <- rep(NA, length(hs))
 fhat <- matrix(0, length(hs), N)
+aucs <- rep(NA, length(hs))
+hmse_dc <- rep(NA, length(hs))
 
 for (k in 1:length(hs)) {
   h <- hs[k]
@@ -392,25 +454,31 @@ for (k in 1:length(hs)) {
     
   }
   fhat[k,] <- colMeans(f)
+  id <- order(theta)
+  aucs[k] <- sum(diff(theta[id])*rollmean(fhat[k, id],2)) # AUC for dc-kde
+  fhat[k,] <- fhat[k,] / aucs[k]
+  hmse_dc[k] <- mean((fhat[k,] / aucs[k] - dentheta)^2)
   hmse[k] <- mean((fhat[k,] - dentheta)^2)
   rcors[k] <- cor(dentheta, fhat[k,], method = "s")
 }
-plot(hs, hmse, type = "b")
-abline(h = mean((ffixed - dentheta)^2), col = "red")
+plot(hs, hmse_dc, type = "b")
+# points(hs, hmse_dc, type = "b", col = "red")
+abline(h = mean((ffixed - dentheta)^2), col = "green")
 plot(hs, rcors, type = "b")
-abline(h = cor(dentheta, ffixed, method = "s"), col = "red")
+abline(h = cor(dentheta, ffixed, method = "s"), col = "green")
 hs[which.min(hmse)] # when MSE is minimized
+hs[which.min(hmse_dc)]
 hs[which.max(rcors)] # when rank correlation is maximized
 # save(hs, hmse, rcors, theta, dentheta, ffixed, file = "R/riemgeom_s1_hs.rda")
 
 # optimized MSE
 par(mfrow=c(1,1))
-plot(fn, fhat[which.min(hmse),], main = paste("Estimated density of fn", "h=", round(hs[which.min(hmse)],3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
+plot(theta, fhat[which.min(hmse),], main = paste("Estimated density of fn", "h=", round(hs[which.min(hmse)],3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
      ylim = c(0, max(dentheta, ffixed, fhat))
 )
 points(theta, dentheta, lty = 1, cex = .2, col = 1)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
-points(fn, ffixed, col = 3, lty = 2, cex = .2)
+points(theta, ffixed, col = 3, lty = 2, cex = .2)
 # points(theta, dentheta, col = "red", lty = "dashed", cex = .2)
 legend(x = "topright",          # Position
        legend = c("True density", "Estimates with riemannian", "Estimates with kde"),  # Legend texts
@@ -434,14 +502,14 @@ legend(x = "topright",          # Position
        lwd = 2)                 # Line width
 
 # Another h value in between
-j <- 50
+j <- 10
 par(mfrow=c(1,1))
-plot(fn, fhat[j,], main = paste("Estimated density of fn", "h=", round(hs[j],3)), cex = .2, col = "red", lty = 3, xlim = c(min(fn), max(theta)),
-     ylim = c(0, max(dentheta, ffixed, fhat))
+plot(theta, fhat[j,] / aucs[j], main = paste("Estimated density of fn", "h=", round(hs[j],3)), cex = .2, col = "red", lty = 3, xlim = c(min(theta), max(theta)),
+     ylim = c(0, max(dentheta, ffixed, fhat[j,] / aucs[j]))
 )
 points(theta, dentheta, lty = 1, cex = .2, col = 1)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
-points(fn, ffixed, col = 3, lty = 2, cex = .2)
+points(theta, ffixed, col = 3, lty = 2, cex = .2)
 # points(theta, dentheta, col = "red", lty = "dashed", cex = .2)
 legend(x = "topright",          # Position
        legend = c("True density", "Estimates with riemannian", "Estimates with kde"),  # Legend texts
