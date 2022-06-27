@@ -360,37 +360,37 @@ To start with, we introduce the notations used in this manuscript. Then we intro
 \hypertarget{multivariate-kernel-density-estimation}{%
 \subsection{Multivariate kernel density estimation}\label{multivariate-kernel-density-estimation}}
 
-Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the density of the data based on weighted kernels centered at the data. \textcite{Scott1992-cj} and \textcite{Scott2015-vl} covered a wide range of techniques for estimating the kernel densities of multivariate data.
+Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data. \textcite{Scott1992-cj} and \textcite{Scott2015-vl} cover a wide range of techniques for estimating the kernel densities of multivariate data.
 In general, given a multivariate random sample \(\pmb{X}_1, \dots, \pmb{X}_N \in \mathcal{R}^d\)
 drawn from a density \(f\), the kernel density estimate of \(f\) at point \(\pmb{x}=(x_1, x_2, \dots, x_d)^\prime \in \mathcal{R}^d\) is given by
 \begin{equation}
 \label{eq:kde}
 \hat{f}(\pmb{x};\pmb{H})=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}}(\pmb{x}-\pmb{X}_i),
 \end{equation}
-where \(\pmb{H}\) is called the bandwidth matrix and it is a \(d\times d\) symmetric positive definite matrix, \(K(\pmb{x})\) is the kernel function, and \(K_{\pmb{H}}(\pmb{x}) = |\pmb{H}|^{-1/2} K(\pmb{H}^{-1/2}\pmb{x})\).
+where \(K(\pmb{x})\) is the kernel function, \(\pmb{H}\) is called the bandwidth matrix and it is a symmetric positive definite matrix of dimension \(d\times d\), and \(K_{\pmb{H}}(\pmb{x}) = |\pmb{H}|^{-1/2} K(\pmb{H}^{-1/2}\pmb{x})\).
 When using the standard gaussian kernel, we have \(K(\pmb{x}) = (2\pi)^{-d/2}\exp(-\frac{1}{2}\pmb{x}'\pmb{x})\) and hence
 \begin{equation}
 \label{eq:kernel}
 K_{\pmb{H}}(\pmb{x}-\pmb{X}_i)=(2\pi)^{-d/2}|\pmb{H}|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{x}-\pmb{X}_i)'\pmb{H}^{-1}(\pmb{x}-\pmb{X}_i)\right],
 \end{equation}
 with \(|\pmb{H}|\) being the determinant of matrix \(\pmb{H}\).
-Intuitively, KDE smooths out each data point \(\pmb{X}_i\) into a smooth bump with the shape determined by the kernel function. Then an average over all data points is taken as the estimated density \(\hat{f}\). KDE is a local smooth estimator because the nearby points contributes more to the density value compared to points that are far away from the estimated data point \(\pmb{x}\).
+Intuitively, KDE smooths out each data point \(\pmb{X}_i\) into a smooth bump with the shape determined by the kernel function. Then an average over all data points is taken as the estimated density \(\hat{f}\). KDE is a local smooth estimator because the nearby points contributes more to the density value compared to points far away from the estimated data point \(\pmb{x}\).
 
-The choice of the the bandwidth matrix \(\pmb{H}\) is crucial in the accuracy of \(\hat{f}\) because it controls the smoothing across the sample data points. For a given kernel function \(K(\pmb{x})\), the shape of the local smoothing at each point is determined. Then the performance of the density estimate \(\hat{f}\) depends on the choice of \(\pmb{H}\). When \(\pmb{H}\) is too small, the density estimates will apprear to be wiggly. On the contrary, when \(\pmb{H}\) is too large, the density estimates might smooth out some local feathers of \(f\). So the accuracy of \(\hat{f}\) depends strongly on the bandwidth matrix.
-Many bandwidth selection methods has been proposed in the literature, including the rule-of-thumb, cross-validation and plug-in methods \autocites[See][ for details]{Heidenreich2013-bl,Scott2015-vl}. For univariate kernel density estimation, the bandwidth selection problem has been thoroughly investigated \autocites[See][ for reviews]{Jones1992-ef,Cao1994-st,Jones1996-cb,Wand1994-xu}. The generalization to multivariate case could mostly be found in \textcite{Duong2003-sp}, \textcite{Duong2004-rh}, and \textcite{Chacon2010-wm}. In this paper, we consider the multivariate kernel density estimation.
+The choice of the bandwidth matrix \(\pmb{H}\) is crucial in the accuracy of \(\hat{f}\) because it controls the smoothing across the sample data. For a given kernel function \(K(\pmb{x})\), the shape of the local smoothing at each point is determined. Then the performance of the density estimate \(\hat{f}\) depends on the choice of \(\pmb{H}\). When \(\pmb{H}\) is too small, the density estimates will apprear to be wiggly. On the contrary, when \(\pmb{H}\) is too large, the density estimates might smooth out some local features of \(f\). So the accuracy of \(\hat{f}\) depends strongly on the bandwidth matrix.
+Many bandwidth selection methods have been proposed in the literature, including the rule-of-thumb, cross-validation and plug-in methods \autocites[See][ for details]{Heidenreich2013-bl,Scott2015-vl}. For univariate kernel density estimation, the bandwidth selection problem has been thoroughly investigated \autocites[See][ for reviews]{Jones1992-ef,Cao1994-st,Jones1996-cb,Wand1994-xu}. The generalization to multivariate case could mostly be found in \textcite{Duong2003-sp}, \textcite{Duong2004-rh}, and \textcite{Chacon2010-wm}. In this paper, we focus on the multivariate kernel density estimation.
 
-Note that the bandwidth matrix in \eqref{eq:kde} is a global smoothing parameter for all data points. However, when the local data structure is not universal for all sample data, an adaptive bandwidth matrix that is varying rather than fixed at each data point is needed. This is ususally referred to as variable kernel density estimation {[}VKDE; \textcite{Breiman1977-qc}; \textcite{Jones1990-oe}; \textcite{Terrell1992-ut}{]}, where the bandwidth is varied depending on either the location of the sample points or that of the estimated points \autocite[Section 6.6 of][]{Scott2015-vl}. In this paper, the densities are estimated at the sample points themselves, so we only need to consider the case where the bandwidth changes for each sample point \(\pmb{X}_i\) and will refer to this as the variable/adaptive kernel density estimation unless otherwise stated.
+Note that the bandwidth matrix in \eqref{eq:kde} is a global smoothing parameter for all data points. However, when the local data structure is not universal for all sample data, an adaptive bandwidth matrix that is varying rather than fixed at each data point is needed. This is ususally referred to as variable kernel density estimation {[}VKDE; \textcite{Breiman1977-qc}; \textcite{Jones1990-oe}; \textcite{Terrell1992-ut}{]}, where the bandwidth is varied depending on either the location of the sample points or that of the estimated points \autocite[Section 6.6 of][]{Scott2015-vl}. In this paper, the densities are estimated at the sample points themselves, so we only need to consider the case where the bandwidth changes for each sample point \(\pmb{X}_i\) and will refer to this as the \emph{variable/adaptive kernel density estimation(VKDE)} unless otherwise stated.
 
 In multivariate VKDE, the estimator in Equation \eqref{eq:vkde} is similar to that in \eqref{eq:kde} except that the bandwidth is a variable matrix \(\pmb{H}_i\) for each \(\pmb{X}_i\),
 \begin{equation}
 \label{eq:vkde}
-\hat{f}(\pmb{x};\pmb{H}_i)=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i),
+\hat{f}(\pmb{x};\pmb{H}_i)=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i).
 \end{equation}
-Compared to a global fixed \(\pmb{H}\), a variable bandwidth matrix is able to account for the pointwise adaptive local structure at each point and generate an estimate more applicable to the case where the distortion at each point is different at each point in the manifold learning embedding.
+Compared to a global fixed \(\pmb{H}\), a variable bandwidth matrix is able to account for the pointwise-adaptive local structure and generate an estimate more applicable to the case where the distortion at each point is different in the low-dimensional manifold learning embedding.
 
 For computational purposes, \textcite{Duong2007-up} implements the kernel density estimates for data from 1 to 6 dimensions in the R package \emph{ks}.
-However, for variable kernel density estimation where the bandwidth is no longer a constant matrix, the \emph{ks} implementation is limited to 2-dimension and the bandwidth can either be a diagonal matrix or a vector with the diagonal elements, which limits the full flexibility of the kernel function.
-More importantly, the estimator in Equation \eqref{eq:vkde} is only applicable when the sample space is Euclidean. In the cases of a Riemannian manifold, the underlying density is supported on a single manifold. The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. Therefore, there is a need for an adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}.
+However, for variable kernel density estimation where the bandwidth is no longer a constant matrix, the \emph{ks} implementation is limited to 2-dimension and the bandwidth can either be a diagonal matrix or a vector of the diagonal elements, which limits the full flexibility of the kernel function.
+More importantly, the estimator in Equation \eqref{eq:vkde} is only applicable when the sample space is Euclidean. In the cases of a Riemannian manifold, the underlying density is supported on a single manifold. The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. This motivates our proposed adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}.
 
 \hypertarget{riemest}{%
 \subsection{Kernel density estimator on Riemannian manifolds}\label{riemest}}
@@ -398,10 +398,10 @@ More importantly, the estimator in Equation \eqref{eq:vkde} is only applicable w
 Consider a compact Riemannian manifold \((M, g)\) of dimension \(d\) without boundary and a probability distribution with density \(f\) on the manifold. Assume \((M, d_g)\) is a complete metric space, where \(d_g\) is the Riemannian distance induced by the Riemannian, \(g\), and the strictly positive injectivity radius \autocite{Chavel2006-mp} of the manifold, \(inj_g(M)\). Denote \(\pmb{X}_i, i = 1, 2, \dots, N\), where \(\pmb{X}_i \in \mathcal{R}^d\), as i.i.d. random objects on \(M\) with density \(f\). For each point \(p\in M\), \textcite{Pelletier2005-vu} proposed a kernel density estimator of \(f\) to be
 \begin{equation}
 \label{eq:denriem}
-\hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d \theta_{\pmb{X}_i}(p)} K(\frac{d_g(p, \pmb{X}_i}{h}),
+\hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d \theta_{\pmb{X}_i}(p)} K(\frac{d_g(p, \pmb{X}_i)}{h}),
 \end{equation}
 where \(h\) is the global bandwidth satisfying \(h \leq h_0\) for fixed \(h_0\) such that \(0\leq h_0\leq inj_g(M)\), \(K: \mathcal{R}_{+} \rightarrow \mathcal{R}\) is a non-negative map, and \(\theta_{q}(p)\) is the volume density function on the manifold.
-\textcite{Pelletier2005-vu} mention that the volume density function \(\theta_q(p)\) defined for \(p\) in a neighborhood of \(q\) on the manifold, with the geodesic normal coordinates at \(q\), is equal to the determinant of the Riemannian metric \(g\) at the logarithm map at q, \(\exp_q^{-1}(p)\). The expression in \eqref{eq:denriem} is also proved to be consistent with the kernel density estimators in the Euclidean case as
+\textcite{Pelletier2005-vu} mentions that the volume density function \(\theta_q(p)\) defined for \(p\) in a neighborhood of \(q\) on the manifold, with the geodesic normal coordinates at \(q\), is equal to the determinant of the Riemannian metric \(g\) at the logarithm map at q, \(\exp_q^{-1}(p)\). The expression in \eqref{eq:denriem} is also proved to be consistent with the kernel density estimators in the Euclidean case as
 \begin{equation}
 \label{eq:denconsist}
 \hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d} K(\frac{\|p-\pmb{X}_i\|}{h}),
@@ -425,7 +425,7 @@ An important goal of manifold learning is to recover the local or global feature
 
 The Riemannian metric \(g\) is a symmetric and positive definite tensor field which defines an inner product \(<,>_g\) on the tangent space \(T_pM\) for every point \(p \in M\). If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. The Metric Learning algorithm \autocite{Perrault-Joncas2013-pq} then augment the embedded manifold with the Riemannian metric and produce a Riemannian manifold \((M, g)\).
 
-To recover the original geometry of the manifold, we need to know what the inner product corresponds to in the embedding. The inner product between two vectors \(u,v \in T_pM\), \(<u,v>_g=g_{ij}u^iv^j\)\footnote{Here the Einstein notation is used where superscripts denote summation over \(i\) and \(j\)}, can be used to define some geometric quantities, such as the vector norm \(\|u\|=\sqrt{<u,v>_g}\) and the angle between two vectors \(\cos{\theta}=\frac{<u,v>_g}{\|u\|\|v\|}\) in the tangent space.
+To recover the original geometry of the manifold, we need to know what the inner product corresponds to in the embedding. The inner product between two vectors \(u,v \in T_pM\), \(\langle u,v \rangle_g=g_{ij}u^iv^j\)\footnote{Here the Einstein notation is used where superscripts denote summation over \(i\) and \(j\)}, can be used to define some geometric quantities, such as the vector norm \(\|u\|=\sqrt{\langle u,v \rangle_g}\) and the angle between two vectors \(\cos{\theta}=\frac{\langle u,v \rangle_g}{\|u\|\|v\|}\) in the tangent space.
 Therefore, for each point \(p\in M\) in any coordinate system, the Riemannian metric \(g\) is a \(d\times d\) symmetric positive definite matrix, where \(d\) is the dimension of the manifold.
 
 The line element and volume element of the full manifold or a subset of the manifold can also be computed from \(g\). The arc length of a curve \(c\in M\) is defined as
@@ -769,7 +769,7 @@ to real-life data sets.
 \section*{Acknowledgment}\label{acknowledgment}}
 \addcontentsline{toc}{section}{Acknowledgment}
 
-This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster.
+This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster. The first author acknowledges the financial support of the Monash Graduate Scholarship (MGS) and the Monash International Tuition Scholarship (MITS) at the Monash University.
 
 \clearpage\appendix
 
@@ -781,74 +781,75 @@ In this appendix, we present some notions about the Riemannian geometry used in 
 \hypertarget{differentiable-manifolds}{%
 \subsection{Differentiable manifolds}\label{differentiable-manifolds}}
 
-In topology, a \emph{homeomorphism} is a bijective map between two topological spaces that is continuous in both directions. A \emph{Hausdorff space} is a topological space where any two distinct points can be separated by disjoint neighborhoods. A \(d\)-dimensional (topological) \emph{manifold} \(M\) is a connected Hausdorff space \((M, \mathcal{T}_M)\) where the neighborhood \(U\) for each point \(p\) is homeomorphic to an open subset \(V\) of the Euclidean space \(\mathbb{R}^d\). Such a homeomorphism \(\varphi: U \rightarrow V\) together with \(U\) gives a (coordinate) \emph{chart}, denoted as \((U, \varphi)\), with the corresponding local
-coordinates \((x_1(p),\dots, x_d(p)) := \varphi(p)\). A collection of charts \(\{U_\alpha, \varphi_\alpha\}\) ranging over the manifold \(M\) is called an \emph{atlas}, denoted as \(\mathcal{A}\). The manifold \(M\) is a \emph{differentiable manifold} if there exists an atlas of \(M\), \(\{U_\alpha, \varphi_\alpha\}\), such that the \emph{transition maps} between any two charts,
+In topology, a \emph{homeomorphism} is a bijective map between two topological spaces that is continuous in both directions. A \emph{Hausdorff space} is a topological space where any two distinct points can be separated by disjoint neighborhoods. And a \(d\)-dimensional (topological) \emph{manifold} \(M\) is a connected Hausdorff space \((M, \mathcal{T}_M)\) where the neighborhood \(U\) for each point \(p\) is homeomorphic to an open subset \(V\) of the Euclidean space \(\mathbb{R}^d\). Such a homeomorphism \(\varphi: U \rightarrow V\) together with \(U\) gives a (coordinate) \emph{chart}, denoted as \((U, \varphi)\), with the corresponding local coordinates \((x^1(p),\dots, x^d(p)) := \varphi(p)\). Further, a collection of charts \(\{U_\alpha, \varphi_\alpha\}\) ranging over the manifold \(M\) is called an \emph{atlas}, denoted as \(\mathcal{A}\).
+
+The manifold \(M\) is a \emph{differentiable manifold} if there exists an atlas of \(M\), \(\{U_\alpha, \varphi_\alpha\}\), such that the \emph{transition maps} between any two charts,
 \[
 \varphi_\beta \circ \varphi_\alpha^{-1}: \varphi_\alpha(U_\alpha \cap U_\beta) \rightarrow \varphi_\beta(U_\alpha \cap U_\beta),
 \] are differentiable of class \(C^\infty\) (smooth).
-
-Let \(\varphi\) be an injective map \(E \rightarrow \varphi(E)\). Then \(\varphi\) is an embedding of \(E\) into \(M\) if and only if
+Let \(\varphi\) be an injective map: \(E \rightarrow \varphi(E)\). Then \(\varphi\) is an \emph{embedding} of \(E\) into \(M\) if and only if
 \(\varphi: E \rightarrow \varphi(E)\) is a homeomorphism, and \(\varphi(E)\) is called an embedded submanifold of \(M\) with the subspace topology.
 
 \hypertarget{tangent-vector-and-tangent-space}{%
 \subsection{Tangent vector and tangent space}\label{tangent-vector-and-tangent-space}}
 
-The tangent vector at point \(p\) can be intuitively viewed as the velocity of a curve passing through the point \(p\) or as the directional derivatives at \(p\). Here we define the tangent vector via the velocity of curves.
+The tangent vector at point \(p\) can be intuitively viewed as the velocity of a curve passing through point \(p\) or as the directional derivatives at \(p\). Here we define the tangent vector via the velocity of curves.
 
-For any \(p \in M\), let \(\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M\) and \(\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M\) be two smooth curve through \(p\), i.e.~\(\gamma_1(0) = \gamma_2(0) = p\). \(\gamma_1\) and \(\gamma_2\) are \emph{equivalent} if and only if there exists a chart, \((U,\varphi)\), at \(p\) such that
+For any point \(p \in M\), let \(\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M\) and \(\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M\) be two smooth curves passing through \(p\), i.e.~\(\gamma_1(0) = \gamma_2(0) = p\). We say \(\gamma_1\) and \(\gamma_2\) are \emph{equivalent} if and only if there exists a chart, \((U,\varphi)\), at \(p\) such that
 \[
 (\varphi \circ \gamma_1)^\prime(0) = (\varphi \circ \gamma_2)^\prime(0).
 \]
-A \emph{tangent vector} to a manifold \(M\) at point \(p\), \(v_p\), is any equivalent class of the differentiable curves initialized at \(p\). The set of all tangent vectors at \(p\) defines the \emph{tangent space} of \(M\) at \(p\), denoted as \(T_pM\). The tangent space is a vector space of dimension \(d\), equal to the dimension of \(M\), and it does not depend on the chart \(\varphi\) locally at \(p\). The collection of all tangent spaces defines the \emph{tangent bundle} \(TM = \cup_{p \in M}T_pM\). Tangent vectors can also be seen as the directional derivatives at \(p\). For a given coordinate chart \(\varphi=(x_1,\dots,x_d)\), the tangent vectors defining partial
-derivatives are denoted as \(\frac{\partial}{\partial x_1}(p),\dots,\frac{\partial}{\partial x_d}(p)\), which define a \emph{basis} of the tangent space.
+A \emph{tangent vector} to a manifold \(M\) at point \(p\), denoted as \(v_p\), is any equivalent class of the differentiable curves initialized at \(p\). The set of all tangent vectors at \(p\) defines the \emph{tangent space} of \(M\) at \(p\), denoted as \(T_pM\). The tangent space is a vector space of dimension \(d\), equal to the dimension of \(M\), and it does not depend on the chart \(\varphi\) locally at \(p\). The collection of all tangent spaces defines the \emph{tangent bundle}, \(TM = \cup_{p \in M}T_pM\).
 
-The tangent space \(T_pM\) also admits a dual space \(T^\star_pM\) called the \emph{cotangent space} with corresponding \emph{cotangent vector}
-\(z_p: T^\star_pM \rightarrow \mathbb{R}^d\), and basis denoted as \(dx_1(p),\dots,dx_d(p)\).
+Tangent vectors can also be seen as the directional derivatives at \(p\). For a given coordinate chart \(\varphi=(x^1,\dots,x^d)\), the tangent vectors defining partial
+derivatives are denoted as \(\frac{\partial}{\partial x^1}(p),\dots,\frac{\partial}{\partial x^d}(p)\), which defines a \emph{basis} of the tangent space.
+The tangent space \(T_pM\) also admits a dual space \(T^\star_pM\) called the \emph{cotangent space} with corresponding \emph{cotangent vectors}
+\(z_p: T^\star_pM \rightarrow \mathbb{R}^d\), and a basis denoted as \(dx^1(p),\dots,dx^d(p)\).
 
 \hypertarget{riemannian-metric-and-geodesic-distance}{%
 \subsection{Riemannian metric and geodesic distance}\label{riemannian-metric-and-geodesic-distance}}
 
-A Riemannian metric \(g_p\) defined on the tangent space \(T_pM\) at each point \(p\) is a local inner product \(T_pM \times T_pM \rightarrow \mathbb{R}\), where \(g_p\) is \(d\times d\) symmetric positive definite and varies smoothly at \(p\). Generally, we
-omit the subscript \(p\) and refer to \(g\) as the Riemannian metric. The inner product for two vectors \(u, v \in T_pM\) is written as \(<u, v>_g = g_{ij}u^iv^j\) using the Einstein summation convention where implicit summation over all indices, \(\sum_{i,j}\), is assumed. A differentiable manifold \(M\) endowed with the Riemannian metric \(g\) on each tangent space \(T_pM\) is called a \emph{Riemannian manifold} \((M,g)\).
+A Riemannian metric \(g_p\) defined on the tangent space \(T_pM\) at each point \(p\) is a local inner product \(T_pM \times T_pM \rightarrow \mathbb{R}\), where \(g_p\) is a \(d\times d\) symmetric positive definite matrix and varies smoothly at \(p\). Generally, we
+omit the subscript \(p\) and refer to \(g\) as the Riemannian metric. The inner product between two vectors \(u, v \in T_pM\) is written as \(\langle u, v \rangle_g = g_{ij}u^iv^j\) using the Einstein summation convention where implicit summation over all indices, \(\sum_{i,j}\), is assumed. A differentiable manifold \(M\) endowed with the Riemannian metric \(g\) on each tangent space \(T_pM\) is called a \emph{Riemannian manifold} \((M,g)\).
 
-The Riemannian metric \(g\) can be used to define the norm of a vector \(u\), \(\|u\| = \sqrt{<u,v>_g}\) and the angle between two vectors \(u\) and \(v\), \(\cos\theta = \frac{<u,v>_g}{\|u\| \|v\|}\), which are the geometric quantities induced by \(g\). \(g\) could also be used to define the line element \(dl^2 = g_{ij}dx_idx_j\) and the volume element \(dV_g = \sqrt{\det(g)}dx_1\dots dx_d\), where \((x_1,\dots,x_d)\) are the local coordinates of the chart \((U, \varphi)\).
+The Riemannian metric \(g\) can be used to define the norm of a vector \(u\), \(\|u\| = \sqrt{\langle u,v \rangle_g}\) and the angle between two vectors \(u\) and \(v\), \(\cos\theta = \frac{\langle u,v \rangle_g}{\|u\| \|v\|}\), which are the geometric quantities induced by \(g\). It could also be used to define the line element \(dl^2 = g_{ij}dx^i dx^j\) and the volume element \(dV_g = \sqrt{\det(g)}dx^1 \dots dx^d\), where \((x^1,\dots,x^d)\) are the local coordinates of the chart \((U, \varphi)\).
 For a curve \(\gamma: I \rightarrow M\), the length of the curve is
 \[
-l(\gamma) = \sqrt{\int_0^1 \|\gamma\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx_i}{dt} \frac{dx_j}{dt} dt},
+l(\gamma) = \sqrt{\int_0^1 \|\gamma\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt} dt},
 \]
 where \(\gamma(I) \subset U\). The volume of \(W \subset U\) is defined as
 \[
-Vol(W) = \int_W \sqrt{\det(g)}dx_1 \dots dx_d,
+Vol(W) = \int_W \sqrt{\det(g)}dx^1 \dots dx^d,
 \]
 which is also called the \emph{Riemannian measure} on \(M\).
 
-The \emph{geodesics} of \(M\) are the smooth curves that locally joins the points along the shortest path on the manifold. A curve
-\(\gamma: I \rightarrow M\) is a geodesic if for all indices \(i,j,k\), the second-order ordinary differential equation is satisfied,
+The \emph{geodesics} of \(M\) are the smooth curves that locally joins the points along the shortest path on the manifold. Intuitively, geodesics are the \emph{straightest possible curves} in a Riemannian manifold. \autocite[Section 7.2.3 of][]{Nakahara2018-zs}
+A curve \(\gamma: I \rightarrow M\) is a geodesic if for all indices \(i,j,k\), the second-order ordinary differential equation is satisfied,
 \[
-\frac{d^2 x_i}{dt^2} + \Gamma^i_{jk} \frac{d x_j}{dt} \frac{dx_k}{dt} = 0,
+\frac{d^2 x^i}{dt^2} + \Gamma^i_{jk} \frac{d x^j}{dt} \frac{dx^k}{dt} = 0,
 \]
-where \(\Gamma^i_{jk}\) is the \emph{Christoffel symbol} defined by
+where \({x^i}\) are the coordinates of the curve \(\gamma\) and \(\Gamma^i_{jk}\) is the \emph{Christoffel symbol} defined by
 \[
-\Gamma^i_{jk} = \frac{1}{2} \sum_l g_{il} (\frac{\partial g_{il}}{\partial x_k} 
-+ \frac{\partial g_{kl}}{\partial x_j} - \frac{\partial g_{jk}}{\partial x_l}).
+\Gamma^i_{jk} = \frac{1}{2} \sum_l g^{il} (\frac{\partial g_{il}}{\partial x^k} 
++ \frac{\partial g_{kl}}{\partial x^j} - \frac{\partial g_{jk}}{\partial x^l}).
 \]
 The geodesics have a constant speed with norm \(\| \gamma^\prime(t) \|\), and they are the local minimizers of the arc
 length functional \(l:\gamma \rightarrow \sqrt{\int_0^1 \| \gamma^\prime(t) \|_g^2 dt}\) when the curves are defined over the interval \([0,1]\).
-The \emph{geodesic distance} \(d_g\) is the length of the shortest geodesic between two points on the manifold. For a point \(p \in M\), when the geodesic distance starting at \(p\) is not minimized, we call such set of points the \emph{cut locus} of \(p\), and the \emph{injectivity radius} at \(p \in M\) is the distance to the cut locus. The injectivity radius of \((M,g)\), \(\textit{inj}_gM\) is the infimum of the injectivity radii over all points on the manifold.
+The \emph{geodesic distance} \(d_g\) is the length of the shortest geodesic between two points on the manifold. For a point \(p \in M\), when the geodesic distance starting at \(p\) is not minimized, we call such set of points the \emph{cut locus} of \(p\), and the distance to the cut locus is the \emph{injectivity radius} at \(p \in M\). Therefore, the injectivity radius of the Riemannian manifold \((M,g)\), \(\textit{inj}_gM\), is the infimum of the injectivity radii over all points on the manifold.
+
+\hypertarget{exponential-map-and-logarithmic-map}{%
+\subsection{Exponential map and logarithmic map}\label{exponential-map-and-logarithmic-map}}
+
+Denote \(B(p, r) \subset T_pM\) as an open ball centered at point \(p\) with raidus \(r\). Then \(B(0_p, r) = exp_p^{-1}(B(p,r))\) is an open neighborhood of \(0_p\) in the tangent space at \(p\), \(T_pM\). Define \(exp_p\) as the \emph{exponential map} at point \(p\), where \(exp_p\) is a differentiable, bijective map of differentiable inverse (i.e.~\emph{diffeomorphism}) that maps a tangent vector \(u \in B(0_p, r)\) to the endpoint of the geodesic \(\gamma: I \rightarrow M\) satisfying \(\gamma(0)=p, \gamma^{-1}(0)=u\), and \(\gamma(1)=exp_p(u)\). The exponential map moves point \(p\) from \(p\) at speed \(u\) to an endpoint after covering the length of \(\|u\|\) along the geodesic in one time unit. The inverse of the exponential map is called the \emph{logarithm map}, \(\log_p(q):= \exp^{-1}_p(q)\), which gives the vector from point \(p\) to \(q\). Also define the \emph{geodesic ball} centered at \(p\) of radius \(r > 0\) as the image by the exponential map of \(B(0_p, r) \subset T_pM\) with \(r < \textit{inj}_gM\). Then we could interpolate a geodesic \(\gamma\) between two points \(p\) and \(q\) with the exponential map and the logarithmic map, \(\gamma(t) = \exp_p(t\log_p(q))\), and the geodesic distance is given by \(d_g(p,q) = \|\log_p(q)\|_g\).
 
 \hypertarget{pushforward-and-pullback-metric}{%
 \subsection{Pushforward and pullback metric}\label{pushforward-and-pullback-metric}}
 
 Pushforward and pullback are two notions corresponding to the notions of tangent and cotangent vectors. Let \(f\) be an embedding from the Riemannian manifold \((M,g)\) to another smooth manifold \(E\). The pushforward \(h=\varphi*g\) of the Riemannian metric \(g\) along \(\varphi \equiv f^{-1}\) is a linear map \(f_*:TM \rightarrow TE\), which maps the tangent vectors \(u_p\) at point \(p \in M\) to the tangent vectors \(f_*u_p\) at the mapping point \(f(p) \in E\), and satisfies that for \(u, v \in T_f(p)E\),
 \[
-<u,v>_{\varphi*g_p} = <df_p^{-1}u, df_p^{-1}v>_{g_p},
+\langle u,v \rangle_{\varphi*g_p} = <df_p^{-1}u, df_p^{-1}v>_{g_p},
 \]
 where \(df_p^{-1}\) is the Jacobian of \(f^{-1}\). The tangent vectors \(f_\star u_p\) are equivalent to the velocity vector of a curve \(\gamma: I\rightarrow M\) passing through point \(p\) at time zero with a constant speed \(\gamma^{-1}(0)=u_p\). Similarly, the pullback maps the cotangent vectors \(z_{f(p)}\) at \(f(p) \in E\) to cotangent vectors at \(p \in M\) acting on tangent vectors \(u \in T_pM\).
-
-\hypertarget{exponential-map-and-logarithmic-map}{%
-\subsection{Exponential map and logarithmic map}\label{exponential-map-and-logarithmic-map}}
-
-Denote \(B(p, r) \subset T_pM\) as an open ball centered at point \(p\) with raidus \(r\). Then \(B(0_p, r) = exp_p^{-1}(B(p,r))\) is an open neighborhood of \(0_p\) in the tangent space at \(p\), \(T_pM\). Define \(exp_p\) as the \emph{exponential map} at point \(p\), where \(exp_p\) is a differentiable, bijective map of differentiable inverse (i.e.~\emph{diffeomorphism}) that maps a tangent vector \(u \in B(0_p, r)\) to the endpoint of the geodesic \(\gamma: I \rightarrow M\) satisfying \(\gamma(0)=p, \gamma^{-1}(0)=u\), and \(\gamma(1)=exp_p(u)\). The exponential map moves point \(p\) from \(p\) at speed \(u\) to an endpoint after covering the length of \(\|u\|\) along the geodesic in one time unit. The inverse of the exponential map is called the \emph{logarithm map}, \(\log_p(q):= \exp^{-1}_p(q)\), which gives the vector from point \(p\) to \(q\). Also define the \emph{geodesic ball} centered at \(p\) of radius \(r > 0\) as the image by the exponential map of \(B(0_p, r) \subset T_pM\) with \(r < \textit{inj}_gM\). Then we could interpolate a geodesic \(\gamma\) between two points \(p\) and \(q\) with the exponential map and the logarithmic map, \(\gamma(t) = \exp_p(t\log_p(q))\), and the geodesic distance is given by \(d_g(p,q) = \|\log_p(q)\|_g\).
 
 \hypertarget{volume-density-function-1}{%
 \subsection{Volume density function}\label{volume-density-function-1}}
