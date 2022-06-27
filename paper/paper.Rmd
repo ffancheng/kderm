@@ -151,7 +151,7 @@ Consider a compact Riemannian manifold $(M, g)$ of dimension $d$ without boundar
 \hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d \theta_{\pmb{X}_i}(p)} K(\frac{d_g(p, \pmb{X}_i)}{h}),
 \end{equation} 
 where $h$ is the global bandwidth satisfying $h \leq h_0$ for fixed $h_0$ such that $0\leq h_0\leq inj_g(M)$, $K: \mathcal{R}_{+} \rightarrow \mathcal{R}$ is a non-negative map, and $\theta_{q}(p)$ is the volume density function on the manifold.
-@Pelletier2005-vu mention that the volume density function $\theta_q(p)$ defined for $p$ in a neighborhood of $q$ on the manifold, with the geodesic normal coordinates at $q$, is equal to the determinant of the Riemannian metric $g$ at the logarithm map at q, $\exp_q^{-1}(p)$. The expression in \@ref(eq:denriem) is also proved to be consistent with the kernel density estimators in the Euclidean case as 
+@Pelletier2005-vu mentions that the volume density function $\theta_q(p)$ defined for $p$ in a neighborhood of $q$ on the manifold, with the geodesic normal coordinates at $q$, is equal to the determinant of the Riemannian metric $g$ at the logarithm map at q, $\exp_q^{-1}(p)$. The expression in \@ref(eq:denriem) is also proved to be consistent with the kernel density estimators in the Euclidean case as 
 \begin{equation}
 \label{eq:denconsist}
 \hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d} K(\frac{\|p-\pmb{X}_i\|}{h}),
@@ -174,7 +174,7 @@ An important goal of manifold learning is to recover the local or global feature
 
 The Riemannian metric $g$ is a symmetric and positive definite tensor field which defines an inner product $<,>_g$ on the tangent space $T_pM$ for every point $p \in M$. If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. The Metric Learning algorithm [@Perrault-Joncas2013-pq] then augment the embedded manifold with the Riemannian metric and produce a Riemannian manifold $(M, g)$.
 
-To recover the original geometry of the manifold, we need to know what the inner product corresponds to in the embedding. The inner product between two vectors $u,v \in T_pM$, $<u,v>_g=g_{ij}u^iv^j$[^1], can be used to define some geometric quantities, such as the vector norm $\|u\|=\sqrt{<u,v>_g}$ and the angle between two vectors $\cos{\theta}=\frac{<u,v>_g}{\|u\|\|v\|}$ in the tangent space.
+To recover the original geometry of the manifold, we need to know what the inner product corresponds to in the embedding. The inner product between two vectors $u,v \in T_pM$, $\langle u,v \rangle_g=g_{ij}u^iv^j$[^1], can be used to define some geometric quantities, such as the vector norm $\|u\|=\sqrt{\langle u,v \rangle_g}$ and the angle between two vectors $\cos{\theta}=\frac{\langle u,v \rangle_g}{\|u\|\|v\|}$ in the tangent space.
 Therefore, for each point $p\in M$ in any coordinate system, the Riemannian metric $g$ is a $d\times d$ symmetric positive definite matrix, where $d$ is the dimension of the manifold.
 
 [^1]: Here the Einstein notation is used where superscripts denote summation over $i$ and $j$
@@ -480,7 +480,7 @@ to real-life data sets.
 
 # Acknowledgment {-}
 
-This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster.
+This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster. The first author acknowledges the financial support of the Monash Graduate Scholarship (MGS) and the Monash International Tuition Scholarship (MITS) at the Monash University.
 
 \clearpage\appendix
 
@@ -496,74 +496,76 @@ In this appendix, we present some notions about the Riemannian geometry used in 
 
 ## Differentiable manifolds
 
-In topology, a *homeomorphism* is a bijective map between two topological spaces that is continuous in both directions. A *Hausdorff space* is a topological space where any two distinct points can be separated by disjoint neighborhoods. A $d$-dimensional (topological) *manifold* $M$ is a connected Hausdorff space $(M, \mathcal{T}_M)$ where the neighborhood $U$ for each point $p$ is homeomorphic to an open subset $V$ of the Euclidean space $\mathbb{R}^d$. Such a homeomorphism $\varphi: U \rightarrow V$ together with $U$ gives a (coordinate) *chart*, denoted as $(U, \varphi)$, with the corresponding local
-coordinates $(x_1(p),\dots, x_d(p)) := \varphi(p)$. A collection of charts $\{U_\alpha, \varphi_\alpha\}$ ranging over the manifold $M$ is called an *atlas*, denoted as $\mathcal{A}$. The manifold $M$ is a *differentiable manifold* if there exists an atlas of $M$, $\{U_\alpha, \varphi_\alpha\}$, such that the *transition maps* between any two charts, 
+In topology, a *homeomorphism* is a bijective map between two topological spaces that is continuous in both directions. A *Hausdorff space* is a topological space where any two distinct points can be separated by disjoint neighborhoods. And a $d$-dimensional (topological) *manifold* $M$ is a connected Hausdorff space $(M, \mathcal{T}_M)$ where the neighborhood $U$ for each point $p$ is homeomorphic to an open subset $V$ of the Euclidean space $\mathbb{R}^d$. Such a homeomorphism $\varphi: U \rightarrow V$ together with $U$ gives a (coordinate) *chart*, denoted as $(U, \varphi)$, with the corresponding local coordinates $(x^1(p),\dots, x^d(p)) := \varphi(p)$. Further, a collection of charts $\{U_\alpha, \varphi_\alpha\}$ ranging over the manifold $M$ is called an *atlas*, denoted as $\mathcal{A}$. 
+
+The manifold $M$ is a *differentiable manifold* if there exists an atlas of $M$, $\{U_\alpha, \varphi_\alpha\}$, such that the *transition maps* between any two charts, 
 $$
 \varphi_\beta \circ \varphi_\alpha^{-1}: \varphi_\alpha(U_\alpha \cap U_\beta) \rightarrow \varphi_\beta(U_\alpha \cap U_\beta),
 $$ are differentiable of class $C^\infty$ (smooth).
-
-Let $\varphi$ be an injective map $E \rightarrow \varphi(E)$. Then $\varphi$ is an embedding of $E$ into $M$ if and only if
+Let $\varphi$ be an injective map: $E \rightarrow \varphi(E)$. Then $\varphi$ is an *embedding* of $E$ into $M$ if and only if
 $\varphi: E \rightarrow \varphi(E)$ is a homeomorphism, and $\varphi(E)$ is called an embedded submanifold of $M$ with the subspace topology.
 
 ## Tangent vector and tangent space
 
-The tangent vector at point $p$ can be intuitively viewed as the velocity of a curve passing through the point $p$ or as the directional derivatives at $p$. Here we define the tangent vector via the velocity of curves.
+The tangent vector at point $p$ can be intuitively viewed as the velocity of a curve passing through point $p$ or as the directional derivatives at $p$. Here we define the tangent vector via the velocity of curves.
 
-For any $p \in M$, let $\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M$ and $\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M$ be two smooth curve through $p$, i.e. $\gamma_1(0) = \gamma_2(0) = p$. $\gamma_1$ and $\gamma_2$ are *equivalent* if and only if there exists a chart, $(U,\varphi)$, at $p$ such that 
+For any point $p \in M$, let $\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M$ and $\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M$ be two smooth curves passing through $p$, i.e. $\gamma_1(0) = \gamma_2(0) = p$. We say $\gamma_1$ and $\gamma_2$ are *equivalent* if and only if there exists a chart, $(U,\varphi)$, at $p$ such that 
 $$
 (\varphi \circ \gamma_1)^\prime(0) = (\varphi \circ \gamma_2)^\prime(0).
 $$ 
-A *tangent vector* to a manifold $M$ at point $p$, $v_p$, is any equivalent class of the differentiable curves initialized at $p$. The set of all tangent vectors at $p$ defines the *tangent space* of $M$ at $p$, denoted as $T_pM$. The tangent space is a vector space of dimension $d$, equal to the dimension of $M$, and it does not depend on the chart $\varphi$ locally at $p$. The collection of all tangent spaces defines the *tangent bundle* $TM = \cup_{p \in M}T_pM$. Tangent vectors can also be seen as the directional derivatives at $p$. For a given coordinate chart $\varphi=(x_1,\dots,x_d)$, the tangent vectors defining partial
-derivatives are denoted as $\frac{\partial}{\partial x_1}(p),\dots,\frac{\partial}{\partial x_d}(p)$, which define a *basis* of the tangent space.
+A *tangent vector* to a manifold $M$ at point $p$, denoted as $v_p$, is any equivalent class of the differentiable curves initialized at $p$. The set of all tangent vectors at $p$ defines the *tangent space* of $M$ at $p$, denoted as $T_pM$. The tangent space is a vector space of dimension $d$, equal to the dimension of $M$, and it does not depend on the chart $\varphi$ locally at $p$. The collection of all tangent spaces defines the *tangent bundle*, $TM = \cup_{p \in M}T_pM$. 
 
-The tangent space $T_pM$ also admits a dual space $T^\star_pM$ called the *cotangent space* with corresponding *cotangent vector*
-$z_p: T^\star_pM \rightarrow \mathbb{R}^d$, and basis denoted as $dx_1(p),\dots,dx_d(p)$.
+Tangent vectors can also be seen as the directional derivatives at $p$. For a given coordinate chart $\varphi=(x^1,\dots,x^d)$, the tangent vectors defining partial
+derivatives are denoted as $\frac{\partial}{\partial x^1}(p),\dots,\frac{\partial}{\partial x^d}(p)$, which defines a *basis* of the tangent space.
+The tangent space $T_pM$ also admits a dual space $T^\star_pM$ called the *cotangent space* with corresponding *cotangent vectors*
+$z_p: T^\star_pM \rightarrow \mathbb{R}^d$, and a basis denoted as $dx^1(p),\dots,dx^d(p)$.
 
 ## Riemannian metric and geodesic distance
 
-A Riemannian metric $g_p$ defined on the tangent space $T_pM$ at each point $p$ is a local inner product $T_pM \times T_pM \rightarrow \mathbb{R}$, where $g_p$ is $d\times d$ symmetric positive definite and varies smoothly at $p$. Generally, we
-omit the subscript $p$ and refer to $g$ as the Riemannian metric. The inner product for two vectors $u, v \in T_pM$ is written as $<u, v>_g = g_{ij}u^iv^j$ using the Einstein summation convention where implicit summation over all indices, $\sum_{i,j}$, is assumed. A differentiable manifold $M$ endowed with the Riemannian metric $g$ on each tangent space $T_pM$ is called a *Riemannian manifold* $(M,g)$.
+A Riemannian metric $g_p$ defined on the tangent space $T_pM$ at each point $p$ is a local inner product $T_pM \times T_pM \rightarrow \mathbb{R}$, where $g_p$ is a $d\times d$ symmetric positive definite matrix and varies smoothly at $p$. Generally, we
+omit the subscript $p$ and refer to $g$ as the Riemannian metric. The inner product between two vectors $u, v \in T_pM$ is written as $\langle u, v \rangle_g = g_{ij}u^iv^j$ using the Einstein summation convention where implicit summation over all indices, $\sum_{i,j}$, is assumed. A differentiable manifold $M$ endowed with the Riemannian metric $g$ on each tangent space $T_pM$ is called a *Riemannian manifold* $(M,g)$.
 
-The Riemannian metric $g$ can be used to define the norm of a vector $u$, $\|u\| = \sqrt{<u,v>_g}$ and the angle between two vectors $u$ and $v$, $\cos\theta = \frac{<u,v>_g}{\|u\| \|v\|}$, which are the geometric quantities induced by $g$. $g$ could also be used to define the line element $dl^2 = g_{ij}dx_idx_j$ and the volume element $dV_g = \sqrt{\det(g)}dx_1\dots dx_d$, where $(x_1,\dots,x_d)$ are the local coordinates of the chart $(U, \varphi)$. 
+The Riemannian metric $g$ can be used to define the norm of a vector $u$, $\|u\| = \sqrt{\langle u,v \rangle_g}$ and the angle between two vectors $u$ and $v$, $\cos\theta = \frac{\langle u,v \rangle_g}{\|u\| \|v\|}$, which are the geometric quantities induced by $g$. It could also be used to define the line element $dl^2 = g_{ij}dx^i dx^j$ and the volume element $dV_g = \sqrt{\det(g)}dx^1 \dots dx^d$, where $(x^1,\dots,x^d)$ are the local coordinates of the chart $(U, \varphi)$. 
 For a curve $\gamma: I \rightarrow M$, the length of the curve is
 $$
-l(\gamma) = \sqrt{\int_0^1 \|\gamma\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx_i}{dt} \frac{dx_j}{dt} dt},
+l(\gamma) = \sqrt{\int_0^1 \|\gamma\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt} dt},
 $$
 where $\gamma(I) \subset U$. The volume of $W \subset U$ is defined as
 $$
-Vol(W) = \int_W \sqrt{\det(g)}dx_1 \dots dx_d,
+Vol(W) = \int_W \sqrt{\det(g)}dx^1 \dots dx^d,
 $$
 which is also called the *Riemannian measure* on $M$.
 
-The *geodesics* of $M$ are the smooth curves that locally joins the points along the shortest path on the manifold. A curve
-$\gamma: I \rightarrow M$ is a geodesic if for all indices $i,j,k$, the second-order ordinary differential equation is satisfied, 
+The *geodesics* of $M$ are the smooth curves that locally joins the points along the shortest path on the manifold. Intuitively, geodesics are the *straightest possible curves* in a Riemannian manifold [Section 7.2.3 of @Nakahara2018-zs].
+A curve $\gamma: I \rightarrow M$ is a geodesic if for all indices $i,j,k$, the second-order ordinary differential equation is satisfied, 
 $$
-\frac{d^2 x_i}{dt^2} + \Gamma^i_{jk} \frac{d x_j}{dt} \frac{dx_k}{dt} = 0,
+\frac{d^2 x^i}{dt^2} + \Gamma^i_{jk} \frac{d x^j}{dt} \frac{dx^k}{dt} = 0,
 $$ 
-where $\Gamma^i_{jk}$ is the *Christoffel symbol* defined by 
+where ${x^i}$ are the coordinates of the curve $\gamma$ and $\Gamma^i_{jk}$ is the *Christoffel symbol* defined by 
 $$
-\Gamma^i_{jk} = \frac{1}{2} \sum_l g_{il} (\frac{\partial g_{il}}{\partial x_k} 
-+ \frac{\partial g_{kl}}{\partial x_j} - \frac{\partial g_{jk}}{\partial x_l}).
+\Gamma^i_{jk} = \frac{1}{2} \sum_l g^{il} (\frac{\partial g_{il}}{\partial x^k} 
++ \frac{\partial g_{kl}}{\partial x^j} - \frac{\partial g_{jk}}{\partial x^l}).
 $$ 
 The geodesics have a constant speed with norm $\| \gamma^\prime(t) \|$, and they are the local minimizers of the arc
 length functional $l:\gamma \rightarrow \sqrt{\int_0^1 \| \gamma^\prime(t) \|_g^2 dt}$ when the curves are defined over the interval $[0,1]$. 
-The *geodesic distance* $d_g$ is the length of the shortest geodesic between two points on the manifold. For a point $p \in M$, when the geodesic distance starting at $p$ is not minimized, we call such set of points the *cut locus* of $p$, and the *injectivity radius* at $p \in M$ is the distance to the cut locus. The injectivity radius of $(M,g)$, $\textit{inj}_gM$ is the infimum of the injectivity radii over all points on the manifold.
+The *geodesic distance* $d_g$ is the length of the shortest geodesic between two points on the manifold. For a point $p \in M$, when the geodesic distance starting at $p$ is not minimized, we call such set of points the *cut locus* of $p$, and the distance to the cut locus is the *injectivity radius* at $p \in M$. Therefore, the injectivity radius of the Riemannian manifold $(M,g)$, $\textit{inj}_gM$, is the infimum of the injectivity radii over all points on the manifold.
 
 <!-- ### Isometry -->
+
+## Exponential map and logarithmic map
+
+Denote $B(p, r) \subset T_pM$ as an open ball centered at point $p$ with raidus $r$. Then $B(0_p, r) = exp_p^{-1}(B(p,r))$ is an open neighborhood of $0_p$ in the tangent space at $p$, $T_pM$. Define $exp_p$ as the *exponential map* at point $p$, where $exp_p$ is a differentiable, bijective map of differentiable inverse (i.e. *diffeomorphism*) that maps a tangent vector $u \in B(0_p, r)$ to the endpoint of the geodesic $\gamma: I \rightarrow M$ satisfying $\gamma(0)=p, \gamma^{-1}(0)=u$, and $\gamma(1)=exp_p(u)$. The exponential map moves point $p$ from $p$ at speed $u$ to an endpoint after covering the length of $\|u\|$ along the geodesic in one time unit. The inverse of the exponential map is called the *logarithm map*, $\log_p(q):= \exp^{-1}_p(q)$, which gives the vector from point $p$ to $q$. Also define the *geodesic ball* centered at $p$ of radius $r > 0$ as the image by the exponential map of $B(0_p, r) \subset T_pM$ with $r < \textit{inj}_gM$. Then we could interpolate a geodesic $\gamma$ between two points $p$ and $q$ with the exponential map and the logarithmic map, $\gamma(t) = \exp_p(t\log_p(q))$, and the geodesic distance is given by $d_g(p,q) = \|\log_p(q)\|_g$.
 
 ## Pushforward and pullback metric
 
 Pushforward and pullback are two notions corresponding to the notions of tangent and cotangent vectors. Let $f$ be an embedding from the Riemannian manifold $(M,g)$ to another smooth manifold $E$. The pushforward $h=\varphi*g$ of the Riemannian metric $g$ along $\varphi \equiv f^{-1}$ is a linear map $f_*:TM \rightarrow TE$, which maps the tangent vectors $u_p$ at point $p \in M$ to the tangent vectors $f_*u_p$ at the mapping point $f(p) \in E$, and satisfies that for $u, v \in T_f(p)E$, 
 $$
-<u,v>_{\varphi*g_p} = <df_p^{-1}u, df_p^{-1}v>_{g_p},
+\langle u,v \rangle_{\varphi*g_p} = <df_p^{-1}u, df_p^{-1}v>_{g_p},
 $$ 
 where $df_p^{-1}$ is the Jacobian of $f^{-1}$. The tangent vectors $f_\star u_p$ are equivalent to the velocity vector of a curve $\gamma: I\rightarrow M$ passing through point $p$ at time zero with a constant speed $\gamma^{-1}(0)=u_p$. Similarly, the pullback maps the cotangent vectors $z_{f(p)}$ at $f(p) \in E$ to cotangent vectors at $p \in M$ acting on tangent vectors $u \in T_pM$.
 
 <!-- embedding pushforward metric [@Perrault-Joncas2013-pq] -->
 
-## Exponential map and logarithmic map
-
-Denote $B(p, r) \subset T_pM$ as an open ball centered at point $p$ with raidus $r$. Then $B(0_p, r) = exp_p^{-1}(B(p,r))$ is an open neighborhood of $0_p$ in the tangent space at $p$, $T_pM$. Define $exp_p$ as the *exponential map* at point $p$, where $exp_p$ is a differentiable, bijective map of differentiable inverse (i.e. *diffeomorphism*) that maps a tangent vector $u \in B(0_p, r)$ to the endpoint of the geodesic $\gamma: I \rightarrow M$ satisfying $\gamma(0)=p, \gamma^{-1}(0)=u$, and $\gamma(1)=exp_p(u)$. The exponential map moves point $p$ from $p$ at speed $u$ to an endpoint after covering the length of $\|u\|$ along the geodesic in one time unit. The inverse of the exponential map is called the *logarithm map*, $\log_p(q):= \exp^{-1}_p(q)$, which gives the vector from point $p$ to $q$. Also define the *geodesic ball* centered at $p$ of radius $r > 0$ as the image by the exponential map of $B(0_p, r) \subset T_pM$ with $r < \textit{inj}_gM$. Then we could interpolate a geodesic $\gamma$ between two points $p$ and $q$ with the exponential map and the logarithmic map, $\gamma(t) = \exp_p(t\log_p(q))$, and the geodesic distance is given by $d_g(p,q) = \|\log_p(q)\|_g$.
 
 <!-- ## Canonical metric -->
 
