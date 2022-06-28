@@ -795,7 +795,7 @@ Let \(\varphi\) be an injective map: \(E \rightarrow \varphi(E)\). Then \(\varph
 
 The tangent vector at point \(p\) can be intuitively viewed as the velocity of a curve passing through point \(p\) or as the directional derivatives at \(p\). Here we define the tangent vector via the velocity of curves.
 
-For any point \(p \in M\), let \(\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M\) and \(\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M\) be two smooth curves passing through \(p\), i.e.~\(\gamma_1(0) = \gamma_2(0) = p\). We say \(\gamma_1\) and \(\gamma_2\) are \emph{equivalent} if and only if there exists a chart, \((U,\varphi)\), at \(p\) such that
+For any point \(p \in M\), let \(\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M\) and \(\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M\) be two smooth curves passing through \(p\), i.e.~\(\gamma_1(0) = \gamma_2(0) = p\). We say \(\gamma_1\) and \(\gamma_2\) are \emph{equivalent} if and only if there exists a chart \((U,\varphi)\) at \(p\) such that
 \[
 (\varphi \circ \gamma_1)^\prime(0) = (\varphi \circ \gamma_2)^\prime(0).
 \]
@@ -803,32 +803,31 @@ A \emph{tangent vector} to a manifold \(M\) at point \(p\), denoted as \(v_p\), 
 
 Tangent vectors can also be seen as the directional derivatives at \(p\). For a given coordinate chart \(\varphi=(x^1,\dots,x^d)\), the tangent vectors defining partial
 derivatives are denoted as \(\frac{\partial}{\partial x^1}(p),\dots,\frac{\partial}{\partial x^d}(p)\), which defines a \emph{basis} of the tangent space.
-The tangent space \(T_pM\) also admits a dual space \(T^\star_pM\) called the \emph{cotangent space} with corresponding \emph{cotangent vectors}
-\(z_p: T^\star_pM \rightarrow \mathbb{R}^d\), and a basis denoted as \(dx^1(p),\dots,dx^d(p)\).
+The tangent space \(T_pM\) also admits a dual space \(T^\star_pM\) called the \emph{cotangent space} with the corresponding \emph{cotangent vectors} \(z_p: T^\star_pM \rightarrow \mathbb{R}^d\) and a basis denoted as \(dx^1(p),\dots,dx^d(p)\).
 
 \hypertarget{riemannian-metric-and-geodesic-distance}{%
 \subsection{Riemannian metric and geodesic distance}\label{riemannian-metric-and-geodesic-distance}}
 
 A Riemannian metric \(g_p\) defined on the tangent space \(T_pM\) at each point \(p\) is a local inner product \(T_pM \times T_pM \rightarrow \mathbb{R}\), where \(g_p\) is a \(d\times d\) symmetric positive definite matrix and varies smoothly at \(p\). Generally, we
-omit the subscript \(p\) and refer to \(g\) as the Riemannian metric. The inner product between two vectors \(u, v \in T_pM\) is written as \(\langle u, v \rangle_g = g_{ij}u^iv^j\) using the Einstein summation convention where implicit summation over all indices, \(\sum_{i,j}\), is assumed. A differentiable manifold \(M\) endowed with the Riemannian metric \(g\) on each tangent space \(T_pM\) is called a \emph{Riemannian manifold} \((M,g)\).
+omit the subscript \(p\) and refer to \(g\) as the Riemannian metric. The inner product between two vectors \(u, v \in T_pM\) is written as \(\langle u, v \rangle_g = g_{ij}u^iv^j\) using the Einstein summation convention where implicit summation over all indices, \(\sum_{i,j} g_{ij}u^iv^j\), is assumed. A differentiable manifold \(M\) endowed with the Riemannian metric \(g\) on each tangent space \(T_pM\) is called a \emph{Riemannian manifold} \((M,g)\).
 
-The Riemannian metric \(g\) can be used to define the norm of a vector \(u\), \(\|u\| = \sqrt{\langle u,v \rangle_g}\) and the angle between two vectors \(u\) and \(v\), \(\cos\theta = \frac{\langle u,v \rangle_g}{\|u\| \|v\|}\), which are the geometric quantities induced by \(g\). It could also be used to define the line element \(dl^2 = g_{ij}dx^i dx^j\) and the volume element \(dV_g = \sqrt{\det(g)}dx^1 \dots dx^d\), where \((x^1,\dots,x^d)\) are the local coordinates of the chart \((U, \varphi)\).
+The Riemannian metric \(g\) can be used to define the norm of a vector \(u\), \(\|u\| = \sqrt{\langle u,v \rangle_g}\), and the angle between two vectors \(u\) and \(v\), \(\cos\theta = \frac{\langle u,v \rangle_g}{\|u\| \|v\|}\), which are the geometric quantities induced by \(g\). It could also be used to define the line element \(dl^2 = g_{ij}dx^i dx^j\) and the volume element \(dV_g = \sqrt{\det(g)}dx^1 \dots dx^d\), where \((x^1,\dots,x^d)\) are the local coordinates of the chart \((U, \varphi)\).
 For a curve \(\gamma: I \rightarrow M\), the length of the curve is
 \[
-l(\gamma) = \sqrt{\int_0^1 \|\gamma\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt} dt},
+l(\gamma) = \sqrt{\int_0^1 \|\gamma^\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt} dt},
 \]
 where \(\gamma(I) \subset U\). The volume of \(W \subset U\) is defined as
 \[
-Vol(W) = \int_W \sqrt{\det(g)}dx^1 \dots dx^d,
+Vol(W) = \int_W \sqrt{\det(g)}dx^1 \cdots dx^d,
 \]
 which is also called the \emph{Riemannian measure} on \(M\).
 
-The \emph{geodesics} of \(M\) are the smooth curves that locally joins the points along the shortest path on the manifold. Intuitively, geodesics are the \emph{straightest possible curves} in a Riemannian manifold. \autocite[Section 7.2.3 of][]{Nakahara2018-zs}
+The \emph{geodesics} of \(M\) are the smooth curves that locally joins the points along the shortest path on the manifold. Intuitively, geodesics are the \emph{straightest possible curves} in a Riemannian manifold \autocite[Section 7.2.3 of][]{Nakahara2018-zs}.
 A curve \(\gamma: I \rightarrow M\) is a geodesic if for all indices \(i,j,k\), the second-order ordinary differential equation is satisfied,
 \[
 \frac{d^2 x^i}{dt^2} + \Gamma^i_{jk} \frac{d x^j}{dt} \frac{dx^k}{dt} = 0,
 \]
-where \({x^i}\) are the coordinates of the curve \(\gamma\) and \(\Gamma^i_{jk}\) is the \emph{Christoffel symbol} defined by
+where \(\{x^i\}\) are the coordinates of the curve \(\gamma\) and \(\Gamma^i_{jk}\) is the \emph{Christoffel symbol} defined by
 \[
 \Gamma^i_{jk} = \frac{1}{2} \sum_l g^{il} (\frac{\partial g_{il}}{\partial x^k} 
 + \frac{\partial g_{kl}}{\partial x^j} - \frac{\partial g_{jk}}{\partial x^l}).
@@ -840,31 +839,42 @@ The \emph{geodesic distance} \(d_g\) is the length of the shortest geodesic betw
 \hypertarget{exponential-map-and-logarithmic-map}{%
 \subsection{Exponential map and logarithmic map}\label{exponential-map-and-logarithmic-map}}
 
-Denote \(B(p, r) \subset T_pM\) as an open ball centered at point \(p\) with raidus \(r\). Then \(B(0_p, r) = exp_p^{-1}(B(p,r))\) is an open neighborhood of \(0_p\) in the tangent space at \(p\), \(T_pM\). Define \(exp_p\) as the \emph{exponential map} at point \(p\), where \(exp_p\) is a differentiable, bijective map of differentiable inverse (i.e.~\emph{diffeomorphism}) that maps a tangent vector \(u \in B(0_p, r)\) to the endpoint of the geodesic \(\gamma: I \rightarrow M\) satisfying \(\gamma(0)=p, \gamma^{-1}(0)=u\), and \(\gamma(1)=exp_p(u)\). The exponential map moves point \(p\) from \(p\) at speed \(u\) to an endpoint after covering the length of \(\|u\|\) along the geodesic in one time unit. The inverse of the exponential map is called the \emph{logarithm map}, \(\log_p(q):= \exp^{-1}_p(q)\), which gives the vector from point \(p\) to \(q\). Also define the \emph{geodesic ball} centered at \(p\) of radius \(r > 0\) as the image by the exponential map of \(B(0_p, r) \subset T_pM\) with \(r < \textit{inj}_gM\). Then we could interpolate a geodesic \(\gamma\) between two points \(p\) and \(q\) with the exponential map and the logarithmic map, \(\gamma(t) = \exp_p(t\log_p(q))\), and the geodesic distance is given by \(d_g(p,q) = \|\log_p(q)\|_g\).
+Denote \(B(p, r) \subset T_pM\) as an open ball centered at point \(p\) with raidus \(r\). Then \(B(0_p, r) = exp_p^{-1}(B(p,r))\) is an open neighborhood of \(0_p\) in the tangent space at \(p\), \(T_pM\), where \(exp_p\) is the \emph{exponential map} at point \(p\). The exponential map maps a tangent vector \(u \in B(0_p, r)\) to the endpoint of the geodesic \(\gamma: I \rightarrow M\) satisfying \(\gamma(0)=p, \gamma^{\prime}(0)=u\), and \(\gamma(1)=exp_p(u)\). It is a differentiable bijective map of differentiable inverse (i.e.~\emph{diffeomorphism}). Intuitively, the exponential map moves point \(p\) to an endpoint at speed \(u\) after covering the length of \(\|u\|\) along the geodesic in one time unit.
+
+The inverse of the exponential map is called the \emph{logarithm map}, denoted as \(\log_p(q):= \exp^{-1}_p(q)\), which gives the tangent vector to get from point \(p\) to \(q\) in one unit time. Also define the \emph{geodesic ball} centered at \(p\) of radius \(r > 0\) as the image by the exponential map of \(B(0_p, r) \subset T_pM\) with \(r < \textit{inj}_gM\). Then we could interpolate a geodesic \(\gamma\) between two points \(p\) and \(q\) with the exponential map and the logarithmic map, \(\gamma(t) = \exp_p(t\log_p(q))\), and the geodesic distance is given by \(d_g(p,q) = \|\log_p(q)\|_g\).
 
 \hypertarget{pushforward-and-pullback-metric}{%
 \subsection{Pushforward and pullback metric}\label{pushforward-and-pullback-metric}}
 
-Pushforward and pullback are two notions corresponding to the notions of tangent and cotangent vectors. Let \(f\) be an embedding from the Riemannian manifold \((M,g)\) to another smooth manifold \(E\). The pushforward \(h=\varphi*g\) of the Riemannian metric \(g\) along \(\varphi \equiv f^{-1}\) is a linear map \(f_*:TM \rightarrow TE\), which maps the tangent vectors \(u_p\) at point \(p \in M\) to the tangent vectors \(f_*u_p\) at the mapping point \(f(p) \in E\), and satisfies that for \(u, v \in T_f(p)E\),
+Pushforward and pullback are two notions corresponding to the notions of tangent and cotangent vectors.
+Let \(\phi: M \rightarrow E\) be a smooth map between the Riemannian manifold \((M,g)\) to another smooth manifold \(E\). Then the differential of \(\phi\) at point \(p\) is a linear map \(d\phi_p: T_pM \rightarrow T_{\phi (p)}E\), which pushes the tangent vector \(u \in T_pM\) at point \(p\) forward to the tangent vector \(\phi_*u \in T_{\phi (p)}E\) at the mapping point \(\phi(p)\).
+The image of the tangent vector \(u \in T_pM\) under the differential \(d\phi_p\), denoted as \(d\phi_p u\) is called the pushforward of \(u\) by the map \(\phi\).
+Then pushforward metric \(h=\varphi_*g\) of the Riemannian metric \(g\) along \(\varphi\) is given by the inner product
 \[
-\langle u,v \rangle_{\varphi*g_p} = <df_p^{-1}u, df_p^{-1}v>_{g_p},
+\langle \phi_*u,\phi_*v \rangle_{\varphi*g} = \langle d\phi_p \phi_*u, d\phi_p \phi_*v \rangle_{g}.
 \]
-where \(df_p^{-1}\) is the Jacobian of \(f^{-1}\). The tangent vectors \(f_\star u_p\) are equivalent to the velocity vector of a curve \(\gamma: I\rightarrow M\) passing through point \(p\) at time zero with a constant speed \(\gamma^{-1}(0)=u_p\). Similarly, the pullback maps the cotangent vectors \(z_{f(p)}\) at \(f(p) \in E\) to cotangent vectors at \(p \in M\) acting on tangent vectors \(u \in T_pM\).
+
+The tangent vectors \(\phi_*u\) are equivalent to the velocity vector of a curve \(\gamma: I\rightarrow M\) passing through point \(p\) at time zero with a constant speed \(\gamma^{\prime}(0)=u\),
+\[
+d\phi_p(\gamma^{\prime}(0)) = (\phi \circ \gamma)^\prime (0).
+\]
+Similarly, the pullback maps the cotangent vectors \(z_{f(p)}\) at \(f(p) \in E\) to cotangent vectors at \(p \in M\) acting on tangent vectors \(u \in T_pM\). The linear map is called the pullback by \(\phi\) and is often denoted as \(\phi^*\).
 
 \hypertarget{volume-density-function-1}{%
 \subsection{Volume density function}\label{volume-density-function-1}}
 
-For any \(u \in T_pM\), let \(\gamma(u): t \rightarrow \exp(\frac{tu}{\|u\|})\) and let \(w_i, i=1,\dots,d\) be Jacobi fields along \(\gamma\) such that \(w_i(0)=0\), for all \(i=1,\dots,d\), \(Dw_1/dt(0)=u/\|u\|\) and \(Dw_i/dt(0)\) forms an orthonomal basis of the tangent space \(T_pM\). Define \(\theta_p(q): T_pM \rightarrow \mathbb{R}\) the volume density function on \(M\) as
+For any tangent vector \(u \in T_pM\), let \(\gamma(u): t \rightarrow \exp_p(\frac{tu}{\|u\|})\) and let \(w_i, i=1,\dots,d\) be Jacobi fields along \(\gamma\) such that \(w_i(0)=0\), for all \(i=1,\dots,d\), \(Dw_1/dt(0)=u/\|u\|\). Then \(Dw_i/dt(0)\) forms an orthonomal basis of the tangent space \(T_pM\). Define the volume density function on \(M\), \(\theta_p(q): T_pM \rightarrow \mathbb{R}\), as
 \[
 \theta_p(u) = \|u\|^{d-1} \det(w_1(\|u\|),\dots,w_d(\|u\|)).
 \]
-Rewrite \(\theta_p(u) = \theta_p(\log_p(u))\). The exponential map \(\exp_p: T_pM \rightarrow M\) induced by pullback of a volume form \(\exp_p^*\textit{Vol}\) on \(T_pM\), and \(\theta_p\) is its density with respect to the Lebesgue measure of the Euclidean structure on \(T_pM\), which gives in normal coordinates
+The exponential map \(\exp_p: T_pM \rightarrow M\) induced by pullback of a volume form \(\exp_p^*\textit{Vol}\) on \(T_pM\), and \(\theta_p\) is its density with respect to the Lebesgue measure of the Euclidean structure on \(T_pM\), which gives in normal coordinates
 \[
 d\exp_p^*\textit{Vo}l(u) = \theta_p(u)du.
 \]
+The volume density function is motivated by how a measure \(du\) changes under the change of coordinates. It is related to the integration on manifolds and plays an important part in studing the density of manifolds.
 
-\hypertarget{example-s1}{%
-\subsection{\texorpdfstring{Example: \(S^1\)}{Example: S\^{}1}}\label{example-s1}}
+\hypertarget{example-of-s1-for-manifold-density-estimation}{%
+\subsection{\texorpdfstring{Example of \(S^1\) for manifold density estimation}{Example of S\^{}1 for manifold density estimation}}\label{example-of-s1-for-manifold-density-estimation}}
 
 Manifold: \(S^1\) with center 0 and radius \(r=1\)
 
@@ -890,15 +900,15 @@ Then the density of X is the derivative of the CDF w.r.t. \(x\) \[
 f(x) = -\frac{2}{\pi} (-\frac{1}{\sqrt{1 - x^2}}) \\
 = \frac{2}{\pi \sqrt{1 - x^2}}.
 \]
+
 Given \((x, y) \in \mathbb{R}^2\) as sample points from \(S^1\), we could
 estimate the density of each sample point \(X_i \in S^1, i = 1, \dots, N\)
 and compare it with its true density \(f(x)\).
-
 We use the density estimator in \textcite{Pelletier2005-vu}. For point \(p \in S^1\), the density at \(p\) is estimated by
 \[
 f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{X_i}(p)} K(\frac{d_g(p, X_i)}{r}),
 \]
-where \(d=1\), \(h\) is the bandwidth, \(\theta_{X_i}(p)\) is the volume density function at sample point \(X_i\), and \(d_g(p, X_i)\) is the geodesic distance between \(p\) and \(X_i\) along the manifold \(S^1\).
+where \(d=1\), \(r\) is the bandwidth, \(\theta_{X_i}(p)\) is the volume density function at sample point \(X_i\), and \(d_g(p, X_i)\) is the geodesic distance between \(p\) and \(X_i\) along the manifold \(S^1\).
 
 Since the manifold is known (\(S^1\)), we know the geodesic distance is the arc length between two points on the manifold, which is given by \(L(\gamma) = r(\beta - \alpha)\) with \(r=1\). Therefore, the geodesic distance is
 \[
@@ -916,13 +926,13 @@ is smooth in a local neighborhood \(U\) of \(M\).
 
 Then the volume density function \(\theta_{X_i}(p)\) is the inner product of the tangent vectors produced by the logarithm map from \(X_i\) to \(p\), which is given by
 \[
-\theta_{X_i}(p) = \sqrt{1 - X_i^2}.
+\theta_{X_i}(p) = \sqrt{|\cos(d_g(p,q))|} = \sqrt{|\cos(\arccos(p) - \arccos(X_i))|}.
 \]
 Therefore, the estimator for \(p \in S^1\) is given by
 \[
-f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r \sqrt{1 - X_i^2}} K\bigg(\frac{\|\arccos(p) - \arccos(X_i))\|}{r}\bigg),
+f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r \sqrt{|\cos(\arccos(p) - \arccos(X_i))|}} K\bigg(\frac{\|\arccos(p) - \arccos(X_i))\|}{r}\bigg),
 \]
-where the bandwidth \(r\) is selected by the plug-in bandwidth selector implemented by the R package \emph{ks}.
+where the bandwidth \(r\) is selected with the plug-in bandwidth selector implemented by the R package \emph{ks}.
 
 \hypertarget{how-to-derive-volume-density-function-theta_x_ip}{%
 \subsubsection{\texorpdfstring{How to derive volume density function \(\theta_{X_i}(p)\)}{How to derive volume density function \textbackslash theta\_\{X\_i\}(p)}}\label{how-to-derive-volume-density-function-theta_x_ip}}
