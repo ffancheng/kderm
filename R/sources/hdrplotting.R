@@ -11,7 +11,7 @@ hdrscatterplot_new <- function(x, y, levels = c(1, 50, 99), kde.package = "ks", 
   
   vnames <- names(data)
   
-  if(is.null(den)){
+  if(is.null(den)) {
     den <- hdr.2d(data[, 1], data[, 2], prob = levels, kde.package = kde.package, h = h, ...) # add all arguments, h for bandwidth
   }
   

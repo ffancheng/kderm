@@ -11,6 +11,7 @@ rm(list= ls())
 library(tidyverse)
 library(dimRed)
 library(ks)
+library(zoo)
 Jmisc::sourceAll(here::here("R/sources"))
 
 set.seed(1)
@@ -89,6 +90,7 @@ y <- sin(theta)
 # plot(x, denx)
 # range(denx)
 idx <- order(x)
+# Check integral to 1
 sum(diff(x[idx])*rollmean(denx[idx],2)) # 0.9984189
 
 # KDE with fixed bandwidth
@@ -378,7 +380,7 @@ fhat <- colMeans(f)
 id <- order(theta)
 (trueAUC <- sum(diff(theta[id])*rollmean(dentheta[id],2))) # 0.99899 for true densities
 sum(diff(theta[id])*rollmean(ffixed[id],2)) # 0.98569 for kde
-(AUC <- sum(diff(theta[id])*rollmean(fhat[id],2))) # 0.881 for dc-kde
+(AUC <- sum(diff(theta[id]) * rollmean(fhat[id],2))) # 0.881 for dc-kde
 # auc(theta[id], fhat[id], method = "trapezoid") # same as above
 # AUC <- auc(theta[id], fhat[id], method = "step")
 # check MSE

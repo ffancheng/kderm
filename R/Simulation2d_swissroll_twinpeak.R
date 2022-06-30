@@ -7,19 +7,19 @@ rm(list= ls())
 library(tidyverse)
 library(dimRed)
 library(reticulate)
-library(here)
-library(viridis)
+# library(here)
+# library(viridis)
 library(hdrcde)
 library(igraph)
 library(matrixcalc)
-library(akima)
-library(car)
+# library(akima)
+# library(car)
 library(ggforce)
 library(ks)
 library(patchwork)
 # library(copula)
 library(plotly)
-library(kableExtra)
+# library(kableExtra)
 Jmisc::sourceAll(here::here("R/sources"))
 # set.seed(1)
 
@@ -253,9 +253,10 @@ Rn <- metric_isomap$rmetric # array
 # fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
 # plot_contour(metric_isomap, gridsize = gridsize, riem.scale = riem.scale) # estimate grid densities with vkde()
 
+adj_matrix <- metric_isomap$adj_matrix
 opt.method <- c("AMISE", "MEAN", "SCALED")[3]
 riem.scale <- 1 # h_hdr_isomap
-fisomap <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale) # 0.923
+fisomap <- vkde(x = fn, h = h_hdr_isomap, vh = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix) # 0.923
 # fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn) # 0.64
 # # if scaling the bandwidth
 # fisomap_MEAN <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = "MEAN") # 0.964
@@ -272,7 +273,7 @@ fisomap <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.metho
 # all.equal(interpden_fix, fisomap$estimate)
 
 ## ----hdroutliers----------------------------------------------------------------
-p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
+p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap$estimate, ell.size = 0)
 # all.equal(fxy_isomap, p_isomap$densities)
 
 ## ----compoutlier, eval = FALSE--------------------------------------------------
