@@ -20,13 +20,13 @@ vkde <- function(x, h = NULL, vh = NULL, r = NULL, gridsize = 20, xmin = apply(x
   if(is_scalar_atomic(gridsize)) gridsize <- rep(gridsize[1], d) # vector of number of grid points
 
   if(is.null(vh) | !is.array(vh)) return(ks::kde(x, h = h, gridsize = gridsize, xmin = xmin, xmax = xmax, eval.points = eval.points, positive = positive, ...)) # fixed diagonal bandwidth # return(MASS::kde2d(x, y, h, n, lims)) # but only works for 2d
-  if(is_scalar_atomic(r)) warning("Input r is not a scalar! Default value r=1 is selected."); r <- 1
+  if(missing(r) | !is_scalar_atomic(r)) warning("Input r is missing or is not a scalar! Default value r=1 is selected."); r <- 1
   
-  # Use optimized bandwidth from minimizing AMISE as r in Pelletier's estimator
-  if (d == 1 & !positive) 
-    h <- ks::hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
-  if (d > 1 & !positive) 
-    h <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  # # Use optimized bandwidth from minimizing AMISE as r in Pelletier's estimator (SCALAR SHOULD BE USED)
+  # if (d == 1 & !positive) 
+  #   h <- ks::hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  # if (d > 1 & !positive) 
+  #   h <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
   
   opt.method <- match.arg(opt.method, c("AMISE", "MEAN", "SCALED"), several.ok = FALSE)
   xr <- apply(x, 2, function(x) diff(range(x, na.rm = TRUE)))
@@ -38,7 +38,7 @@ vkde <- function(x, h = NULL, vh = NULL, r = NULL, gridsize = 20, xmin = apply(x
   if(opt.method == "MEAN"){
     # Option 1: scale hi with mean_i(|hi|) / det(hi)
     vhidet <- apply(vh, 3, det)
-    vh <- sweep(vh, 3, mean(hidet) / hidet, "*")
+    vh <- sweep(vh, 3, mean(vhidet) / vhidet, "*")
   } else
   
   if(opt.method == "AMISE"){

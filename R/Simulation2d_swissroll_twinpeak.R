@@ -243,7 +243,7 @@ prob <- c(1, 50, 95, 99) # c(1, 10, 50, 95, 99) #
 p_hdr_isomap <- hdrscatterplot_new(E1, E2, kde.package = "ks", levels = prob, noutliers = noutliers, label = NULL)
 p_hdr_isomap_p <- p_hdr_isomap$p +
   plot_ellipse(metric_isomap, add = T, ell.no = 50, ell.size = 0,
-             color = blues9[5], fill = blues9[1], alpha = 0.2)
+               color = blues9[5], fill = blues9[1], alpha = 0.2)
 # p_hdr_isomap
 h_hdr_isomap <- p_hdr_isomap$den$den$h # same as ks::Hpi.diag(fn)
 
@@ -254,9 +254,10 @@ Rn <- metric_isomap$rmetric # array
 # plot_contour(metric_isomap, gridsize = gridsize, riem.scale = riem.scale) # estimate grid densities with vkde()
 
 adj_matrix <- metric_isomap$adj_matrix
-opt.method <- c("AMISE", "MEAN", "SCALED")[3]
+opt.method <- c("AMISE", "MEAN", "SCALED")[2]
 riem.scale <- 1 # h_hdr_isomap
-fisomap <- vkde(x = fn, h = h_hdr_isomap, vh = Rn, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix) # 0.923
+r <- .1
+fisomap <- vkde(x = fn, h = h_hdr_isomap, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix) # 0.923
 # fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn) # 0.64
 # # if scaling the bandwidth
 # fisomap_MEAN <- vkde(x = fn, h = Rn, gridsize = gridsize, eval.points = fn, opt.method = "MEAN") # 0.964
@@ -266,14 +267,14 @@ fisomap <- vkde(x = fn, h = h_hdr_isomap, vh = Rn, gridsize = gridsize, eval.poi
 # summary(fisomap$estimate)
 # all.equal(fisomap$estimate, p_isomap$densities)
 
-# check if vkde with grid estimate is the same as hdrcde::interp.2d
+# # check if vkde with grid estimate is the same as hdrcde::interp.2d
 # fixgrid_isomap <- vkde(x = fn, h = NULL, gridsize = gridsize)
 # summary(fixgrid_isomap)
 # interpden_fix <- hdrcde:::interp.2d(fixgrid_isomap$eval.points[[1]], fixgrid_isomap$eval.points[[2]], fixgrid_isomap$estimate, x0 = E1, y0 = E2)
 # all.equal(interpden_fix, fisomap$estimate)
 
 ## ----hdroutliers----------------------------------------------------------------
-p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap$estimate, ell.size = 0)
+p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
 # all.equal(fxy_isomap, p_isomap$densities)
 
 ## ----compoutlier, eval = FALSE--------------------------------------------------
