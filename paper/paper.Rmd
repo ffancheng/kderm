@@ -14,7 +14,8 @@ author:
   othernames: Rob J
   address: Monash University
   email: Rob.Hyndman@monash.edu
-abstract: "Manifold learning can be used to obtain a low-dimensional representation of the underlying manifold given the high-dimensional data. However, kernel density estimates of the low-dimensional embedding with a fixed bandwidth fail to account for the way manifold learning algorithms distort the geometry of the underlying Riemannian manifold. We propose a novel kernel density estimator for any manifold learning embedding by introducing the estimated Riemannian metric of the manifold as the variable bandwidth matrix for each point. The geometric information of the manifold guarantees a more accurate density estimation of the true manifold, which subsequently could be used for anomaly detection. To compare our proposed estimator with a fixed-bandwidth kernel density estimator, we run two simulations with 2-D metadata mapped into a 3-D swiss roll or twin peaks shape and a 5-D semi-hypersphere mapped in a 100-D space, and demonstrate that the proposed estimator could improve the density estimates given a good manifold learning embedding and has higher rank correlations between the true and estimated manifold density. A shiny app in R is also developed for various simulation scenarios. The proposed method is applied to density estimation in statistical manifolds of electricity usage with the Irish smart meter data. This demonstrates our estimator's capability to fix the distortion of the manifold geometry and to be further used for anomaly detection in high-dimensional data."
+abstract: "Manifold learning can be used to obtain a low-dimensional representation of the underlying manifold given the high-dimensional data. However, kernel density estimates of the low-dimensional embe
+dding with a fixed bandwidth fail to account for the way manifold learning algorithms distort the geometry of the underlying Riemannian manifold. We propose a novel kernel density estimator for any manifold learning embedding by introducing the estimated Riemannian metric of the manifold as the variable bandwidth matrix for each point. The geometric information of the manifold guarantees a more accurate density estimation of the true manifold, which subsequently could be used for anomaly detection. To compare our proposed estimator with a fixed-bandwidth kernel density estimator, we run two simulations with 2-D metadata mapped into a 3-D swiss roll or twin peaks shape and a 5-D semi-hypersphere mapped in a 100-D space, and demonstrate that the proposed estimator could improve the density estimates given a good manifold learning embedding and has higher rank correlations between the true and estimated manifold density. A shiny app in R is also developed for various simulation scenarios. The proposed method is applied to density estimation in statistical manifolds of electricity usage with the Irish smart meter data. This demonstrates our estimator's capability to fix the distortion of the manifold geometry and to be further used for anomaly detection in high-dimensional data."
 keywords: "manifold learning, variable bandwidth, Riemannian metric, highest density region, Gaussian kernels"
 # wpnumber: 03/2021
 # jelcodes: C55, C65, C80
@@ -91,7 +92,7 @@ Therefore, we propose to the use Riemannian metric as the bandwidth matrix in, w
 The rest of the paper is organized as follows. In \autoref{vkde}, we present the proposed algorithm to detect anomalies based on variable kernel density estimates of manifold embeddings. In this section, we provide justification for the use of the Riemannian metric as the bandwidth of variable kernel density estimation, including the comparison with fixed bandwidth. \autoref{simulation} is composed of two simulations with the proposed algorithm; the first deals with 2-dimensional meta data mapped into a 3-D swiss roll or twin peaks data and the second with a 5-D semi-hypersphere mapped in a 100-D space.
 \autoref{application} contains the application to visualize and identify anomalies in the Irish smart meter dataset. Conclusions and discussions are presented in \autoref{conclusion}. Readers interested in the notions of Riemannian geometry mentioned in this paper could use the Appendix in \autoref{riemgeo} as a reference.
 
-# Kernel density estimation on manifolds {#vkde}
+# Kernel density estimation on manifold learning embeddings {#vkde}
 
 In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. @Perrault-Joncas2013-pq gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric which is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates. The proposed schematic is shown in Figure \@ref(fig:vkde). The highlighted two steps in Figure \@ref(fig:vkde) are the main contributions of this main chapter, replacing the bandwidth matrix $\pmb{H}_i$ with the Riemannian metric $g_i$ for each point in
 variable kernel density estimate, and computing the highest density region plots based on the density estimates, $\hat{f}(\pmb{x})$, for anomaly detection.
@@ -108,7 +109,7 @@ To start with, we introduce the notations used in this manuscript. Then we intro
 
 <!-- Denote the $s$-dimensional input data with observations $X_i, i = 1, 2, \dots, N$, where $x_i \in \mathcal{R}^s$. The underlying manifold $M$ has the true density $f$. Manifold learning takes the input data and finds its $d$-dimensional representation of data that lie on the manifold $M$, with output data points $Y_i, i = 1, 2, \dots, N$, where $Y_i \in \mathcal{R}^d$ and $d \ll s$. The Riemannian metric of the embedding is denoted as $g_i, i = 1, 2, \dots, N$. In kernel density estimate, the pointwise variable bandwidth matrix $H_i$ is used to estimate the density of the embedding, $\hat{f}$. -->
 
-## Multivariate kernel density estimation
+## Multivariate kernel density estimation {#mvkde}
 
 Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data. @Scott1992-cj and @Scott2015-vl cover a wide range of techniques for estimating the kernel densities of multivariate data. 
 In general, given a multivariate random sample $\pmb{X}_1, \dots, \pmb{X}_N \in \mathcal{R}^d$
@@ -141,25 +142,49 @@ Compared to a global fixed $\pmb{H}$, a variable bandwidth matrix is able to acc
 
 For computational purposes, @Duong2007-up implements the kernel density estimates for data from 1 to 6 dimensions in the R package *ks*. 
 However, for variable kernel density estimation where the bandwidth is no longer a constant matrix, the *ks* implementation is limited to 2-dimension and the bandwidth can either be a diagonal matrix or a vector of the diagonal elements, which limits the full flexibility of the kernel function.
-More importantly, the estimator in Equation \@ref(eq:vkde) is only applicable when the sample space is Euclidean. In the cases of a Riemannian manifold, the underlying density is supported on a single manifold. The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. This motivates our proposed adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}.
+More importantly, the estimator in Equation \@ref(eq:vkde) is only applicable when the sample space is Euclidean. In the cases of a Riemannian manifold, the manifold has a differentiable structure, which has to be taken into account when considering the neighborhood of a sample point. Therefore, we need to consider the probability density estimation on a Riemannian manifold and adapts the techiniques on Euclidean samples to a non-Euclidean setting. This is discussed in \autoref{riemest}. 
 
 ## Kernel density estimator on Riemannian manifolds {#riemest}
 
-Consider a compact Riemannian manifold $(M, g)$ of dimension $d$ without boundary and a probability distribution with density $f$ on the manifold. Assume $(M, d_g)$ is a complete metric space, where $d_g$ is the Riemannian distance induced by the Riemannian, $g$, and the strictly positive injectivity radius [@Chavel2006-mp] of the manifold, $inj_g(M)$. Denote $\pmb{X}_i, i = 1, 2, \dots, N$, where $\pmb{X}_i \in \mathcal{R}^d$, as i.i.d. random objects on $M$ with density $f$. For each point $p\in M$, @Pelletier2005-vu proposed a kernel density estimator of $f$ to be 
+Consider a compact Riemannian manifold $(M, g)$ of dimension $d$ without boundary and a probability distribution with density $f$ on the manifold. Assume $(M, d_g)$ is a complete metric space, where $d_g$ is the geodesic distance induced by the Riemannian metric $g$ and the strictly positive injectivity radius of the manifold $inj_g(M)$ [@Chavel2006-mp]. Denote $\pmb{X}_i, i = 1, 2, \dots, N$, where $\pmb{X}_i \in \mathcal{R}^d$, as i.i.d. random objects on $M$ with density $f$. To estimate the density of the manifold, @Pelletier2005-vu proposed a kernel density estimator for $f$ at point $\pmb{p}\in M$ as
 \begin{equation}
 \label{eq:denriem}
-\hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d \theta_{\pmb{X}_i}(p)} K(\frac{d_g(p, \pmb{X}_i)}{h}),
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{\pmb{X}_i}(\pmb{p})} K(\frac{d_g(\pmb{p}, \pmb{X}_i)}{r}),
 \end{equation} 
-where $h$ is the global bandwidth satisfying $h \leq h_0$ for fixed $h_0$ such that $0\leq h_0\leq inj_g(M)$, $K: \mathcal{R}_{+} \rightarrow \mathcal{R}$ is a non-negative map, and $\theta_{q}(p)$ is the volume density function on the manifold.
-@Pelletier2005-vu mentions that the volume density function $\theta_q(p)$ defined for $p$ in a neighborhood of $q$ on the manifold, with the geodesic normal coordinates at $q$, is equal to the determinant of the Riemannian metric $g$ at the logarithm map at q, $\exp_q^{-1}(p)$. The expression in \@ref(eq:denriem) is also proved to be consistent with the kernel density estimators in the Euclidean case as 
-\begin{equation}
-\label{eq:denconsist}
-\hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h^d} K(\frac{\|p-\pmb{X}_i\|}{h}),
-\end{equation} 
-and converges at the same rate as the Euclidean kernel density estimator [@Henry2009-ll].
+where $r$ is the global bandwidth satisfying $r \leq r_0$ for fixed $r_0$ such that $0\leq r_0\leq inj_g(M)$, $K: \mathcal{R}_{+} \rightarrow \mathcal{R}$ is a non-negative map, and $\theta_{\pmb{X}_i}(\pmb{p})$ is the volume density function on the manifold for point $\pmb{X}_i$. The estimator in \@ref(eq:denriem) is also proved to be consistent with the kernel density estimators in the Euclidean case in Equation \@ref(eq:kde) and converges at the same rate as the Euclidean estimator [@Henry2009-ll].
+
+Denote $\lambda$ as the Lebesque measure of $\mathbb{R}^d$. The kernels $K$ in \@ref(eq:denriem) are functions of the geodesic distance of the manifold $d_g$ and they satisfy the following conditions [@Pelletier2005-vu]:
+\begin{align}
+& (i) \int_{\mathbb{R}^{d}} K(\|x\|) \mathrm{d} \lambda(x)=1;
+(ii) \int_{\mathbb{R}^{d}} x K(\|x\|) \mathrm{d} \lambda(x)=0;
+(iii) \int_{\mathbb{R}^{d}}\|x\|^{2} K(\|x\|) \mathrm{d} \lambda(x)<\infty; \\
+& (iv) \supp K=[0; 1];
+(v) \sup K(x)=K(0).
+\end{align}
+Note that conditon (iv) implies that the support of the kernel is between 0 and 1, which is guaranteed by the condition on the bandwidth, $r\leq inj_g(M)$. Under such condition, for each $\pmb{p} \in M$, there exists a normal coordinate neighborhood of $\pmb{p}$ containing an open ball $B(\pmb{p}, r) \in T_pM$ centered at $\pmb{p}$ with radius $r$.
+
+Now consider the volume density function $\theta_{\pmb{X}_i}(\pmb{p})$ in the estimator.
+For any tangent vector $u \in T_pM$, let $\gamma(u): t \rightarrow \exp_p(\frac{tu}{\|u\|})$ denotes a curve passing through $u$, and let $w_i, i=1,\dots,d$ be Jacobi fields along $\gamma$ such that $w_i(0)=0$ for all $i=1,\dots,d$ and $\frac{Dw_1}{dt}(0)=\frac{u}{\|u\|}$. Then $\frac{Dw_1}{dt}(0)$ forms an orthonomal basis of the tangent space $T_pM$. 
+The volume density function on $M$, $\theta_p(q): T_pM \rightarrow \mathbb{R}$ is defined as 
+$$
+\theta_p(u) = \|u\|^{d-1} \det(w_1(\|u\|),\dots,w_d(\|u\|)).
+$$ 
+
+For the exponential map $\exp_p: T_pM \rightarrow M$ induced by pullback of a volume form $\exp_p^*\textit{Vol}$ on $T_pM$, $\theta_p$ is its density with respect to the Lebesgue measure of the Euclidean structure on $T_pM$, which gives 
+$$
+d\exp_p^*\textit{Vo}l(u) = \theta_p(u)du,
+$$
+in normal coordinates. The volume density function is motivated by how a measure $du$ changes under the change of coordinates. It is related to the integration on manifolds and plays an important part in studing the density of manifolds.
+@Pelletier2005-vu mentions that the volume density function $\theta_q(p)$ defined for $p$ in a neighborhood of $q$ on the manifold, with the geodesic normal coordinates at $q$, is equal to the determinant of the Riemannian metric $g$ expressed in the coordinates at the logarithm map of q, $\exp_q^{-1}(p)$. 
+
+<!-- $$ -->
+<!-- \theta_p: q \rightarrow \theta_p(q)=\frac{\mu_{\exp_p{g}}}{\mu_{g_p}}(\exp^{-1}_p(q)), -->
+<!-- $$ --> 
+<!-- Rewrite $\theta_p(u) = \theta_p(\log_p(u))$.  -->
+<!-- the volume density function is the quotient of the canonical measure of the Riemannian metric $\exp_p{g}$ on $T_pM$ by the Lebesgue measure of the Euclidean structure $g_p$ on $T_pM$. -->
 
 
-### Volume density function
+# Distotion-corrected kernel density estimator (DC-KDE) {#dckde}
 
 However, in application, we usually found the observations lie on a $d$-dimensional manifold embedded in a $s$-dimensional space, where $d \ll s$. Then manifold learning can be applies to find the $d$-dimensional representation of the manifold $M$. Therefore, based on the estimator in \@ref(eq:denriem), we propose a kernel density estimator of $f$ with the manifold embedding $y_i, i = 1, 2, \dots, N$ to be 
 \begin{equation}
@@ -168,7 +193,13 @@ However, in application, we usually found the observations lie on a $d$-dimensio
 \end{equation} 
 where $h_i, i = 1, 2, \dots, N$ is the pointwise variable bandwidth matrix and $h_i$ is positive definite with dimension $d\times d$.
 
+
+<!-- The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. This motivates our proposed adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}. -->
+
+
 An important goal of manifold learning is to recover the local or global features of the data. In order to recover the geometry of the manifold, @Perrault-Joncas2013-pq propose a method to augment any existing reasonable embedding and allow for the computation of geometric values to be calculated with an estimation of the Riemannian metric $g$. This could also be used to fix the geometric distortion in the embedding. It is worth noticing that the Riemannian metric from @Perrault-Joncas2013-pq is a $d\times d$ positive definite matrix for each data point. Therefore, we propose to take the geometric distortion into consideration when estimating the kernel densities of the embedding with Equation \@ref(eq:denestimator). In this way, we present a consistent kernel density estimator with pointwise variable bandwidth as the Riemannian metric.
+
+
 
 ### Riemannian metric as variable bandwidth
 
@@ -584,7 +615,7 @@ Similarly, the pullback maps the cotangent vectors $z_{f(p)}$ at $f(p) \in E$ to
 <!-- embedding pushforward metric [@Perrault-Joncas2013-pq] -->
 
 
-## Volume density function
+## Volume density function [MOVE TO SECTION 2.2.1]
 
 For any tangent vector $u \in T_pM$, let $\gamma(u): t \rightarrow \exp_p(\frac{tu}{\|u\|})$ and let $w_i, i=1,\dots,d$ be Jacobi fields along $\gamma$ such that $w_i(0)=0$, for all $i=1,\dots,d$, $Dw_1/dt(0)=u/\|u\|$. Then $Dw_i/dt(0)$ forms an orthonomal basis of the tangent space $T_pM$. Define the volume density function on $M$, $\theta_p(q): T_pM \rightarrow \mathbb{R}$, as 
 $$
