@@ -310,7 +310,7 @@ Monash University
 \begin{document}
 \maketitle
 \begin{abstract}
-Manifold learning can be used to obtain a low-dimensional representation of the underlying manifold given the high-dimensional data. However, kernel density estimates of the low-dimensional embedding with a fixed bandwidth fail to account for the way manifold learning algorithms distort the geometry of the underlying Riemannian manifold. We propose a novel kernel density estimator for any manifold learning embedding by introducing the estimated Riemannian metric of the manifold as the variable bandwidth matrix for each point. The geometric information of the manifold guarantees a more accurate density estimation of the true manifold, which subsequently could be used for anomaly detection. To compare our proposed estimator with a fixed-bandwidth kernel density estimator, we run two simulations with 2-D metadata mapped into a 3-D swiss roll or twin peaks shape and a 5-D semi-hypersphere mapped in a 100-D space, and demonstrate that the proposed estimator could improve the density estimates given a good manifold learning embedding and has higher rank correlations between the true and estimated manifold density. A shiny app in R is also developed for various simulation scenarios. The proposed method is applied to density estimation in statistical manifolds of electricity usage with the Irish smart meter data. This demonstrates our estimator's capability to fix the distortion of the manifold geometry and to be further used for anomaly detection in high-dimensional data.
+Manifold learning can be used to obtain a low-dimensional representation of the underlying manifold given the high-dimensional data. However, kernel density estimates of the low-dimensional embe dding with a fixed bandwidth fail to account for the way manifold learning algorithms distort the geometry of the underlying Riemannian manifold. We propose a novel kernel density estimator for any manifold learning embedding by introducing the estimated Riemannian metric of the manifold as the variable bandwidth matrix for each point. The geometric information of the manifold guarantees a more accurate density estimation of the true manifold, which subsequently could be used for anomaly detection. To compare our proposed estimator with a fixed-bandwidth kernel density estimator, we run two simulations with 2-D metadata mapped into a 3-D swiss roll or twin peaks shape and a 5-D semi-hypersphere mapped in a 100-D space, and demonstrate that the proposed estimator could improve the density estimates given a good manifold learning embedding and has higher rank correlations between the true and estimated manifold density. A shiny app in R is also developed for various simulation scenarios. The proposed method is applied to density estimation in statistical manifolds of electricity usage with the Irish smart meter data. This demonstrates our estimator's capability to fix the distortion of the manifold geometry and to be further used for anomaly detection in high-dimensional data.
 \end{abstract}
 \begin{keywords}
 manifold learning, variable bandwidth, Riemannian metric, highest density region, Gaussian kernels
@@ -338,7 +338,7 @@ The rest of the paper is organized as follows. In \autoref{vkde}, we present the
 \autoref{application} contains the application to visualize and identify anomalies in the Irish smart meter dataset. Conclusions and discussions are presented in \autoref{conclusion}. Readers interested in the notions of Riemannian geometry mentioned in this paper could use the Appendix in \autoref{riemgeo} as a reference.
 
 \hypertarget{vkde}{%
-\section{Kernel density estimation on manifold learning embeddings}\label{vkde}}
+\section{Kernel density estimate on Riemannian manifold embeddings}\label{vkde}}
 
 In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. \textcite{Perrault-Joncas2013-pq} gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric which is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates. The proposed schematic is shown in Figure \ref{fig:vkde}. The highlighted two steps in Figure \ref{fig:vkde} are the main contributions of this main chapter, replacing the bandwidth matrix \(\pmb{H}_i\) with the Riemannian metric \(g_i\) for each point in
 variable kernel density estimate, and computing the highest density region plots based on the density estimates, \(\hat{f}(\pmb{x})\), for anomaly detection.
@@ -426,9 +426,9 @@ in normal coordinates. The volume density function is motivated by how a measure
 \textcite{Pelletier2005-vu} mentions that the volume density function \(\theta_q(p)\) defined for \(p\) in a neighborhood of \(q\) on the manifold, with the geodesic normal coordinates at \(q\), is equal to the determinant of the Riemannian metric \(g\) expressed in the coordinates at the logarithm map of q, \(\exp_q^{-1}(p)\).
 
 \hypertarget{dckde}{%
-\section{Distotion-corrected kernel density estimator (DC-KDE)}\label{dckde}}
+\subsection{Distotion-corrected kernel density estimator (DC-KDE)}\label{dckde}}
 
-However, in application, we usually found the observations lie on a \(d\)-dimensional manifold embedded in a \(s\)-dimensional space, where \(d \ll s\). Then manifold learning can be applies to find the \(d\)-dimensional representation of the manifold \(M\). Therefore, based on the estimator in \eqref{eq:denriem}, we propose a kernel density estimator of \(f\) with the manifold embedding \(y_i, i = 1, 2, \dots, N\) to be
+However, in application, we usually find the observations lie on a \(d\)-dimensional manifold embedded in a \(s\)-dimensional space, where \(d \ll s\). Then manifold learning can be applies to find the \(d\)-dimensional representation of the manifold \(M\). Therefore, based on the estimator in \eqref{eq:denriem}, we propose a kernel density estimator of \(f\) with the manifold embedding \(y_i, i = 1, 2, \dots, N\) to be
 \begin{equation}
 \label{eq:denestimator}
 \hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h_i^d |g(\exp_p^{-1}(y_i))|} K(\frac{d_g(p, y_i)}{h_i}),
@@ -437,8 +437,8 @@ where \(h_i, i = 1, 2, \dots, N\) is the pointwise variable bandwidth matrix and
 
 An important goal of manifold learning is to recover the local or global features of the data. In order to recover the geometry of the manifold, \textcite{Perrault-Joncas2013-pq} propose a method to augment any existing reasonable embedding and allow for the computation of geometric values to be calculated with an estimation of the Riemannian metric \(g\). This could also be used to fix the geometric distortion in the embedding. It is worth noticing that the Riemannian metric from \textcite{Perrault-Joncas2013-pq} is a \(d\times d\) positive definite matrix for each data point. Therefore, we propose to take the geometric distortion into consideration when estimating the kernel densities of the embedding with Equation \eqref{eq:denestimator}. In this way, we present a consistent kernel density estimator with pointwise variable bandwidth as the Riemannian metric.
 
-\hypertarget{riemannian-metric-as-variable-bandwidth}{%
-\subsubsection{Riemannian metric as variable bandwidth}\label{riemannian-metric-as-variable-bandwidth}}
+\hypertarget{riemannian-metric-estimation}{%
+\subsection{Riemannian metric estimation}\label{riemannian-metric-estimation}}
 
 The Riemannian metric \(g\) is a symmetric and positive definite tensor field which defines an inner product \(<,>_g\) on the tangent space \(T_pM\) for every point \(p \in M\). If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. The Metric Learning algorithm \autocite{Perrault-Joncas2013-pq} then augment the embedded manifold with the Riemannian metric and produce a Riemannian manifold \((M, g)\).
 
@@ -502,7 +502,7 @@ As pointed out by \textcite{Perrault-Joncas2013-pq}, if the embedding dimension 
 \end{algorithm}
 
 \hypertarget{outlier-detection-on-manifold-learning-embedding}{%
-\section{Outlier detection on manifold learning embedding}\label{outlier-detection-on-manifold-learning-embedding}}
+\subsection{Outlier detection on manifold learning embedding}\label{outlier-detection-on-manifold-learning-embedding}}
 
 Now we present our proposed algorithm for anomaly detection based on variable kernel density estimates in \ref{alg:vkderm}. There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \ref{alg:learnmetric} to the input high-dimensional data \(x_i,i=1,\ldots,N\) where \(x_i\in \mathcal{R^s}\) to get the low-dimensional embedding \(y_i\), where \(y_i\in \mathcal{R^d}\) and the Riemannian metric \(\pmb{H}_i\) with dimension \(d\times d\) for each observation. Two parameters \(\sqrt{\varepsilon} = 0.4\) and \(c=0.25\) are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \eqref{eq:denestimator}. The top outliers of size \(n\_outliers\) are obtained by ordering the embedding points \(y_i\) according to their density estimates \(f_N(\pmb{y}_i)\).
 
@@ -557,9 +557,6 @@ kernel density estimates.
 \caption{True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.02, 0.02)$. The colors indicate the density of the data and lower density points in darker colors are scattered both in the outer and center areas. The shapes indicate the four kernels.}\label{fig:metadensity}
 \end{figure}
 
-\hypertarget{swiss-roll-mapping}{%
-\subsubsection{Swiss roll mapping}\label{swiss-roll-mapping}}
-
 \begin{figure}
 
 {\centering \includegraphics[width=0.8\linewidth]{figures/mappings_sr_tp} 
@@ -569,55 +566,8 @@ kernel density estimates.
 \caption{3-D Mappings of the meta data with colors and shapes indicating the four kernels. Left: swiss roll mapping. Right: twin peak mapping.}\label{fig:mappings}
 \end{figure}
 
-Given the 2-D meta data, multiple mapping functions could be applied to embed the data in a 3-D space. One of the most famous examples in manifold learning is the swiss roll data, with the mapping function in \eqref{eq:swissroll}. The two-dimensional meta data \((\pmb{X}_1, \pmb{X}_2)^\prime\) is transformed into the three-dimensional data \((\pmb{X}, \pmb{Y}, \pmb{Z})^\prime\), shown in the left plot of \autoref{fig:mappings}. The four colors in the mappings represent the four Gaussian kernels used to generate the meta data \((\pmb{X}_1, \pmb{X}_2)^\prime\).
-\begin{equation}
-\label{eq:swissroll}
-\left\{
-\begin{array}{lcl}
-X = X_1 \cos{X_1}, \\
-Y = X_2, \\
-Z = X_1 \sin{X_1}.
-\end{array}
-\right.
-\end{equation}
-
-\begin{figure}
-
-{\centering \includegraphics[width=0.95\linewidth]{figures/Swiss Roll_outliers_comparison_4ml_3cases_riem0_08} 
-
-}
-
-\caption{Highest density region plots of five manifold learning embeddings of the swiss roll data. Colors are indicating densities from left: true densities from the Gaussian mixture model; middle: KDE with Riemannian matrix as variable bandwidth; and right: KDE with fixed bandwidth. Variable KDE performs better in finding kernel structures with ISOMAP, LLE, and Laplacian Eigenmaps, and in locating outliers with ISOMAP and LLE. The t-SNE and UMAP embeddings are highly distorted and the outliers found are clustered.}\label{fig:sroutliers}
-\end{figure}
-
-Now we are able to apply different manifold learning algorithms to \((\pmb{X}, \pmb{Y}, \pmb{Z})^\prime\) and reduce the dimension back to \(d=2\), and further estimate the density of the 2-D embedding. According to the density estimates, we could rank the data points and then identify which observations lie in the highest density region of specified coverage, eg. 1\%, 5\%, 50\%, 99\%, \textgreater99\%. For each of the five manifold learning methods, namely ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, \autoref{fig:sroutliers} presents the 2-D embedding plot in the same row, with the colors indicating the densities levels,
-the left column for true densities from the Gaussian mixture model, the middle column for highest density region plots with densities from our proposed variable KDE method, and the right for similar HDR plots with densities from KDE with fixed bandwidth. The top twenty outliers with the lowest densities are highlighted in black with point indexes in blue. From \autoref{fig:metadensity} and the data generating process, we know that there are four highest density regions. However, in all
-manifold learning embeddings colored with true densities (left column in \autoref{fig:sroutliers} ), except for LLE, the number of highest density regions are not the same as the meta data. When comparing the number of HDRs for variable and fixed bandwidth (middle and right column in \autoref{fig:sroutliers} ), our proposed method with variable bandwidth outperforms fixed bandwidth for ISOMAP, LLE, and Laplacian Eigenmaps (top three rows in \autoref{fig:sroutliers} ). In terms of the top 20 outliers found rowwise, variable bandwidth could find most outliers lying on the left area of the embedding in ISOMAP and UMAP, and both methods in LLE embedding could find the outliers in the outer area, but for the other methods, both variable and fixed bandwidth are not detecting true outliers accurately. For t-SNE and UMAP embedding, the embedding structure is highly distorted and the points are clustered together in a discontinuous way, which is also shown in the clustered outliers.
-
-\begin{table}
-
-\caption{\label{tab:srcors}Correlation between true density ranking and estimated density ranking for different manifold learning embeddings of the swiss roll data. Variable bandwidth KDE outperfoms for LLE and UMAP, and LLE gives the highest rank correlation.}
-\centering
-\begin{tabular}[t]{l>{}l>{}l>{}l>{}l>{}l}
-\toprule
-  & ISOMAP & LLE & Laplacian.Eigenmaps & t.SNE & UMAP\\
-\midrule
-Variable bandwidth & 0.0696 & \textbf{0.400} & -0.2357 & 0.023 & \textbf{0.0138}\\
-Fixed bandwidth & \textbf{0.2798} & 0.351 & \textbf{0.0141} & \textbf{0.367} & -0.0110\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-To further compare the accuracy of the estimated densities for all data points, we calculate the correlation between the rank of true densities and the estimated densities and present in \autoref{tab:srcors}. It can be seen that the rank correlation of our proposed method with variable bandwidth is higher for LLE and UMAP, although the correlation for UMAP is very close to zero. The highest correlation comes from our method in LLE embedding, which is mainly due to it being closest to the
-rectangular structure of the meta data shown in \autoref{fig:metadensity}. For Laplacian Eigenmaps, our method has wrongly estimated the left area with lower densities even though their true densities are very high in yellow, leading to a negative
-correlation. The negative correlation would occur typically when the highest or lowest true density areas are not well estimated. As for the estimates in highly distorted embedding, including ISOMAP, t-SNE, and UMAP, the rank correlations are quite low. This shows that our proposed method could improve the kernel density estimate of manifold learning embedding by considering the distortion using the Riemannian metric.
-However, if the distortion is too severe, eg. ISOMAP, or when the embedding is discontinuous, eg. t-SNE and UMAP, the density estimates are not as reliable for outlier detection.
-
-\hypertarget{twin-peaks-mapping}{%
-\subsubsection{Twin peaks mapping}\label{twin-peaks-mapping}}
-
-For comparison, we use the same 2-D meta data in \autoref{fig:metadensity} with a different mapping function, twin peaks
-mapping in Equation \eqref{eq:twinpeak}, with the corresponding 3-D structure shown in the right plot of \autoref{fig:mappings}.
+Given the 2-D meta data, multiple mapping functions could be applied to embed the data in a 3-D space. We use the same 2-D meta data in \autoref{fig:metadensity} with a different mapping function, twin peaks
+mapping in Equation \eqref{eq:twinpeak}, with the corresponding 3-D structure shown in the right plot of \autoref{fig:mappings}. For simplicity, the simulation results for the swiss roll mapping in te left plot is shown in the Appendix \autoref{swissrollappe}.
 \begin{equation}
 \label{eq:twinpeak}
 \left\{ 
@@ -788,7 +738,7 @@ to real-life data sets.
 
 This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster. The first author acknowledges the financial support of the Monash Graduate Scholarship (MGS) and the Monash International Tuition Scholarship (MITS) at the Monash University.
 
-\clearpage\appendix
+\appendix
 
 \hypertarget{riemgeo}{%
 \section{Appendix: Notions about Riemannian geometry}\label{riemgeo}}
@@ -877,21 +827,8 @@ d\phi_p(\gamma^{\prime}(0)) = (\phi \circ \gamma)^\prime (0).
 \]
 Similarly, the pullback maps the cotangent vectors \(z_{f(p)}\) at \(f(p) \in E\) to cotangent vectors at \(p \in M\) acting on tangent vectors \(u \in T_pM\). The linear map is called the pullback by \(\phi\) and is often denoted as \(\phi^*\).
 
-\hypertarget{volume-density-function-move-to-section-2.2.1}{%
-\subsection{Volume density function {[}MOVE TO SECTION 2.2.1{]}}\label{volume-density-function-move-to-section-2.2.1}}
-
-For any tangent vector \(u \in T_pM\), let \(\gamma(u): t \rightarrow \exp_p(\frac{tu}{\|u\|})\) and let \(w_i, i=1,\dots,d\) be Jacobi fields along \(\gamma\) such that \(w_i(0)=0\), for all \(i=1,\dots,d\), \(Dw_1/dt(0)=u/\|u\|\). Then \(Dw_i/dt(0)\) forms an orthonomal basis of the tangent space \(T_pM\). Define the volume density function on \(M\), \(\theta_p(q): T_pM \rightarrow \mathbb{R}\), as
-\[
-\theta_p(u) = \|u\|^{d-1} \det(w_1(\|u\|),\dots,w_d(\|u\|)).
-\]
-The exponential map \(\exp_p: T_pM \rightarrow M\) induced by pullback of a volume form \(\exp_p^*\textit{Vol}\) on \(T_pM\), and \(\theta_p\) is its density with respect to the Lebesgue measure of the Euclidean structure on \(T_pM\), which gives in normal coordinates
-\[
-d\exp_p^*\textit{Vo}l(u) = \theta_p(u)du.
-\]
-The volume density function is motivated by how a measure \(du\) changes under the change of coordinates. It is related to the integration on manifolds and plays an important part in studing the density of manifolds.
-
-\hypertarget{example-of-s1-for-manifold-density-estimation}{%
-\subsection{\texorpdfstring{Example of \(S^1\) for manifold density estimation}{Example of S\^{}1 for manifold density estimation}}\label{example-of-s1-for-manifold-density-estimation}}
+\hypertarget{example-of-s1-for-manifold-density-estimation-todo-rewrite-as-appendix-b-with-plots}{%
+\subsection{\texorpdfstring{Example of \(S^1\) for manifold density estimation {[}TODO: rewrite as appendix B with plots?{]}}{Example of S\^{}1 for manifold density estimation {[}TODO: rewrite as appendix B with plots?{]}}}\label{example-of-s1-for-manifold-density-estimation-todo-rewrite-as-appendix-b-with-plots}}
 
 Manifold: \(S^1\) with center 0 and radius \(r=1\)
 
@@ -995,6 +932,57 @@ So the riemannian metric is \(g_q = \cos(r)\) and further,
 \theta_p(q) = \sqrt{|\cos(r)|} = \sqrt{|\cos(d_g(p,q))|},
 \]
 where the geodesic distance is \(d_g(p,q) = \arccos(p) - \arccos(q)\), and \(\theta_p(p) = 1\).
+
+\clearpage
+
+\hypertarget{swissrollappe}{%
+\section{Appendix: Simulation with swiss roll mapping}\label{swissrollappe}}
+
+In this appendix, we demonstrate the simulation results for the data in \autoref{twodgaussian} with the swiss roll mapping.
+
+One of the most famous examples in manifold learning is the swiss roll data, with the mapping function in \eqref{eq:swissroll}. The two-dimensional meta data \((\pmb{X}_1, \pmb{X}_2)^\prime\) is transformed into the three-dimensional data \((\pmb{X}, \pmb{Y}, \pmb{Z})^\prime\), shown in the left plot of \autoref{fig:mappings}. The four colors in the mappings represent the four Gaussian kernels used to generate the meta data \((\pmb{X}_1, \pmb{X}_2)^\prime\).
+\begin{equation}
+\label{eq:swissroll}
+\left\{
+\begin{array}{lcl}
+X = X_1 \cos{X_1}, \\
+Y = X_2, \\
+Z = X_1 \sin{X_1}.
+\end{array}
+\right.
+\end{equation}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/Swiss Roll_outliers_comparison_4ml_3cases_riem0_08} 
+
+}
+
+\caption{Highest density region plots of five manifold learning embeddings of the swiss roll data. Colors are indicating densities from left: true densities from the Gaussian mixture model; middle: KDE with Riemannian matrix as variable bandwidth; and right: KDE with fixed bandwidth. Variable KDE performs better in finding kernel structures with ISOMAP, LLE, and Laplacian Eigenmaps, and in locating outliers with ISOMAP and LLE. The t-SNE and UMAP embeddings are highly distorted and the outliers found are clustered.}\label{fig:sroutliers}
+\end{figure}
+
+Now we are able to apply different manifold learning algorithms to \((\pmb{X}, \pmb{Y}, \pmb{Z})^\prime\) and reduce the dimension back to \(d=2\), and further estimate the density of the 2-D embedding. According to the density estimates, we could rank the data points and then identify which observations lie in the highest density region of specified coverage, eg. 1\%, 5\%, 50\%, 99\%, \textgreater99\%. For each of the five manifold learning methods, namely ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, \autoref{fig:sroutliers} presents the 2-D embedding plot in the same row, with the colors indicating the densities levels,
+the left column for true densities from the Gaussian mixture model, the middle column for highest density region plots with densities from our proposed variable KDE method, and the right for similar HDR plots with densities from KDE with fixed bandwidth. The top twenty outliers with the lowest densities are highlighted in black with point indexes in blue. From \autoref{fig:metadensity} and the data generating process, we know that there are four highest density regions. However, in all
+manifold learning embeddings colored with true densities (left column in \autoref{fig:sroutliers} ), except for LLE, the number of highest density regions are not the same as the meta data. When comparing the number of HDRs for variable and fixed bandwidth (middle and right column in \autoref{fig:sroutliers} ), our proposed method with variable bandwidth outperforms fixed bandwidth for ISOMAP, LLE, and Laplacian Eigenmaps (top three rows in \autoref{fig:sroutliers} ). In terms of the top 20 outliers found rowwise, variable bandwidth could find most outliers lying on the left area of the embedding in ISOMAP and UMAP, and both methods in LLE embedding could find the outliers in the outer area, but for the other methods, both variable and fixed bandwidth are not detecting true outliers accurately. For t-SNE and UMAP embedding, the embedding structure is highly distorted and the points are clustered together in a discontinuous way, which is also shown in the clustered outliers.
+
+\begin{table}
+
+\caption{\label{tab:srcors}Correlation between true density ranking and estimated density ranking for different manifold learning embeddings of the swiss roll data. Variable bandwidth KDE outperfoms for LLE and UMAP, and LLE gives the highest rank correlation.}
+\centering
+\begin{tabular}[t]{l>{}l>{}l>{}l>{}l>{}l}
+\toprule
+  & ISOMAP & LLE & Laplacian.Eigenmaps & t.SNE & UMAP\\
+\midrule
+Variable bandwidth & 0.0696 & \textbf{0.400} & -0.2357 & 0.023 & \textbf{0.0138}\\
+Fixed bandwidth & \textbf{0.2798} & 0.351 & \textbf{0.0141} & \textbf{0.367} & -0.0110\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+To further compare the accuracy of the estimated densities for all data points, we calculate the correlation between the rank of true densities and the estimated densities and present in \autoref{tab:srcors}. It can be seen that the rank correlation of our proposed method with variable bandwidth is higher for LLE and UMAP, although the correlation for UMAP is very close to zero. The highest correlation comes from our method in LLE embedding, which is mainly due to it being closest to the
+rectangular structure of the meta data shown in \autoref{fig:metadensity}. For Laplacian Eigenmaps, our method has wrongly estimated the left area with lower densities even though their true densities are very high in yellow, leading to a negative
+correlation. The negative correlation would occur typically when the highest or lowest true density areas are not well estimated. As for the estimates in highly distorted embedding, including ISOMAP, t-SNE, and UMAP, the rank correlations are quite low. This shows that our proposed method could improve the kernel density estimate of manifold learning embedding by considering the distortion using the Riemannian metric.
+However, if the distortion is too severe, eg. ISOMAP, or when the embedding is discontinuous, eg. t-SNE and UMAP, the density estimates are not as reliable for outlier detection.
 
 \printbibliography
 
