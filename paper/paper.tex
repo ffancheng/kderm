@@ -21,7 +21,7 @@
 \PassOptionsToPackage{hyphens}{url} % url is loaded by hyperref
 \usepackage[unicode=true]{hyperref}
 \hypersetup{
-            pdftitle={Kernel density estimate for embedding of Riemannian manifolds},
+            pdftitle={Distortion-corrected kernel density estimate for Riemannian manifolds},
             pdfkeywords={manifold learning, variable bandwidth, Riemannian metric, highest density region, Gaussian kernels},
             pdfborder={0 0 0},
             breaklinks=true}
@@ -50,7 +50,7 @@
 \makeatother
 
 
-\title{Kernel density estimate for embedding of Riemannian manifolds}
+\title{Distortion-corrected kernel density estimate for Riemannian manifolds}
 
 %% MONASH STUFF
 
@@ -340,19 +340,7 @@ The rest of the paper is organized as follows. In \autoref{vkde}, we present the
 \hypertarget{vkde}{%
 \section{Kernel density estimate on Riemannian manifold embeddings}\label{vkde}}
 
-In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. \textcite{Perrault-Joncas2013-pq} gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric which is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates. The proposed schematic is shown in Figure \ref{fig:vkde}. The highlighted two steps in Figure \ref{fig:vkde} are the main contributions of this main chapter, replacing the bandwidth matrix \(\pmb{H}_i\) with the Riemannian metric \(g_i\) for each point in
-variable kernel density estimate, and computing the highest density region plots based on the density estimates, \(\hat{f}(\pmb{x})\), for anomaly detection.
-
-
-
-\begin{figure}
-
-{\centering \includegraphics[width=0.95\linewidth]{figures/vkde} 
-
-}
-
-\caption{The proposed schematic for variable kernel density estimation with recovered geometry.}\label{fig:vkde}
-\end{figure}
+In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. \textcite{Perrault-Joncas2013-pq} gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric which is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates.
 
 To start with, we introduce the notations used in this manuscript. Then we introduce the multivariate kernel density estimation method with variable bandwidth matrix and the metric learning algorithm to derive the pointwise Riemannian metric. Readers familiar with these topics could skip the corresponding subsections. Finally, we propose our novel algorithm to estimate densities and detect anomalies for high-dimensional data set.
 
@@ -424,16 +412,19 @@ d\exp_p^*\textit{Vo}l(u) = \theta_p(u)du,
 \]
 in normal coordinates. The volume density function is motivated by how a measure \(du\) changes under the change of coordinates. It is related to the integration on manifolds and plays an important part in studing the density of manifolds.
 \textcite{Pelletier2005-vu} mentions that the volume density function \(\theta_q(p)\) defined for \(p\) in a neighborhood of \(q\) on the manifold, with the geodesic normal coordinates at \(q\), is equal to the determinant of the Riemannian metric \(g\) expressed in the coordinates at the logarithm map of q, \(\exp_q^{-1}(p)\).
+Note that this is true only when using the geodesic normal coordinates. If the mapping function is not exponential/logarithm map, the volume density function is calculated otherwise. Therefore, the Riemannian manifold density estimator in \textcite{Pelletier2005-vu} only works when the true manifold \(M\) is known.
 
 \hypertarget{dckde}{%
-\subsection{Distotion-corrected kernel density estimator (DC-KDE)}\label{dckde}}
+\subsection{Distortion-corrected kernel density estimator for manifold embedding}\label{dckde}}
 
-However, in application, we usually find the observations lie on a \(d\)-dimensional manifold embedded in a \(s\)-dimensional space, where \(d \ll s\). Then manifold learning can be applies to find the \(d\)-dimensional representation of the manifold \(M\). Therefore, based on the estimator in \eqref{eq:denriem}, we propose a kernel density estimator of \(f\) with the manifold embedding \(y_i, i = 1, 2, \dots, N\) to be
+However, in application, we usually find the observations lying on a \(d\)-dimensional manifold embedded in a much higher \(s\)-dimensional space, where \(d \ll s\). Instead of sampling from the undering manifold \(M\), we apply manifold learning algorithms to reduce dimension and find a \(d\)-dimensional representation of the manifold \(M\).
+Notice that this representation is not necessarily isometry to \(M\), and the underlying manifold is usually unknown in real data sets. Then the density estimator in Equation \eqref{eq:denriem} proposed by \textcite{Pelletier2005-vu} no longer applies because of the unknown geodesic distance \(d_g\) and the volume density function \(\theta_{\pmb{X}_i}(\pmb{p})\).
+Motivated on the estimator in \eqref{eq:denriem}, we propose a distortion-corrected kernel density estimator (DC-KDE) of \(f\) with the manifold embedding \(y_i, i = 1, 2, \dots, N\) to be
 \begin{equation}
 \label{eq:denestimator}
-\hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h_i^d |g(\exp_p^{-1}(y_i))|} K(\frac{d_g(p, y_i)}{h_i}),
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r} \frac{|h(\pmb{p})|}{|h(\pmb{y_i}))|} K\bigg( \frac{(\pmb{p} - \pmb{y_i})^\prime h^{-1}(\pmb{y_i}) (\pmb{p} - \pmb{y_i})}{r} \bigg),
 \end{equation}
-where \(h_i, i = 1, 2, \dots, N\) is the pointwise variable bandwidth matrix and \(h_i\) is positive definite with dimension \(d\times d\).
+where \(h(\pmb{y_i}), i = 1, 2, \dots, N\) is the pointwise variable Riemannian matrix and \(h(x)\) is positive definite with dimension \(d\times d\), \(\frac{|h(\pmb{p})|}{|h(\pmb{y_i}))|}\) is the estimated volume density function when using the coordinates from any manifold learning mapping, \((\pmb{p} - \pmb{y_i})^\prime h^{-1}(\pmb{y_i}) (\pmb{p} - \pmb{y_i})\) is the estimated geodesic distance with the distortion corrected by the Riemannian metric at embedding point \(\pmb{y_i} \ \mathbb{R}^d\). Then the only problem left is the estimation of the Riemannian metric at each embedding point.
 
 An important goal of manifold learning is to recover the local or global features of the data. In order to recover the geometry of the manifold, \textcite{Perrault-Joncas2013-pq} propose a method to augment any existing reasonable embedding and allow for the computation of geometric values to be calculated with an estimation of the Riemannian metric \(g\). This could also be used to fix the geometric distortion in the embedding. It is worth noticing that the Riemannian metric from \textcite{Perrault-Joncas2013-pq} is a \(d\times d\) positive definite matrix for each data point. Therefore, we propose to take the geometric distortion into consideration when estimating the kernel densities of the embedding with Equation \eqref{eq:denestimator}. In this way, we present a consistent kernel density estimator with pointwise variable bandwidth as the Riemannian metric.
 
@@ -526,6 +517,20 @@ Now we present our proposed algorithm for anomaly detection based on variable ke
 \end{algorithm}
 
 If the embedding dimension \(d=2\), the HDR plots \autocite{Hyndman1996-lk} could be used to identify the relative location of outliers in the embedding and find which observations lie in the highest density region of specified coverage, eg. 1\%, 50\%, 99\%, \textgreater99\%.
+
+The proposed schematic is shown in Figure \ref{fig:vkde}. The highlighted two steps in Figure \ref{fig:vkde} are the main contributions of this main chapter, replacing the bandwidth matrix \(\pmb{H}_i\) with the Riemannian metric \(g_i\) for each point in
+variable kernel density estimate, and computing the highest density region plots based on the density estimates, \(\hat{f}(\pmb{x})\), for anomaly detection.
+
+
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/vkde} 
+
+}
+
+\caption{The proposed schematic for variable kernel density estimation with recovered geometry.}\label{fig:vkde}
+\end{figure}
 
 \hypertarget{simulation}{%
 \section{Simulations}\label{simulation}}
