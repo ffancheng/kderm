@@ -1,5 +1,5 @@
 ---
-title: "Kernel density estimate for embedding of Riemannian manifolds"
+title: "Distortion-corrected kernel density estimate for Riemannian manifolds"
 author:
 - familyname: Cheng
   othernames: Fan
@@ -93,14 +93,7 @@ The rest of the paper is organized as follows. In \autoref{vkde}, we present the
 
 # Kernel density estimate on Riemannian manifold embeddings {#vkde}
 
-In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. @Perrault-Joncas2013-pq gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric which is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates. The proposed schematic is shown in Figure \@ref(fig:vkde). The highlighted two steps in Figure \@ref(fig:vkde) are the main contributions of this main chapter, replacing the bandwidth matrix $\pmb{H}_i$ with the Riemannian metric $g_i$ for each point in
-variable kernel density estimate, and computing the highest density region plots based on the density estimates, $\hat{f}(\pmb{x})$, for anomaly detection.
-
-(ref:vkdecaption) The proposed schematic for variable kernel density estimation with recovered geometry.
-
-```{r vkde, fig.align = 'center', out.width = "95%", fig.cap = "(ref:vkdecaption)", echo = FALSE, eval=TRUE}
-knitr::include_graphics("figures/vkde.png")
-```
+In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. @Perrault-Joncas2013-pq gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric which is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates. 
 
 To start with, we introduce the notations used in this manuscript. Then we introduce the multivariate kernel density estimation method with variable bandwidth matrix and the metric learning algorithm to derive the pointwise Riemannian metric. Readers familiar with these topics could skip the corresponding subsections. Finally, we propose our novel algorithm to estimate densities and detect anomalies for high-dimensional data set.
 
@@ -175,6 +168,7 @@ d\exp_p^*\textit{Vo}l(u) = \theta_p(u)du,
 $$
 in normal coordinates. The volume density function is motivated by how a measure $du$ changes under the change of coordinates. It is related to the integration on manifolds and plays an important part in studing the density of manifolds.
 @Pelletier2005-vu mentions that the volume density function $\theta_q(p)$ defined for $p$ in a neighborhood of $q$ on the manifold, with the geodesic normal coordinates at $q$, is equal to the determinant of the Riemannian metric $g$ expressed in the coordinates at the logarithm map of q, $\exp_q^{-1}(p)$. 
+Note that this is true only when using the geodesic normal coordinates. If the mapping function is not exponential/logarithm map, the volume density function is calculated otherwise. Therefore, the Riemannian manifold density estimator in @Pelletier2005-vu only works when the true manifold $M$ is known.
 
 <!-- $$ -->
 <!-- \theta_p: q \rightarrow \theta_p(q)=\frac{\mu_{\exp_p{g}}}{\mu_{g_p}}(\exp^{-1}_p(q)), -->
@@ -183,14 +177,16 @@ in normal coordinates. The volume density function is motivated by how a measure
 <!-- the volume density function is the quotient of the canonical measure of the Riemannian metric $\exp_p{g}$ on $T_pM$ by the Lebesgue measure of the Euclidean structure $g_p$ on $T_pM$. -->
 
 
-## Distotion-corrected kernel density estimator (DC-KDE) {#dckde}
+## Distortion-corrected kernel density estimator for manifold embedding {#dckde}
 
-However, in application, we usually find the observations lie on a $d$-dimensional manifold embedded in a $s$-dimensional space, where $d \ll s$. Then manifold learning can be applies to find the $d$-dimensional representation of the manifold $M$. Therefore, based on the estimator in \@ref(eq:denriem), we propose a kernel density estimator of $f$ with the manifold embedding $y_i, i = 1, 2, \dots, N$ to be 
+However, in application, we usually find the observations lying on a $d$-dimensional manifold embedded in a much higher $s$-dimensional space, where $d \ll s$. Instead of sampling from the undering manifold $M$, we apply manifold learning algorithms to reduce dimension and find a $d$-dimensional representation of the manifold $M$.
+Notice that this representation is not necessarily isometry to $M$, and the underlying manifold is usually unknown in real data sets. Then the density estimator in Equation \@ref(eq:denriem) proposed by @Pelletier2005-vu no longer applies because of the unknown geodesic distance $d_g$ and the volume density function $\theta_{\pmb{X}_i}(\pmb{p})$.
+Motivated on the estimator in \@ref(eq:denriem), we propose a distortion-corrected kernel density estimator (DC-KDE) of $f$ with the manifold embedding $y_i, i = 1, 2, \dots, N$ to be 
 \begin{equation}
 \label{eq:denestimator}
-\hat{f}(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{h_i^d |g(\exp_p^{-1}(y_i))|} K(\frac{d_g(p, y_i)}{h_i}),
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r} \frac{|h(\pmb{p})|}{|h(\pmb{y_i}))|} K\bigg( \frac{(\pmb{p} - \pmb{y_i})^\prime h^{-1}(\pmb{y_i}) (\pmb{p} - \pmb{y_i})}{r} \bigg),
 \end{equation} 
-where $h_i, i = 1, 2, \dots, N$ is the pointwise variable bandwidth matrix and $h_i$ is positive definite with dimension $d\times d$.
+where $h(\pmb{y_i}), i = 1, 2, \dots, N$ is the pointwise variable Riemannian matrix and $h(x)$ is positive definite with dimension $d\times d$, $\frac{|h(\pmb{p})|}{|h(\pmb{y_i}))|}$ is the estimated volume density function when using the coordinates from any manifold learning mapping, $(\pmb{p} - \pmb{y_i})^\prime h^{-1}(\pmb{y_i}) (\pmb{p} - \pmb{y_i})$ is the estimated geodesic distance with the distortion corrected by the Riemannian metric at embedding point $\pmb{y_i} \ \mathbb{R}^d$. Then the only problem left is the estimation of the Riemannian metric at each embedding point.
 
 
 <!-- The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. This motivates our proposed adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}. -->
@@ -290,6 +286,16 @@ Now we present our proposed algorithm for anomaly detection based on variable ke
 \end{algorithm}
 
 If the embedding dimension $d=2$, the HDR plots [@Hyndman1996-lk] could be used to identify the relative location of outliers in the embedding and find which observations lie in the highest density region of specified coverage, eg. 1%, 50%, 99%, \>99%.
+
+The proposed schematic is shown in Figure \@ref(fig:vkde). The highlighted two steps in Figure \@ref(fig:vkde) are the main contributions of this main chapter, replacing the bandwidth matrix $\pmb{H}_i$ with the Riemannian metric $g_i$ for each point in
+variable kernel density estimate, and computing the highest density region plots based on the density estimates, $\hat{f}(\pmb{x})$, for anomaly detection.
+
+(ref:vkdecaption) The proposed schematic for variable kernel density estimation with recovered geometry.
+
+```{r vkde, fig.align = 'center', out.width = "95%", fig.cap = "(ref:vkdecaption)", echo = FALSE, eval=TRUE}
+knitr::include_graphics("figures/vkde.png")
+```
+
 
 # Simulations {#simulation}
 
