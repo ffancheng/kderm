@@ -1,5 +1,5 @@
 ---
-title: "Distortion-corrected kernel density estimate for Riemannian manifolds"
+title: "Distortion-corrected kernel density estimate on Riemannian manifolds"
 author:
 - familyname: Cheng
   othernames: Fan
@@ -75,7 +75,9 @@ library(kableExtra)
 
 # Introduction
 
-Anomaly detection has been an important and diverse area where anomalies or outliers are detected in a given data. It often involves a data analysis process to uncover the unusual patterns and has been widely applied to machine learning [@Omar2013-lz], network intrusions identification [@Ahmed2016-co; @Bhuyan2013-ra], medical imaging [@Fernando2022-ef], fraudulent attacks [@Ahmed2016-dz], cyber-security [@Ten2011-co], energy consumption [@Cheng2021-ex], the last of which explored detecting households with anomalous electricity usage distributions instead of raw data. In the case of non-Euclidean sample space, the observations lie on a Riemannian manifold embedded in a very high-dimensional ambient space, which makes it computationally expensive or impossible to detect anomalies. To address this problem, we propose a kernel density estimator of the low-dimensional statistical manifold embedding and find outliers as the data with the lowest density estimates.
+<!-- Anomaly detection has been an important and diverse area where anomalies or outliers are detected in a given data.  -->
+Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data.
+It often involves a data analysis process to uncover the unusual patterns and has been widely applied to machine learning [@Omar2013-lz], network intrusions identification [@Ahmed2016-co; @Bhuyan2013-ra], medical imaging [@Fernando2022-ef], fraudulent attacks [@Ahmed2016-dz], cyber-security [@Ten2011-co], energy consumption [@Cheng2021-ex], the last of which explored detecting households with anomalous electricity usage distributions instead of raw data. In the case of non-Euclidean sample space, the observations lie on a Riemannian manifold embedded in a very high-dimensional ambient space, which makes it computationally expensive or impossible to detect anomalies. To address this problem, we propose a kernel density estimator of the low-dimensional statistical manifold embedding and find outliers as the data with the lowest density estimates.
 
 Kernel density estimation [KDE; @Parzen1962-gt; @Chen2017-dw] is one of the most popular methods to calculate the probability density function from a sample dataset. KDE is flexible to learn the shape of the underlying density from the data controlled by the bandwidth and the selection of bandwidth is crucial in KDE [@Jones1990-oe; @Terrell1992-ut]. There is extensive research on bandwidth selection, two main categories of which are cross-validation [@Jones1992-ta; @Sain1994-gr] and plug-in methods [@Wand1994-gc; @Duong2003-sp]. For multivariate data, variable kernel density estimator [VKDE; @Jones1990-oe; @Terrell1992-ut] has been studied with an adaptive bandwidth matrix to control the amount of smoothing on the location of the estimated point [balloon estimator; @Terrell1992-ut] or the data point [sample smoothing estimator; @Terrell1992-ut]. However, these density estimators are based on random samples in the Euclidean space.
 
@@ -88,14 +90,23 @@ In manifold learning, the underlying idea is that the data lies on a low-dimensi
 The Riemannian metric using the method of @Perrault-Joncas2013-pq gives some idea of the distortion of an embedding. Mapping the points through a non-linear function "stretches" some regions of space and "shrinks" others. The Riemannian gives us an idea of the direction and angle of this stretching, which is informative for learning the manifold. In variable kernel density estimate, the bandwidth matrix $H$ is also defined to control the amount of smoothing for each data point.
 Therefore, we propose to the use Riemannian metric as the bandwidth matrix in, we could further get the kernel density estimation of the manifold $M$. This kernel density estimate can then be used to produce the highest density region plots[@Hyndman1996-lk] for outlier visualization.
 
-The rest of the paper is organized as follows. In \autoref{vkde}, we present the proposed algorithm to detect anomalies based on variable kernel density estimates of manifold embeddings. In this section, we provide justification for the use of the Riemannian metric as the bandwidth of variable kernel density estimation, including the comparison with fixed bandwidth. \autoref{simulation} is composed of two simulations with the proposed algorithm; the first deals with 2-dimensional meta data mapped into a 3-D swiss roll or twin peaks data and the second with a 5-D semi-hypersphere mapped in a 100-D space.
-\autoref{application} contains the application to visualize and identify anomalies in the Irish smart meter dataset. Conclusions and discussions are presented in \autoref{conclusion}. Readers interested in the notions of Riemannian geometry mentioned in this paper could use the Appendix in \autoref{riemgeo} as a reference.
+The rest of the paper is organized as follows. In \autoref{kderm}, we present our distortion-corrected kernel density estimator for Riemannian manifolds. We start by introducing the multivariate kernel density estimate with adaptive bandwidth and the kernel density estimator for Riemannian manifolds. Then we provide justification for the use of Riemannian metric to correct the distortions in manifold learning embedding and further apply the proposed estimator to detect anomalies based on the embedding. \autoref{simulation} is composed of two simulations with the proposed algorithm; the first deals with 2-dimensional data from gaussian mixture model mapped into a 3-D swiss roll structure and the second with a 5-D semi-hypersphere mapped in a 100-D space. Different manifold learning algorithms are applied to the high-dimensional data to get the low-dimensional embedding which are then used to estimate densities and detect anomalies.
+\autoref{application} contains the application to visualize and identify anomalous households in the Irish smart meter dataset. Conclusions and discussions are presented in \autoref{conclusion}. Readers interested in the notions of Riemannian geometry mentioned in this paper could use the Appendix in \autoref{riemgeo} as a reference.
 
-# Kernel density estimate on Riemannian manifold embeddings {#vkde}
+# Kernel density estimate on Riemannian manifold embedding {#kderm}
 
-In this section, we introduce the proposed method to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. @Perrault-Joncas2013-pq gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric which is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates. 
+<!-- In this section, we introduce the proposed kernel density estimator on the embedding of Riemannian manifolds.  -->
+For multivariate data, variable kernel density estimator with adaptive bandwidth matrix at each sample point can be used to capture the local structure of the data. @Pelletier2005-vu generalize the multivariate kernel density esitmator to Riemnnian manifolds. However, it is not applicable when the underlying manifold is not known or when the true manifold is mapped in a much higher dimensional space. Therefore, we propose a distortion-corrected kernel density estimator as in Equation \@ref(eq:denestimator0) based on the low-dimensional embedding, $\pmb{y}_i \in \mathbb{R}^d, i = 1, 2, \dots, N$, of the high-dimensional data with $N$ data points,
+\begin{equation}
+\label{eq:denestimator0}
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|} K\bigg( \frac{(\pmb{p} - \pmb{y}_i)^\prime H^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
+\end{equation} 
+where $\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N$ is the pointwise adaptive Riemannian matrix of dimension $d \times d$.
+The proposed estimator could be used as an estimate of the density of the true manifold, with the local distortion at each point corrected by volume density functions. These densities could further be used for unsupervised tasks including anomaly detection when outliers are defined as the points with the lowest densities. 
 
-To start with, we introduce the notations used in this manuscript. Then we introduce the multivariate kernel density estimation method with variable bandwidth matrix and the metric learning algorithm to derive the pointwise Riemannian metric. Readers familiar with these topics could skip the corresponding subsections. Finally, we propose our novel algorithm to estimate densities and detect anomalies for high-dimensional data set.
+<!-- to detect anomalies based on the kernel density estimates of manifold learning embeddings where the Riemannian matrix is used as the pointwise variable bandwidth to measure the direction and angle of the distortion of the low-dimensional embeddings. @Perrault-Joncas2013-pq gives us an idea of how to measure the direction and angle of the distortion using the Riemannian metric which is a positive definite square matrix for each data point. To learn the distribution of the low-dimensional embedding, we use the kernel density estimation with the bandwidth matrix being the Riemannian metric. The outliers could then be defined as the points with the lowest density estimates.  -->
+
+To start with, we introduce the multivariate kernel density estimation method with variable bandwidth matrix and Pelletier's estimator for Riemannian manifolds. Then we propose our distortion-corrected estimator, followed by details about how to estimate the Riemannian metric using the Learn Metric algorithm in @Perrault-Joncas2013-pq. Finally, we show how to use these densities to carrt out anomaly detection tasks for high dimensional data that lies on a Riemannian manifold densities.
 
 <!-- ## Notations -->
 
@@ -103,34 +114,36 @@ To start with, we introduce the notations used in this manuscript. Then we intro
 
 ## Multivariate kernel density estimation {#mvkde}
 
-Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data. @Scott1992-cj and @Scott2015-vl cover a wide range of techniques for estimating the kernel densities of multivariate data. 
+Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data. @Scott2015-vl covers a wide range of techniques for estimating the kernel densities of multivariate data. 
 In general, given a multivariate random sample $\pmb{X}_1, \dots, \pmb{X}_N \in \mathcal{R}^d$
 <!-- $\pmb{X}_i=(X_{i1}, X_{i2}, \dots, X_{id})^\prime \in \mathcal{R}^d$, $i = 1, 2, \dots, N$  -->
-drawn from a density $f$, the kernel density estimate of $f$ at point $\pmb{x}=(x_1, x_2, \dots, x_d)^\prime \in \mathcal{R}^d$ is given by
-\begin{equation}
-\label{eq:kde}
-\hat{f}(\pmb{x};\pmb{H})=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}}(\pmb{x}-\pmb{X}_i),
-\end{equation} 
-where $K(\pmb{x})$ is the kernel function, $\pmb{H}$ is called the bandwidth matrix and it is a symmetric positive definite matrix of dimension $d\times d$, and $K_{\pmb{H}}(\pmb{x}) = |\pmb{H}|^{-1/2} K(\pmb{H}^{-1/2}\pmb{x})$.
-When using the standard gaussian kernel, we have $K(\pmb{x}) = (2\pi)^{-d/2}\exp(-\frac{1}{2}\pmb{x}'\pmb{x})$ and hence
-\begin{equation}
-\label{eq:kernel}
-K_{\pmb{H}}(\pmb{x}-\pmb{X}_i)=(2\pi)^{-d/2}|\pmb{H}|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{x}-\pmb{X}_i)'\pmb{H}^{-1}(\pmb{x}-\pmb{X}_i)\right],
-\end{equation} 
-with $|\pmb{H}|$ being the determinant of matrix $\pmb{H}$.
-Intuitively, KDE smooths out each data point $\pmb{X}_i$ into a smooth bump with the shape determined by the kernel function. Then an average over all data points is taken as the estimated density $\hat{f}$. KDE is a local smooth estimator because the nearby points contributes more to the density value compared to points far away from the estimated data point $\pmb{x}$. 
-
-The choice of the bandwidth matrix $\pmb{H}$ is crucial in the accuracy of $\hat{f}$ because it controls the smoothing across the sample data. For a given kernel function $K(\pmb{x})$, the shape of the local smoothing at each point is determined. Then the performance of the density estimate $\hat{f}$ depends on the choice of $\pmb{H}$. When $\pmb{H}$ is too small, the density estimates will apprear to be wiggly. On the contrary, when $\pmb{H}$ is too large, the density estimates might smooth out some local features of $f$. So the accuracy of $\hat{f}$ depends strongly on the bandwidth matrix.
-Many bandwidth selection methods have been proposed in the literature, including the rule-of-thumb, cross-validation and plug-in methods [See @Heidenreich2013-bl; @Scott2015-vl for details]. For univariate kernel density estimation, the bandwidth selection problem has been thoroughly investigated [See @Jones1992-ef; @Cao1994-st; @Jones1996-cb; @Wand1994-xu for reviews]. The generalization to multivariate case could mostly be found in @Duong2003-sp, @Duong2004-rh, and @Chacon2010-wm. In this paper, we focus on the multivariate kernel density estimation.
-
-Note that the bandwidth matrix in \@ref(eq:kde) is a global smoothing parameter for all data points. However, when the local data structure is not universal for all sample data, an adaptive bandwidth matrix that is varying rather than fixed at each data point is needed. This is ususally referred to as variable kernel density estimation [VKDE; @Breiman1977-qc; @Jones1990-oe; @Terrell1992-ut], where the bandwidth is varied depending on either the location of the sample points or that of the estimated points [Section 6.6 of @Scott2015-vl]. In this paper, the densities are estimated at the sample points themselves, so we only need to consider the case where the bandwidth changes for each sample point $\pmb{X}_i$ and will refer to this as the *variable/adaptive kernel density estimation(VKDE)* unless otherwise stated. 
-
-In multivariate VKDE, the estimator in Equation \@ref(eq:vkde) is similar to that in \@ref(eq:kde) except that the bandwidth is a variable matrix $\pmb{H}_i$ for each $\pmb{X}_i$,
+drawn from a density $f$, the variable kernel density estimate [@Breiman1977-qc; @Jones1990-oe; @Terrell1992-ut] of $f$ at point $\pmb{x}=(x_1, x_2, \dots, x_d)^\prime \in \mathcal{R}^d$ is given by
 \begin{equation}
 \label{eq:vkde}
 \hat{f}(\pmb{x};\pmb{H}_i)=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i).
 \end{equation}
+where $K(\pmb{x})$ is the kernel function, $\pmb{H}_i$ is called the bandwidth matrix and it is a symmetric positive definite matrix of dimension $d\times d$, and $K_{\pmb{H}_i}(\pmb{x}) = |\pmb{H}_i|^{-1/2} K(\pmb{H}_i^{-1/2}\pmb{x})$.
+When using the standard gaussian kernel, we have $K(\pmb{x}) = (2\pi)^{-d/2}\exp(-\frac{1}{2}\pmb{x}'\pmb{x})$ and hence
+\begin{equation}
+\label{eq:kernel}
+K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i)=(2\pi)^{-d/2}|\pmb{H}_i|^{-1/2}\exp\left[-\frac{1}{2}(\pmb{x}-\pmb{X}_i)'\pmb{H}_i^{-1}(\pmb{x}-\pmb{X}_i)\right],
+\end{equation} 
+with $|\pmb{H}_i|$ being the determinant of matrix $\pmb{H}_i$.
+Intuitively, KDE smooths out each data point $\pmb{X}_i$ into a smooth bump with the shape determined by the kernel function. Then an average over all data points is taken as the estimated density $\hat{f}$. KDE is a local smooth estimator because the nearby points contributes more to the density value compared to points far away from the estimated data point $\pmb{x}$. 
+
+The choice of the bandwidth matrix $\pmb{H}_i$ is crucial in the accuracy of $\hat{f}$ because it controls the smoothing across the sample data. For a given kernel function $K(\pmb{x})$, the shape of the local smoothing at each point is determined. Then the performance of the density estimate $\hat{f}$ depends on the choice of $\pmb{H}_i$. When $\pmb{H}_i$ is too small, the density estimates will apprear to be wiggly. On the contrary, when $\pmb{H}_i$ is too large, the density estimates might smooth out some local features of $f$. So the accuracy of $\hat{f}$ depends strongly on the bandwidth matrix.
 Compared to a global fixed $\pmb{H}$, a variable bandwidth matrix is able to account for the pointwise-adaptive local structure and generate an estimate more applicable to the case where the distortion at each point is different in the low-dimensional manifold learning embedding.
+
+<!-- Many bandwidth selection methods have been proposed in the literature, including the rule-of-thumb, cross-validation and plug-in methods [See @Heidenreich2013-bl; @Scott2015-vl for details]. For univariate kernel density estimation, the bandwidth selection problem has been thoroughly investigated [See @Jones1992-ef; @Cao1994-st; @Jones1996-cb; @Wand1994-xu for reviews]. The generalization to multivariate case could mostly be found in @Duong2003-sp, @Duong2004-rh, and @Chacon2010-wm. In this paper, we focus on the multivariate kernel density estimation.
+ -->
+
+<!-- Note that a fixed bandwidth matrix $\pmb{H}$ is a global smoothing parameter for all data points. However, when the local data structure is not universal for all sample data, an adaptive bandwidth matrix that is varying rather than fixed at each data point is needed. The bandwidth is varied depending on either the location of the sample points or that of the estimated points [Section 6.6 of @Scott2015-vl]. In this paper, the densities are estimated at the sample points themselves, so we only need to consider the case where the bandwidth changes for each sample point $\pmb{X}_i$ and will refer to this as the *variable/adaptive kernel density estimation(VKDE)* unless otherwise stated. 
+ -->
+<!-- In multivariate VKDE, the estimator in Equation \@ref(eq:vkde) is similar to that in \@ref(eq:kde) except that the bandwidth is a variable matrix $\pmb{H}_i$ for each $\pmb{X}_i$,
+\begin{equation}
+\label{eq:vkde}
+\hat{f}(\pmb{x};\pmb{H}_i)=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i).
+\end{equation} -->
 
 For computational purposes, @Duong2007-up implements the kernel density estimates for data from 1 to 6 dimensions in the R package *ks*. 
 However, for variable kernel density estimation where the bandwidth is no longer a constant matrix, the *ks* implementation is limited to 2-dimension and the bandwidth can either be a diagonal matrix or a vector of the diagonal elements, which limits the full flexibility of the kernel function.
@@ -143,7 +156,7 @@ Consider a compact Riemannian manifold $(M, g)$ of dimension $d$ without boundar
 \label{eq:denriem}
 \hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{\pmb{X}_i}(\pmb{p})} K(\frac{d_g(\pmb{p}, \pmb{X}_i)}{r}),
 \end{equation} 
-where $r$ is the global bandwidth satisfying $r \leq r_0$ for fixed $r_0$ such that $0\leq r_0\leq inj_g(M)$, $K: \mathcal{R}_{+} \rightarrow \mathcal{R}$ is a non-negative map, and $\theta_{\pmb{X}_i}(\pmb{p})$ is the volume density function on the manifold for point $\pmb{X}_i$. The estimator in \@ref(eq:denriem) is also proved to be consistent with the kernel density estimators in the Euclidean case in Equation \@ref(eq:kde) and converges at the same rate as the Euclidean estimator [@Henry2009-ll].
+where $r$ is the global bandwidth satisfying $r \leq r_0$ for fixed $r_0$ such that $0\leq r_0\leq inj_g(M)$, $K: \mathcal{R}_{+} \rightarrow \mathcal{R}$ is a non-negative map, and $\theta_{\pmb{X}_i}(\pmb{p})$ is the volume density function on the manifold for point $\pmb{X}_i$. The estimator in \@ref(eq:denriem) is also proved to be consistent with the kernel density estimators in the Euclidean case and converges at the same rate as the Euclidean estimator [@Henry2009-ll].
 
 Denote $\lambda$ as the Lebesque measure of $\mathbb{R}^d$. The kernels $K$ in \@ref(eq:denriem) are functions of the geodesic distance of the manifold $d_g$ and they satisfy the following conditions [@Pelletier2005-vu]:
 \begin{align}
@@ -181,12 +194,12 @@ Note that this is true only when using the geodesic normal coordinates. If the m
 
 However, in application, we usually find the observations lying on a $d$-dimensional manifold embedded in a much higher $s$-dimensional space, where $d \ll s$. Instead of sampling from the undering manifold $M$, we apply manifold learning algorithms to reduce dimension and find a $d$-dimensional representation of the manifold $M$.
 Notice that this representation is not necessarily isometry to $M$, and the underlying manifold is usually unknown in real data sets. Then the density estimator in Equation \@ref(eq:denriem) proposed by @Pelletier2005-vu no longer applies because of the unknown geodesic distance $d_g$ and the volume density function $\theta_{\pmb{X}_i}(\pmb{p})$.
-Motivated on the estimator in \@ref(eq:denriem), we propose a distortion-corrected kernel density estimator (DC-KDE) of $f$ with the manifold embedding $y_i, i = 1, 2, \dots, N$ to be 
+Motivated on the estimator in \@ref(eq:denriem), we propose a distortion-corrected kernel density estimator (DC-KDE) of $f$, same as \@ref(eq:denestimator0), with the manifold embedding $\pmb{y}_i, i = 1, 2, \dots, N$ to be 
 \begin{equation}
 \label{eq:denestimator}
-\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r} \frac{|h(\pmb{p})|}{|h(\pmb{y_i}))|} K\bigg( \frac{(\pmb{p} - \pmb{y_i})^\prime h^{-1}(\pmb{y_i}) (\pmb{p} - \pmb{y_i})}{r} \bigg),
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|} K\bigg( \frac{(\pmb{p} - \pmb{y}_i)^\prime H^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
 \end{equation} 
-where $h(\pmb{y_i}), i = 1, 2, \dots, N$ is the pointwise variable Riemannian matrix and $h(x)$ is positive definite with dimension $d\times d$, $\frac{|h(\pmb{p})|}{|h(\pmb{y_i}))|}$ is the estimated volume density function when using the coordinates from any manifold learning mapping, $(\pmb{p} - \pmb{y_i})^\prime h^{-1}(\pmb{y_i}) (\pmb{p} - \pmb{y_i})$ is the estimated geodesic distance with the distortion corrected by the Riemannian metric at embedding point $\pmb{y_i} \ \mathbb{R}^d$. Then the only problem left is the estimation of the Riemannian metric at each embedding point.
+where $\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N$ is the pointwise variable Riemannian matrix and it is positive definite with dimension $d\times d$, $\frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|}$ is the estimated volume density function when using the coordinates from any manifold learning mapping, $(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)$ is the estimated geodesic distance with the distortion corrected by the Riemannian metric at embedding point $\pmb{y}_i \in \mathbb{R}^d$. Then the only problem left is the estimation of the Riemannian metric at each embedding point.
 
 
 <!-- The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. This motivates our proposed adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}. -->
@@ -198,7 +211,7 @@ An important goal of manifold learning is to recover the local or global feature
 
 ## Riemannian metric estimation
 
-The Riemannian metric $g$ is a symmetric and positive definite tensor field which defines an inner product $<,>_g$ on the tangent space $T_pM$ for every point $p \in M$. If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. The Metric Learning algorithm [@Perrault-Joncas2013-pq] then augment the embedded manifold with the Riemannian metric and produce a Riemannian manifold $(M, g)$.
+The Riemannian metric $g$ is a symmetric and positive definite tensor field which defines an inner product $\langle,\rangle_g$ on the tangent space $T_pM$ for every point $p \in M$. If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. The Metric Learning algorithm [@Perrault-Joncas2013-pq] then augment the embedded manifold with the Riemannian metric and produce a Riemannian manifold $(M, g)$.
 
 To recover the original geometry of the manifold, we need to know what the inner product corresponds to in the embedding. The inner product between two vectors $u,v \in T_pM$, $\langle u,v \rangle_g=g_{ij}u^iv^j$[^1], can be used to define some geometric quantities, such as the vector norm $\|u\|=\sqrt{\langle u,v \rangle_g}$ and the angle between two vectors $\cos{\theta}=\frac{\langle u,v \rangle_g}{\|u\|\|v\|}$ in the tangent space.
 Therefore, for each point $p\in M$ in any coordinate system, the Riemannian metric $g$ is a $d\times d$ symmetric positive definite matrix, where $d$ is the dimension of the manifold.
