@@ -415,9 +415,10 @@ Note that this is true only when using the geodesic normal coordinates. If the m
 \hypertarget{dckde}{%
 \subsection{Distortion-corrected kernel density estimator for manifold embedding}\label{dckde}}
 
-However, in application, we usually find the observations lying on a \(d\)-dimensional manifold embedded in a much higher \(s\)-dimensional space, where \(d \ll s\). Instead of sampling from the undering manifold \(M\), we apply manifold learning algorithms to reduce dimension and find a \(d\)-dimensional representation of the manifold \(M\).
-Notice that this representation is not necessarily isometry to \(M\), and the underlying manifold is usually unknown in real data sets. Then the density estimator in Equation \eqref{eq:denriem} proposed by \textcite{Pelletier2005-vu} no longer applies because of the unknown geodesic distance \(d_g\) and the volume density function \(\theta_{\pmb{X}_i}(\pmb{p})\).
-Motivated on the estimator in \eqref{eq:denriem}, we propose a distortion-corrected kernel density estimator (DC-KDE) of \(f\), same as \eqref{eq:denestimator0}, with the manifold embedding \(\pmb{y}_i, i = 1, 2, \dots, N\) to be
+However, in application, we usually find the observations lying on a \(d\)-dimensional manifold embedded in a much higher \(s\)-dimensional space, where \(d \ll s\). Instead of sampling from the underlying manifold \(M\), we could only sample from the high-dimensional data and apply dimension reduction techniques such as manifold learning to find a \(d\)-dimensional representation of \(M\).
+Notice that this representation is not necessarily isometry to \(M\), and the underlying manifold is usually unknown in real data sets. We could use the low-dimensional embedding as an approximation of the true manifold \(M\). However, the pointwise distortion induced by the manifold learning process needs to be taken care of to accurately estimate the density of the manifold. Therefore, the density estimator in Equation \eqref{eq:denriem} no longer applies because of the unknown geodesic distance \(d_g\) and the volume density function \(\theta_{\pmb{X}_i}(\pmb{p})\).
+Further, the bandwidth matrix should be adaptive to each sample point to take into account the distortion.
+Motivated by the estimator in \eqref{eq:denriem}, we restate the proposed distortion-corrected kernel density estimator (DC-KDE) of \(f\), same as \eqref{eq:denestimator0}, based on the manifold embedding \(\pmb{y}_i, i = 1, 2, \dots, N\),
 \begin{equation}
 \label{eq:denestimator}
 \hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|} K\bigg( \frac{(\pmb{p} - \pmb{y}_i)^\prime H^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
