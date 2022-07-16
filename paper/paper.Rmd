@@ -192,25 +192,29 @@ Note that this is true only when using the geodesic normal coordinates. If the m
 
 ## Distortion-corrected kernel density estimator for manifold embedding {#dckde}
 
-However, in application, we usually find the observations lying on a $d$-dimensional manifold embedded in a much higher $s$-dimensional space, where $d \ll s$. Instead of sampling from the underlying manifold $M$, we could only sample from the high-dimensional data and apply dimension reduction techniques such as manifold learning to find a $d$-dimensional representation of $M$.
-Notice that this representation is not necessarily isometry to $M$, and the underlying manifold is usually unknown in real data sets. We could use the low-dimensional embedding as an approximation of the true manifold $M$. However, the pointwise distortion induced by the manifold learning process needs to be taken care of to accurately estimate the density of the manifold. Therefore, the density estimator in Equation \@ref(eq:denriem) no longer applies because of the unknown geodesic distance $d_g$ and the volume density function $\theta_{\pmb{X}_i}(\pmb{p})$.
-Further, the bandwidth matrix should be adaptive to each sample point to take into account the distortion.
-Motivated by the estimator in \@ref(eq:denriem), we restate the proposed distortion-corrected kernel density estimator (DC-KDE) of $f$, same as \@ref(eq:denestimator0), based on the manifold embedding $\pmb{y}_i, i = 1, 2, \dots, N$,
+In application, we usually find the observations lying on a $d$-dimensional manifold embedded in a much higher $s$-dimensional space, where $d \ll s$. Instead of sampling from the underlying manifold $M$, we could sample from the high-dimensional data only and apply dimension reduction techniques such as manifold learning to find a $d$-dimensional representation of $M$.
+Notice that this representation is not necessarily isometry to $M$, and the underlying manifold tends to be unknown in real data sets. We could use the low-dimensional embedding as an approximation of the true manifold $M$. However, the pointwise distortion induced by the manifold learning process needs to be taken care of to accurately estimate the density of the manifold. Therefore, the kernel density estimator in Equation \@ref(eq:denriem) no longer applies because of the unknown geodesic distance $d_g$ and the volume density function $\theta_{\pmb{X}_i}(\pmb{p})$.
+Further, the bandwidth matrix should be adaptive to each sample point to take the distortion into account.
+
+Motivated by the estimator in \@ref(eq:denriem), we restate our proposed distortion-corrected kernel density estimator (DC-KDE) of $f$, same as \@ref(eq:denestimator0), based on the manifold embedding $\pmb{y}_i, i = 1, 2, \dots, N$,
 \begin{equation}
 \label{eq:denestimator}
 \hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|} K\bigg( \frac{(\pmb{p} - \pmb{y}_i)^\prime H^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
 \end{equation}
-where $\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N$ is the pointwise variable Riemannian matrix and it is positive definite with dimension $d\times d$, $\frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|}$ is the estimated volume density function when using the coordinates from any manifold learning mapping, $(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)$ is the estimated geodesic distance with the distortion corrected by the Riemannian metric at embedding point $\pmb{y}_i \in \mathbb{R}^d$. Then the only problem left is the estimation of the Riemannian metric at each embedding point.
+where $r$ is a global bandwidth scalar, $\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N$ is the pointwise variable Riemannian matrix and it is positive definite with dimension $d\times d$, $\frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|}$ is the estimated volume density function when using the coordinates from any manifold learning mapping, $(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)$ is the first-order estimated geodesic distance with the distortion corrected by the Riemannian metric $\pmb{H}^{-1}(\pmb{y}_i)$. Then the only problem left is the estimation of the Riemannian metric at each embedding point, discussed in \autoref{#riemmetric}.
 
+
+[TODO: How to derive the volume density function?]
+
+[TODO: Further fix the approximation induced by the estimated d_g so that f will integral to 1.]
 
 <!-- The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. This motivates our proposed adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}. -->
 
 
+
+## Riemannian metric estimation {#riemmetric}
+
 An important goal of manifold learning is to recover the local or global features of the data. In order to recover the geometry of the manifold, @Perrault-Joncas2013-pq propose a method to augment any existing reasonable embedding and allow for the computation of geometric values to be calculated with an estimation of the Riemannian metric $g$. This could also be used to fix the geometric distortion in the embedding. It is worth noticing that the Riemannian metric from @Perrault-Joncas2013-pq is a $d\times d$ positive definite matrix for each data point. Therefore, we propose to take the geometric distortion into consideration when estimating the kernel densities of the embedding with Equation \@ref(eq:denestimator). In this way, we present a consistent kernel density estimator with pointwise variable bandwidth as the Riemannian metric.
-
-
-
-## Riemannian metric estimation
 
 The Riemannian metric $g$ is a symmetric and positive definite tensor field which defines an inner product $\langle,\rangle_g$ on the tangent space $T_pM$ for every point $p \in M$. If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. The Metric Learning algorithm [@Perrault-Joncas2013-pq] then augment the embedded manifold with the Riemannian metric and produce a Riemannian manifold $(M, g)$.
 
