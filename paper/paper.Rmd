@@ -169,11 +169,12 @@ Denote $\lambda$ as the Lebesque measure of $\mathbb{R}^d$. The kernels $K$ in \
 Note that conditon (iv) implies that the support of the kernel is between 0 and 1, which is guaranteed by the condition on the bandwidth, $r\leq inj_g(M)$. Under such condition, for each $\pmb{p} \in M$, there exists a normal coordinate neighborhood of $\pmb{p}$ containing an open ball $B(\pmb{p}, r) \in T_pM$ centered at $\pmb{p}$ with radius $r$.
 
 Now consider the volume density function $\theta_{\pmb{X}_i}(\pmb{p})$ in the estimator.
-For any tangent vector $u \in T_pM$, let $\gamma(u): t \rightarrow \exp_p(\frac{tu}{\|u\|})$ denotes a curve passing through $u$, and let $w_i, i=1,\dots,d$ be Jacobi fields along $\gamma$ such that $w_i(0)=0$ for all $i=1,\dots,d$ and $\frac{Dw_1}{dt}(0)=\frac{u}{\|u\|}$. Then $\frac{Dw_1}{dt}(0)$ forms an orthonomal basis of the tangent space $T_pM$. 
+For any tangent vector $u \in T_pM$, let $\gamma(u): t \rightarrow \exp_p(\frac{tu}{\|u\|})$ denote a curve passing through $u$, and let $w_i, i=1,\dots,d$ be Jacobi fields along $\gamma$ such that $w_i(0)=0$ for all $i=1,\dots,d$ and $\frac{Dw_1}{dt}(0)=\frac{u}{\|u\|}$. Then $\frac{Dw_1}{dt}(0)$ forms an orthonomal basis of the tangent space $T_pM$. 
 The volume density function on $M$, $\theta_p(q): T_pM \rightarrow \mathbb{R}$ is defined as 
-$$
+\begin{equation}
+\label{eq:volden}
 \theta_p(u) = \|u\|^{d-1} \det(w_1(\|u\|),\dots,w_d(\|u\|)).
-$$ 
+\end{equation}
 
 For the exponential map $\exp_p: T_pM \rightarrow M$ induced by pullback of a volume form $\exp_p^*\textit{Vol}$ on $T_pM$, $\theta_p$ is its density with respect to the Lebesgue measure of the Euclidean structure on $T_pM$, which gives 
 $$
@@ -196,19 +197,41 @@ In application, we usually find the observations lying on a $d$-dimensional mani
 Notice that this representation is not necessarily isometry to $M$, and the underlying manifold tends to be unknown in real data sets. We could use the low-dimensional embedding as an approximation of the true manifold $M$. However, the pointwise distortion induced by the manifold learning process needs to be taken care of to accurately estimate the density of the manifold. Therefore, the kernel density estimator in Equation \@ref(eq:denriem) no longer applies because of the unknown geodesic distance $d_g$ and the volume density function $\theta_{\pmb{X}_i}(\pmb{p})$.
 Further, the bandwidth matrix should be adaptive to each sample point to take the distortion into account.
 
+<!-- The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. This motivates our proposed adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}. -->
+
 Motivated by the estimator in \@ref(eq:denriem), we restate our proposed distortion-corrected kernel density estimator (DC-KDE) of $f$, same as \@ref(eq:denestimator0), based on the manifold embedding $\pmb{y}_i, i = 1, 2, \dots, N$,
 \begin{equation}
 \label{eq:denestimator}
 \hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|} K\bigg( \frac{(\pmb{p} - \pmb{y}_i)^\prime H^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
 \end{equation}
-where $r$ is a global bandwidth scalar, $\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N$ is the pointwise variable Riemannian matrix and it is positive definite with dimension $d\times d$, $\frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|}$ is the estimated volume density function when using the coordinates from any manifold learning mapping, $(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)$ is the first-order estimated geodesic distance with the distortion corrected by the Riemannian metric $\pmb{H}^{-1}(\pmb{y}_i)$. Then the only problem left is the estimation of the Riemannian metric at each embedding point, discussed in \autoref{#riemmetric}.
+where $r$ is a global bandwidth scalar, $\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N$ is the pointwise variable Riemannian matrix and it is positive definite with dimension $d\times d$, $\frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|}$ is the estimated volume density function when using the coordinates from any manifold learning mapping, $(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)$ is the first-order estimated geodesic distance with the distortion corrected by the Riemannian metric $\pmb{H}^{-1}(\pmb{y}_i)$. Then the only problem left is the estimation of the Riemannian metric at each embedding point, discussed in \autoref{riemmetric}.
 
 
-[TODO: How to derive the volume density function?]
+<!-- [TODO: How to derive the volume density function?] -->
+By the definition of the volume density function in Equation \@ref(eq:volden), we could calculate how the volume change under the change of coordinates. When using the logarithm map, the coordinates of points on the manifold are transformed into their coordinates in the tangent space, i.e. geodesic normal coordinates. In this case, @Pelletier2005-vu gives the volume density function from the manifold to the tangent space which is equal to the determinant of the Riemannian metric expressed in the geodesic normal coordinates at the logarithm map, $|\det g(\exp^{-1}_p(q)) |$. 
+In order to estimate the density of the true manifold, we first map the high-dimensional data to a low-dimensional embedding, then we apply a kernel density estimator to the embedding. Since the logarithm map of the manifold is also unknown, the volume density function in @Pelletier2005-vu is no longer valid. Instead, we need a volume density function independent of the chart. 
+
+For $p \in M$, denote an open ball centered at $p$ with radius $r$ as $B(p,r)$ and the open neighborhood of $0_p \in T_pM$ can be denoted as $B(0_p,r)=\exp_p^{-1}(B(p,r))$. Consider the Riemannian metrics $g^{\prime}$ and $g^{\prime \prime}$ in $B(0_p,r)$, with $g^{\prime} = \exp^{\ast}_p(g)$ being the pullback of $g$ induced by the exponential map and $g^{\prime \prime}$ being the canonical metric induced by $g_p$ in $B(0_p,r)$. 
+Let $u \in B(0_p,r)$ be a tangent vector and for any given chart $(\overline{U}, \overline{\psi})$ of $B(0_p,r)$, we have $u \in \overline{U}$. 
+The volumes of the parallelepiped spanned by the basis $\{(\partial / \partial\overline{\psi}_1|_u), \dots, (\partial / \partial\overline{\psi}_d|_u)\}$ are given by $| \det g^{\prime}((\partial / \partial\overline{\psi}_i|_u), (\partial / \partial\overline{\psi}_j|_u)) |^{1/2}$ with respect to $g^{\prime}$, and $| \det g^{\prime \prime}((\partial / \partial\overline{\psi}_i|_u), (\partial / \partial\overline{\psi}_j|_u)) |^{1/2}$ with respect to $g^{\prime \prime}$. The quotient of these two volumes is then independent of the chart $(\overline{U}, \overline{\psi})$ [@Henry2009-om]. 
+Therefore, given a point $q \in B(p,r)$ and a tangent vector $u = \exp^{-1}_p(q) \in B(0_p,r)$, for any chart $(\overline{U}, \overline{\psi})$ of $B(0_p,r)$ that contains $u$, @Henry2009-om defines the volume density function on the Riemannian manifold $(M,g)$ as
+$$
+\theta_p(q) = \frac{| \det g^{\prime}((\partial / \partial\overline{\psi}_i|_u), (\partial / \partial\overline{\psi}_j|_u)) |^{1/2} }{ | \det g^{\prime \prime}((\partial / \partial\overline{\psi}_i|_u), (\partial / \partial\overline{\psi}_j|_u)) |^{1/2} } \\ .
+$$
+The volume density function is only defined for points satisfying $d_g(p,q) < inj_gM$ so that there exists an open ball $B(p,r) \in T_pM$. And $\theta_p(q)=1$ for all $p,q \in \mathbb{R}^d$ when the manifold $M$ is $\mathbb{R}^d$ with the canonical metric.
+
+Now we consider the case with the manifold learning embedding. Consider the chart $(U, \psi)$ induced by an orthonormal basis of the tangent space of the embedding $T_{\pmb{y}_i}E$ and a normal neighborhood of $\pmb{y}_i$. Given a query point $\pmb{p} \in B(\pmb{y}_i,r)$, the volume of the parallelepiped is spanned by the same basis.  
+Then the volume density function is given by 
+$$
+\theta_{\pmb{y}_i}(\pmb{p}) = \frac{|\det \pmb{H}(\pmb{p})|^{1/2}}{|\det \pmb{H}(\pmb{y}_i)|^{1/2}},
+$$ 
+where $\pmb{H}$ is the estimated Riemannian metric for the unknown manifold.
+Again, the volume density function is not defined for all $\pmb{p}$ but for points that satisfies $\pmb{p} \in B(\pmb{y}_i,r)$. 
+
 
 [TODO: Further fix the approximation induced by the estimated d_g so that f will integral to 1.]
 
-<!-- The fixed bandwidth matrix assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point. This motivates our proposed adaptive density estimator for Riemannian manifolds as described in \autoref{riemest}. -->
+As for the geodesic distance $d_g$, 
 
 
 
@@ -561,7 +584,7 @@ The *geodesic distance* $d_g$ is the length of the shortest geodesic between two
 
 ## Exponential map and logarithmic map
 
-Denote $B(p, r) \subset T_pM$ as an open ball centered at point $p$ with raidus $r$. Then $B(0_p, r) = exp_p^{-1}(B(p,r))$ is an open neighborhood of $0_p$ in the tangent space at $p$, $T_pM$, where $exp_p$ is the *exponential map* at point $p$. The exponential map maps a tangent vector $u \in B(0_p, r)$ to the endpoint of the geodesic $\gamma: I \rightarrow M$ satisfying $\gamma(0)=p, \gamma^{\prime}(0)=u$, and $\gamma(1)=exp_p(u)$. It is a differentiable bijective map of differentiable inverse (i.e. *diffeomorphism*). Intuitively, the exponential map moves point $p$ to an endpoint  at speed $u$ after covering the length of $\|u\|$ along the geodesic in one time unit.
+Denote $B(p, r) \subset M$ as an open ball centered at point $p$ with raidus $r$. Then $B(0_p, r) = exp_p^{-1}(B(p,r))$ is an open neighborhood of $0_p$ in the tangent space at $p$, $T_pM$, where $exp_p$ is the *exponential map* at point $p$. The exponential map maps a tangent vector $u \in B(0_p, r)$ to the endpoint of the geodesic $\gamma: I \rightarrow M$ satisfying $\gamma(0)=p, \gamma^{\prime}(0)=u$, and $\gamma(1)=exp_p(u)$. It is a differentiable bijective map of differentiable inverse (i.e. *diffeomorphism*). Intuitively, the exponential map moves point $p$ to an endpoint  at speed $u$ after covering the length of $\|u\|$ along the geodesic in one time unit.
 
 The inverse of the exponential map is called the *logarithm map*, denoted as $\log_p(q):= \exp^{-1}_p(q)$, which gives the tangent vector to get from point $p$ to $q$ in one unit time. Also define the *geodesic ball* centered at $p$ of radius $r > 0$ as the image by the exponential map of $B(0_p, r) \subset T_pM$ with $r < \textit{inj}_gM$. Then we could interpolate a geodesic $\gamma$ between two points $p$ and $q$ with the exponential map and the logarithmic map, $\gamma(t) = \exp_p(t\log_p(q))$, and the geodesic distance is given by $d_g(p,q) = \|\log_p(q)\|_g$. 
 <!-- [TODO: reference in appendix]. -->
