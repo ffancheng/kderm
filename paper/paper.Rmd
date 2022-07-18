@@ -160,6 +160,7 @@ where $r$ is the global bandwidth satisfying $r \leq r_0$ for fixed $r_0$ such t
 
 Denote $\lambda$ as the Lebesque measure of $\mathbb{R}^d$. The kernels $K$ in \@ref(eq:denriem) are functions of the geodesic distance of the manifold $d_g$ and they satisfy the following conditions [@Pelletier2005-vu]:
 \begin{align}
+\label{eq:kernelcondition}
 & (i) \int_{\mathbb{R}^{d}} K(\|x\|) \mathrm{d} \lambda(x)=1;
 (ii) \int_{\mathbb{R}^{d}} x K(\|x\|) \mathrm{d} \lambda(x)=0;
 (iii) \int_{\mathbb{R}^{d}}\|x\|^{2} K(\|x\|) \mathrm{d} \lambda(x)<\infty; \\
@@ -169,8 +170,8 @@ Denote $\lambda$ as the Lebesque measure of $\mathbb{R}^d$. The kernels $K$ in \
 Note that conditon (iv) implies that the support of the kernel is between 0 and 1, which is guaranteed by the condition on the bandwidth, $r\leq inj_g(M)$. Under such condition, for each $\pmb{p} \in M$, there exists a normal coordinate neighborhood of $\pmb{p}$ containing an open ball $B(\pmb{p}, r) \in T_pM$ centered at $\pmb{p}$ with radius $r$.
 
 Now consider the volume density function $\theta_{\pmb{X}_i}(\pmb{p})$ in the estimator.
-For any tangent vector $u \in T_pM$, let $\gamma(u): t \rightarrow \exp_p(\frac{tu}{\|u\|})$ denote a curve passing through $u$, and let $w_i, i=1,\dots,d$ be Jacobi fields along $\gamma$ such that $w_i(0)=0$ for all $i=1,\dots,d$ and $\frac{Dw_1}{dt}(0)=\frac{u}{\|u\|}$. Then $\frac{Dw_1}{dt}(0)$ forms an orthonomal basis of the tangent space $T_pM$. 
-The volume density function on $M$, $\theta_p(q): T_pM \rightarrow \mathbb{R}$ is defined as 
+For any tangent vector $u \in T_pM$, let $\gamma(u): t \rightarrow \exp_p(\frac{tu}{\|u\|})$ denote a curve passing through $u$, and let $w_i, i=1,\dots,d$ be Jacobi fields along $\gamma$ such that $w_i(0)=0$ for all $i=1,\dots,d$ and $\frac{Dw_1}{dt}(0)=\frac{u}{\|u\|}$. Then $\frac{Dw_i}{dt}(0)$ forms an orthonomal basis of the tangent space $T_pM$. 
+The volume density function on $M$, $\theta_p(q): T_pM \rightarrow \mathbb{R}$ is defined in @Le_Brigant2019-lj as 
 \begin{equation}
 \label{eq:volden}
 \theta_p(u) = \|u\|^{d-1} \det(w_1(\|u\|),\dots,w_d(\|u\|)).
@@ -180,7 +181,7 @@ For the exponential map $\exp_p: T_pM \rightarrow M$ induced by pullback of a vo
 $$
 d\exp_p^*\textit{Vo}l(u) = \theta_p(u)du,
 $$
-in normal coordinates. The volume density function is motivated by how a measure $du$ changes under the change of coordinates. It is related to the integration on manifolds and plays an important part in studing the density of manifolds.
+in normal coordinates [@Le_Brigant2019-lj]. The volume density function is motivated by how a measure $du$ changes under the change of coordinates. The volume form is variant to the exponential map except that the manifold is flat. Therefore, a multiplicative corrected term called the volume density function has to be added in the estimator so that it will integral to 1. It is closely related to the integration on manifolds and plays an important part in studying the density of manifolds.
 @Pelletier2005-vu mentions that the volume density function $\theta_q(p)$ defined for $p$ in a neighborhood of $q$ on the manifold, with the geodesic normal coordinates at $q$, is equal to the determinant of the Riemannian metric $g$ expressed in the coordinates at the logarithm map of q, $\exp_q^{-1}(p)$. 
 Note that this is true only when using the geodesic normal coordinates. If the mapping function is not exponential/logarithm map, the volume density function is calculated otherwise. Therefore, the Riemannian manifold density estimator in @Pelletier2005-vu only works when the true manifold $M$ is known.
 
@@ -202,7 +203,7 @@ Further, the bandwidth matrix should be adaptive to each sample point to take th
 Motivated by the estimator in \@ref(eq:denriem), we restate our proposed distortion-corrected kernel density estimator (DC-KDE) of $f$, same as \@ref(eq:denestimator0), based on the manifold embedding $\pmb{y}_i, i = 1, 2, \dots, N$,
 \begin{equation}
 \label{eq:denestimator}
-\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|} K\bigg( \frac{(\pmb{p} - \pmb{y}_i)^\prime H^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|} K\bigg( \frac{(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
 \end{equation}
 where $r$ is a global bandwidth scalar, $\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N$ is the pointwise variable Riemannian matrix and it is positive definite with dimension $d\times d$, $\frac{|\pmb{H}(\pmb{p})|}{|\pmb{H}(\pmb{y}_i)|}$ is the estimated volume density function when using the coordinates from any manifold learning mapping, $(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)$ is the first-order estimated geodesic distance with the distortion corrected by the Riemannian metric $\pmb{H}^{-1}(\pmb{y}_i)$. Then the only problem left is the estimation of the Riemannian metric at each embedding point, discussed in \autoref{riemmetric}.
 
@@ -226,12 +227,26 @@ $$
 \theta_{\pmb{y}_i}(\pmb{p}) = \frac{|\det \pmb{H}(\pmb{p})|^{1/2}}{|\det \pmb{H}(\pmb{y}_i)|^{1/2}},
 $$ 
 where $\pmb{H}$ is the estimated Riemannian metric for the unknown manifold.
-Again, the volume density function is not defined for all $\pmb{p}$ but for points that satisfies $\pmb{p} \in B(\pmb{y}_i,r)$. 
+Again, the volume density function is not defined for all $\pmb{p}$ but for points within the geodesic ball satisfying $\pmb{p} \in B(\pmb{y}_i,r)$, which is related to the support of $K$ being $[0,1]$ in (v) of \@ref(eq:kernelcondition).
 
 
-[TODO: Further fix the approximation induced by the estimated d_g so that f will integral to 1.]
+<!-- [TODO: Further fix the approximation induced by the estimated d_g so that f will integral to 1.] -->
+As for the geodesic distance $d_g$ in \@ref(eq:denriem), we propose a distortion-fixed geodesic distance with the use of estimated Riemannian metric as
+\begin{equation}
+\label{eq:dgestimate}
+\hat{d}_g(\pmb{p}, \pmb{y}_i) = \sqrt{(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)},
+\end{equation}
+where $\pmb{H}(\pmb{y}_i)$ is the estimated Riemannian metric at embedding point $\pmb{y}_i$.
 
-As for the geodesic distance $d_g$, 
+For two points $p,q \in M$, the geodesic distance between $p$ and $q$ is defined as the length of the shortest curve from $p$ to $q$ along the manifold.
+The geodesic distance is intrinsic, which means it is a coordinate-independent quantity. The Riemannian metric functions as the correction term for different coordinates of manifold learning embedding. 
+By using the first-order distance estimator, $\hat{d}_g(\pmb{p}, \pmb{y}_i)$ serves as a good approximation of the true geodesic distance $d_g$ with the distortion corrected at each embedding point $\pmb{y}_i$. Compared with the graph distance, the shortest path between point in the neighborhood graph $G$, our proposed $\hat{d}_g$ is better because we use the same graph $G$ for all manifold learning embeddings but the distances between different nodes in $G$ might not be the same due to the distortion.
+
+As pointed out by @Perrault-Joncas2013-pq, the naive distance $\|p-q\|$ underestimates $d_g$, and the graph shortest distance $d_G$ overestimates $d_g$ by the triangle inequality. By using only the first-order correction in $\hat{d}_g$, our estimator is also affected by the estimated Riemannian metric. In order to correct for the estimation error in $\pmb{H}(\pmb{y}_i)$, we further divide the density estimator in \@ref(eq:denestimator) by a constant term $C$ so that the integral of the kernel is equal to 1. The constant term in $1$-d is given by the *area under the curve (AUC)*, and can be named as the *volume between the surface* in higher dimension. We use the volume estimator in Section 6.4 of @Perrault-Joncas2013-pq to sum over all embedding points $\pmb{y}_i$ and get
+$$
+C = \sum_{i=1}^{N} \sqrt{\det(\pmb{H}(\pmb{y}_i))} \Delta y^1(\pmb{y}_i)\dots \Delta y^d(\pmb{y}_i),
+$$
+where the distortion is corrected for the tangent plane of the embedding points.
 
 
 
