@@ -44,7 +44,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,
-  cache = FALSE,
+  cache = T,
   messages = FALSE,
   warning = FALSE,
   eval = TRUE
@@ -309,38 +309,35 @@ To ensure that the estimated Riemannian metric is returned as a $d\times d$ matr
 
 ## Outlier detection on manifold learning embedding
 
-Now we are able to generate kernel density estimates of the underlying manifold using the estimator in Equation \@ref(eq:denestimator).
-
-Now we present our proposed algorithm for anomaly detection based on variable kernel density estimates in \@ref(alg:vkderm). There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \@ref(alg:learnmetric) to the input high-dimensional data $x_i,i=1,\ldots,N$ where $x_i\in \mathcal{R^s}$ to get the low-dimensional embedding $y_i$, where $y_i\in \mathcal{R^d}$ and the Riemannian metric $\pmb{H}_i$ with dimension $d\times d$ for each observation. Two parameters $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \@ref(eq:denestimator). The top outliers of size $n\_outliers$ are obtained by ordering the embedding points $y_i$ according to their density estimates $f_N(\pmb{y}_i)$.
+Now we are able to generate kernel density estimates of the underlying manifold using the estimator in Equation \@ref(eq:denestimator). The densities could be further applied to unsupervised learning tasks such as clustering and anomaly detection. As one way to utilize the kernel density estimates, we propose an algorithm for anomaly detection in \@ref(alg:kdeanomaly). 
+There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \@ref(alg:learnmetric) to the input high-dimensional data $x_i,i=1,\ldots,N$ where $x_i\in \mathcal{R^s}$ to get the low-dimensional embedding $y_i$, where $y_i\in \mathcal{R^d}$ and the Riemannian metric $\pmb{H}_i$ with dimension $d\times d$ for each observation. Two parameters $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \@ref(eq:denestimator). The top outliers of size $n\_outliers$ are obtained by ordering the embedding points $y_i$ according to their density estimates $f_N(\pmb{y}_i)$.
 
 \begin{algorithm}[!htb]
-  \caption{Variable kernel density estimates with Riemannian metric}
-  \label{alg:vkderm}
+  \caption{Anomaly detection with distortion-corrected kernel density estimates}
+  \label{alg:kdeanomaly}
   \DontPrintSemicolon
   \SetAlgoLined
   \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}
-  \Input{ high-dimensional data $x_i$ for all $i=1,\ldots,N$ }
-  \Output{ outliers embedding coordinates $y_1, \dots, y_{n\_outliers}$ with their estimated densities $f_1, \dots, f_{n\_outliers}$ }
+  \Input{ high-dimensional data $\pmb{x}_i$ for all $i=1,\dots,N$ }
+  \Output{ outliers embedding coordinates $\pmb{y}_1, \dots, \pmb{y}_{n\_outliers}$ with their estimated densities $f_1, \dots, f_{n\_outliers}$ }
   \Parameter{ number of outliers $n\_outliers$, embedding dimension $d$ }
   \BlankLine
   \begin{algorithmic}[1]
-
-  \STATE For all $i=1,\ldots,N$, compute the $d$-dimensional embeddings $y_i$ with any exsiting manifold leanring algorithms and the corresponding Riemannian metric $\pmb{g}_i$ using the Learn metric algorithm with inputs $d$ and $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ for heat kernels;
-  \STATE Set the variable bandwidth for each observation as $\pmb{h}_i = \pmb{g}_i$;
-  \STATE Compute the kernel density estimates $f_N(\pmb{y}_i)$ for all $i=1,\ldots,N$ using Equation \@ref(equ:denestimator);
-  \STATE Reorder the embedding coordinates $\pmb{y}$ according to the density estimates $f_N(y)$ and subset the top \textit{n\_outliers} as the outliers.
+  \STATE Estimate the intrinsic dimension $d$ with the TWO-NN algorithm if $d$ is not given;
+  \STATE For all $i=1,\dots,N$, compute the $d$-dimensional embeddings $\pmb{y}_i$ with any existing manifold learning algorithms and the corresponding Riemannian metric $\pmb{H}(\pmb{y}_i)$ using the Learn Metric algorithm with inputs $d$ and $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ for heat kernels;
+  \STATE Compute the kernel density estimates $\hat{f}(\pmb{y}_i)$ for all $i=1,\dots,N$ using the DC\_KDE in \ref{eq:denestimator};
+  \STATE Reorder the embedding coordinates $\pmb{Y}$ from smallest to largest according to the density estimates $\hat{f}$ and subset the top \textit{n\_outliers} points as the outliers.
   \end{algorithmic}
 \end{algorithm}
 
-If the embedding dimension $d=2$, the HDR plots [@Hyndman1996-lk] could be used to identify the relative location of outliers in the embedding and find which observations lie in the highest density region of specified coverage, eg. 1%, 50%, 99%, \>99%.
+If the embedding dimension $d=2$, the HDR plots [@Hyndman1996-lk] could be used to identify the relative location of outliers in the embedding plot and find which observations lie in the highest density region of specified coverage, eg. 1%, 50%, 99%, \>99%.
 
-The proposed schematic is shown in Figure \@ref(fig:vkde). The highlighted two steps in Figure \@ref(fig:vkde) are the main contributions of this main chapter, replacing the bandwidth matrix $\pmb{H}_i$ with the Riemannian metric $g_i$ for each point in
-variable kernel density estimate, and computing the highest density region plots based on the density estimates, $\hat{f}(\pmb{x})$, for anomaly detection.
+The proposed schematic is shown in Figure \@ref(fig:vkde). The last two steps in Figure \@ref(fig:vkde) are the main contributions of Algorithm \@ref(alg:kdeanomaly), generating distortion-corrected KDE with adaptive Riemannian metric $\pmb{H}_i$ at each point and computing the highest density region plots based on the density estimates for anomaly detection. Compared to the anomaly detection with a general kernel density estimator in @Cheng2021-ex, the changes are also highlighted in blue. With this anomaly detection algorithm, outliers based on lowest densities could be detected more accurately regardless of the distortion in manifold learning.
 
 (ref:vkdecaption) The proposed schematic for variable kernel density estimation with recovered geometry.
 
 ```{r vkde, fig.align = 'center', out.width = "95%", fig.cap = "(ref:vkdecaption)", echo = FALSE, eval=TRUE}
-knitr::include_graphics("figures/vkde.png")
+knitr::include_graphics("figures/kde_h-vkde.png")
 ```
 
 
