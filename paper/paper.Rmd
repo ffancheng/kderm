@@ -110,12 +110,12 @@ To start with, we introduce the multivariate kernel density estimation method wi
 
 <!-- ## Notations -->
 
-<!-- Denote the $s$-dimensional input data with observations $X_i, i = 1, 2, \dots, N$, where $x_i \in \mathcal{R}^s$. The underlying manifold $M$ has the true density $f$. Manifold learning takes the input data and finds its $d$-dimensional representation of data that lie on the manifold $M$, with output data points $Y_i, i = 1, 2, \dots, N$, where $Y_i \in \mathcal{R}^d$ and $d \ll s$. The Riemannian metric of the embedding is denoted as $g_i, i = 1, 2, \dots, N$. In kernel density estimate, the pointwise variable bandwidth matrix $H_i$ is used to estimate the density of the embedding, $\hat{f}$. -->
+<!-- Denote the $s$-dimensional input data with observations $X_i, i = 1, 2, \dots, N$, where $x_i \in \mathcal{R}^s$. The underlying manifold $M$ has the true density $f$. Manifold learning takes the input data and finds its $d$-dimensional representation of data that lie on the manifold $M$, with output data points $Y_i, i = 1, 2, \dots, N$, where $Y_i \in \mathcal{R}^d$ and $d \ll s$. The Riemannian metric of the embedding is denoted as $H_i, i = 1, 2, \dots, N$. In kernel density estimate, the pointwise variable bandwidth matrix $H_i$ is used to estimate the density of the embedding, $\hat{f}$. -->
 
 ## Multivariate kernel density estimation {#mvkde}
 
 Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data. @Scott2015-vl covers a wide range of techniques for estimating the kernel densities of multivariate data. 
-In general, given a multivariate random sample $\pmb{X}_1, \dots, \pmb{X}_N \in \mathcal{R}^d$
+In general, given a multivariate random sample $\pmb{X}_1, \dots, \pmb{X}_N \in \mathbb{R}^d$
 <!-- $\pmb{X}_i=(X_{i1}, X_{i2}, \dots, X_{id})^\prime \in \mathcal{R}^d$, $i = 1, 2, \dots, N$  -->
 drawn from a density $f$, the variable kernel density estimate [@Breiman1977-qc; @Jones1990-oe; @Terrell1992-ut] of $f$ at point $\pmb{x}=(x_1, x_2, \dots, x_d)^\prime \in \mathcal{R}^d$ is given by
 \begin{equation}
@@ -267,7 +267,7 @@ The graph Laplacian estimator together with the embedding $\pmb{Y}$ could furthe
 This algorithm is implemented in a Python library *megaman* [@McQueen2016-xz]. It is designed to apply the manifold learning methods to large-scale data sets, as well as compute the Riemannian metric of the manifold. We have re-implemented the algorithm in *R*. 
 
 As pointed out by @Perrault-Joncas2013-pq, if the embedding dimension is larger than the manifold intrinsic dimension $d$, the rank of the embedding metric $\pmb{H}(p)$ is equal to $d$; otherwise, the Riemannian metric will be returned. 
-To ensure that the estimated Riemannian metric is returned as a $d\times d$ matrix, for unknown manifold dimension, we apply the intrinsic dimension (id) selection algorithm called *two-nearest neighbor estimator (TWO-NN estimator)* [@Facco2017-rl; @Denti2021-jl] to derive id estimator from a Poisson point process. @Facco2017-rl point out that of the distances between a point and its second and first neareast neighbors follow a Pareto distribution with scale parameter $1$ and shape parameter $d$, the intrinsic dimension of the manifold [@Facco2017-rl]. By fitting a Pareto distribution to proper transformed data, the intrinsic dimension could be estimated. An *R* library named *intRinsic* has implemented this algorithm and we are going to apply it to when $d$ is unknown.
+To ensure that the estimated Riemannian metric is returned as a $d\times d$ matrix, for unknown manifold dimension, we apply the intrinsic dimension (id) selection algorithm called *two-nearest neighbor estimator (TWO-NN estimator)* [@Facco2017-rl; @Denti2021-jl] to derive id estimator from a Poisson point process. @Facco2017-rl point out that of the distances between a point and its second and first neareast neighbors follow a Pareto distribution with scale parameter $1$ and shape parameter $d$, the intrinsic dimension of the manifold [@Facco2017-rl]. By fitting a Pareto distribution to proper transformed data, the intrinsic dimension could be estimated. An *R* library named *intRinsic* [@Denti2021-qc] has implemented this algorithm and we are going to apply it to when $d$ is unknown.
 
 \begin{algorithm}[!htb]
   \caption{Learn metric algorithm in \cite{Perrault-Joncas2013-pq} }
@@ -278,7 +278,7 @@ To ensure that the estimated Riemannian metric is returned as a $d\times d$ matr
   \Input{ high-dimensional data $\pmb{x}_i \in \mathbb{R}^s$ for all $i=1,\ldots,N$ }
   \Output{ low-dimensional data $\pmb{y}_i \in \mathbb{R}^d$ and its Riemannian metric $\pmb{H}(\pmb{y}_i)$ for all $i=1,\ldots,N$ }
   \Parameter{ embedding dimension $d$, bandwidth parameter $\sqrt{\varepsilon}$, manifold learning algorithm }
-  \OptParameter{ manifold learning parameters $MANILEARN$}
+  \OptParameter{ manifold learning parameters EMBED }
   \BlankLine
   \begin{algorithmic}[1]
 
@@ -290,7 +290,7 @@ To ensure that the estimated Riemannian metric is returned as a $d\times d$ matr
   $$
   where $\widetilde{D}=diag{\widetilde{W}\pmb{1}}$, $\widetilde{W} = D^{-1}WD^{-1}$, and $D = diag{W\pmb{1}}$;
 
-  \STATE Embed all data point $\pmb{X}\in \mathbb{R}^s$ to embedding coordinates $\pmb{Y}=(\pmb{y}^1,\dots,\pmb{y}^d)^\prime$ by any existing manifold learning algorithm $MANILEARN$;
+  \STATE Embed all data point $\pmb{X}\in \mathbb{R}^s$ to embedding coordinates $\pmb{Y}=(\pmb{y}^1,\dots,\pmb{y}^d)^\prime$ by any existing manifold learning algorithm EMBED;
 
   \STATE Obtain the matrix $\pmb{\tilde{H}}$ of all data point by applying the graph Laplacian $\widetilde{\mathcal{L}}_{\sqrt{\varepsilon},N}$ to the embedding coordinates matrix $\pmb{Y}$ with each element vector in $\pmb{\tilde{H}}$ being
   $$
@@ -310,7 +310,7 @@ To ensure that the estimated Riemannian metric is returned as a $d\times d$ matr
 ## Outlier detection on manifold learning embedding
 
 Now we are able to generate kernel density estimates of the underlying manifold using the estimator in Equation \@ref(eq:denestimator). The densities could be further applied to unsupervised learning tasks such as clustering and anomaly detection. As one way to utilize the kernel density estimates, we propose an algorithm for anomaly detection in \@ref(alg:kdeanomaly). 
-There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \@ref(alg:learnmetric) to the input high-dimensional data $x_i,i=1,\ldots,N$ where $x_i\in \mathcal{R^s}$ to get the low-dimensional embedding $y_i$, where $y_i\in \mathcal{R^d}$ and the Riemannian metric $\pmb{H}_i$ with dimension $d\times d$ for each observation. Two parameters $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \@ref(eq:denestimator). The top outliers of size $n\_outliers$ are obtained by ordering the embedding points $y_i$ according to their density estimates $f_N(\pmb{y}_i)$.
+There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \@ref(alg:learnmetric) to the input high-dimensional data $x_i,i=1,\ldots,N$ where $x_i\in \mathcal{R^s}$ to get the low-dimensional embedding $y_i$, where $y_i\in \mathcal{R^d}$ and the Riemannian metric $\pmb{H}_i$ with dimension $d\times d$ for each observation. Two parameters $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \@ref(eq:denestimator). The top outliers of size $n\_outliers$ are obtained by ordering the embedding points $y_i$ according to their density estimates $f(\pmb{y}_i)$.
 
 \begin{algorithm}[!htb]
   \caption{Anomaly detection with distortion-corrected kernel density estimates}
