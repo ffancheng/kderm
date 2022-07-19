@@ -206,16 +206,18 @@ For $p \in M$, denote an open ball centered at $p$ with radius $r$ as $B(p,r)$ a
 Let $u \in B(0_p,r)$ be a tangent vector and for any given chart $(\bar{U}, \bar{\psi})$ of $B(0_p,r)$, we have $u \in \bar{U}$. 
 The volumes of the parallelepiped spanned by the basis $\{(\partial / \partial\bar{\psi}_1|_u), \dots, (\partial / \partial\bar{\psi}_d|_u)\}$ are given by $| \det g^{\prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2}$ with respect to $g^{\prime}$, and $| \det g^{\prime \prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2}$ with respect to $g^{\prime \prime}$. The quotient of these two volumes is then independent of the chart $(\bar{U}, \bar{\psi})$ [@Henry2009-om]. 
 Therefore, given a point $q \in B(p,r)$ and a tangent vector $u = \exp^{-1}_p(q) \in B(0_p,r)$, for any chart $(\bar{U}, \bar{\psi})$ of $B(0_p,r)$ that contains $u$, @Henry2009-om defines the volume density function on the Riemannian manifold $(M,g)$ as
-$$
+\begin{equation}
+\label{eq:volumedensityratio}
 \theta_p(q) = \frac{| \det g^{\prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} }{ | \det g^{\prime \prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} } \\ .
-$$
+\end{equation}
 The volume density function is only defined for points satisfying $d_g(p,q) < inj_gM$ so that there exists an open ball $B(p,r) \in T_pM$. And $\theta_p(q)=1$ for all $p,q \in \mathbb{R}^d$ when the manifold $M$ is $\mathbb{R}^d$ with the canonical metric.
 
 Now we consider the case with the manifold learning embedding. Consider the chart $(U, \psi)$ induced by an orthonormal basis of the tangent space of the embedding $T_{\pmb{y}_i}E$ and a normal neighborhood of $\pmb{y}_i$. Given a query point $\pmb{p} \in B(\pmb{y}_i,r)$, the volume of the parallelepiped is spanned by the same basis.  
 Then the volume density function is given by 
-$$
+\begin{equation}
+\label{eq:volumedensityest}
 \theta_{\pmb{y}_i}(\pmb{p}) = \frac{|\det \pmb{H}(\pmb{p})|^{1/2}}{|\det \pmb{H}(\pmb{y}_i)|^{1/2}},
-$$ 
+\end{equation} 
 where $\pmb{H}$ is the estimated Riemannian metric for the unknown manifold.
 Again, the volume density function is not defined for all $\pmb{p}$ but for points within the geodesic ball satisfying $\pmb{p} \in B(\pmb{y}_i,r)$, which is related to the support of $K$ being $[0,1]$ in condition (v) of \@ref(eq:kernelcondition).
 
@@ -231,57 +233,56 @@ The geodesic distance is intrinsic, which means it is a coordinate-independent q
 By using the first-order distance estimator, $\hat{d}_g(\pmb{p}, \pmb{y}_i)$ serves as a good approximation of the true geodesic distance $d_g$ with the distortion corrected at each embedding point $\pmb{y}_i$. Compared with the graph distance, the shortest path between point in the neighborhood graph $G$, our proposed $\hat{d}_g$ is better because we use the same graph $G$ for all manifold learning embeddings but the distances between different nodes in $G$ might not be the same due to the distortion.
 
 As pointed out by @Perrault-Joncas2013-pq, the naive distance $\|p-q\|$ underestimates $d_g$, and the graph shortest distance $d_G$ overestimates $d_g$ by the triangle inequality. By using only the first-order correction in $\hat{d}_g$, our estimator is also affected by the estimated Riemannian metric. In order to correct for the estimation error in $\pmb{H}(\pmb{y}_i)$, we further divide the density estimator in \@ref(eq:denestimator) by a constant term $C$ so that the integral of the kernel is equal to 1. The constant term in $1$-d is given by the *area under the curve (AUC)*, and can be named as the *volume between the surface (VBS)* in higher dimension. We use the volume estimator in Section 6.4 of @Perrault-Joncas2013-pq to sum over all embedding points $\pmb{y}_i$ and get
-$$
+\begin{equation}
+\label{eq:vbs}
 C = \sum_{i=1}^{N} \sqrt{\det(\pmb{H}(\pmb{y}_i))} \Delta y^1(\pmb{y}_i)\dots \Delta y^d(\pmb{y}_i),
-$$
+\end{equation}
 where the distortion is corrected for the tangent plane of the embedding points.
 
 Now we have all the components needed to estimate the density of manifold learning embedding in Equation \@ref(eq:denestimator) except for the Riemannian metric. The Riemannian metric is a key to correct the distortion from the manifold learning algorithms and we discuss its estimation in \autoref{riemmetric}.
 
 ## Riemannian metric estimation {#riemmetric}
 
-An important goal of manifold learning is to recover the local or global features of the data. In order to recover the geometry of the manifold, @Perrault-Joncas2013-pq propose a method to augment any existing reasonable embedding and allow for the computation of geometric values to be calculated with an estimation of the Riemannian metric $g$. This could also be used to fix the geometric distortion in the embedding. It is worth noticing that the Riemannian metric from @Perrault-Joncas2013-pq is a $d\times d$ positive definite matrix for each data point. Therefore, we propose to take the geometric distortion into consideration when estimating the kernel densities of the embedding with Equation \@ref(eq:denestimator). In this way, we present a consistent kernel density estimator with pointwise variable bandwidth as the Riemannian metric.
+An important goal of manifold learning is to recover the local or global features of the data. However, manifold learning algorithms usually fail to generate an isometric embedding.
+In order to recover the geometry of the manifold, @Perrault-Joncas2013-pq propose a method to augment any existing reasonable embedding and allow for the computation of geometric values to be calculated with an estimated Riemannian metric. Instead of developing a new manifold learning method, they aim to fix the geometric distortion in the embedding. It is worth noticing that the Riemannian metric from @Perrault-Joncas2013-pq is a $d\times d$ positive definite matrix variable at each data point. The estimated Riemannian metric completes our proposed kernel density estimation in \autoref{dckde} and enables us to take the geometric distortion into consideration when estimating the densities of the manifold.
 
-The Riemannian metric $g$ is a symmetric and positive definite tensor field which defines an inner product $\langle,\rangle_g$ on the tangent space $T_pM$ for every point $p \in M$. If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. The Metric Learning algorithm [@Perrault-Joncas2013-pq] then augment the embedded manifold with the Riemannian metric and produce a Riemannian manifold $(M, g)$.
+The Riemannian metric $g$ is a symmetric and positive definite tensor field which defines an inner product $\langle,\rangle_g$ on the tangent space $T_pM$ for every point $p \in M$. If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. For each point $p\in M$ in any embedding coordinate system, the Riemannian metric $g$ is a $d\times d$ symmetric positive definite matrix, where $d$ is the dimension of the manifold.
 
-To recover the original geometry of the manifold, we need to know what the inner product corresponds to in the embedding. The inner product between two vectors $u,v \in T_pM$, $\langle u,v \rangle_g=g_{ij}u^iv^j$[^1], can be used to define some geometric quantities, such as the vector norm $\|u\|=\sqrt{\langle u,v \rangle_g}$ and the angle between two vectors $\cos{\theta}=\frac{\langle u,v \rangle_g}{\|u\|\|v\|}$ in the tangent space.
-Therefore, for each point $p\in M$ in any coordinate system, the Riemannian metric $g$ is a $d\times d$ symmetric positive definite matrix, where $d$ is the dimension of the manifold.
-
-[^1]: Here the Einstein notation is used where superscripts denote summation over $i$ and $j$
-
-The line element and volume element of the full manifold or a subset of the manifold can also be computed from $g$. The arc length of a curve $c\in M$ is defined as 
+The inner product between two vectors $u,v \in T_pM$, given by $\langle u,v \rangle_g=g_{ij}u^iv^j$[^1], can be used to define some geometric quantities, such as the vector norm $|u|=\sqrt{\langle u,u \rangle_g}$ and the angle between two vectors $\cos{\theta}=\frac{\langle u,v \rangle_g}{|u| |v|}$ in the tangent space.
+[^1]: Here the Einstein notation is used where superscripts denote summation over $i$ and $j$.
+The line element and volume element of the full manifold or a subset of the manifold can also be computed from $g$. The arc length of a curve $c$ along the manifold is defined as
 $$
 l(c)=\int_a^b \sqrt{g_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt}} dt,
 $$ 
-where $(x^1,\dots,x^d)$ are the coordinates of chart $(U,x)$ and $c(t)$ is a function mapping $[a,b]$ to $M$. While the volume of $V\subset M$ is computed by 
+where $(x^1,\dots,x^d)$ are the coordinates of chart $(U,x)$ and $c(t)$ is a function that maps $[a,b]$ to $M$. While the volume of $V\subset M$ is computed by 
 $$
-Vol(V)=\int_V \sqrt{\|g\|} dx^1\dots dx^d.
+Vol(V)=\int_V \sqrt{|\det g|} dx^1\dots dx^d.
 $$ 
-Both the concepts of distance and volume are relevant to kernel density estimation.
+Both the concepts of distance and volume are relevant to kernel density estimation as we have shown in Equation \@ref(eq:volumedensityratio), \@ref(eq:volumedensityest), \@ref(eq:dgestimate), and \@ref(eq:vbs).
 
-@Perrault-Joncas2013-pq propose the Learn metric algorithm which mainly involves four steps: weighted neighborhood graph construction; geometric graph Laplacian calculation; manifold learning; and Riemannian metric calculation. We restate these four steps in Algorithm \@ref(alg:learnmetric). 
-By applying an existing manifold learning algorithm to the data $X\in \mathbb{R}^r$ with $n$ observations, a low-dimensional embedding $f_n \in \mathbb{R}^d$ can be computed. Most manifold learning methods involve the construction of the nearest
-neighbor graph based on which the Laplace-Beltrami operator $\Delta_M$ is built. The Laplacian is quite useful because it can be coordinate-free while containing all the important geometry.
-@Perrault-Joncas2013-pq have stated one way to compute the approximated $\Delta_M$ with a discrete consistent estimator, the geometric graph Laplacian $\mathcal{L}_{\varepsilon,n}$ [@Zhou2011-za], where $\varepsilon$ is the radius parameter for the nearest neighbor graph.
-The graph Laplacian together with the embedding can be used in the Metric Learning algorithm to achieve the augmented embedding with the Riemannian metric $(f_n, g_n)$.
+@Perrault-Joncas2013-pq propose the Learn Metric algorithm to augment any manifold learning embedding with the estimated Riemannian metric. There are mainly four steps in the algorithm: weighted neighborhood graph construction; geometric graph Laplacian calculation; manifold learning; and Riemannian metric calculation. We restate these four steps in Algorithm \@ref(alg:learnmetric). 
+By applying an existing manifold learning algorithm to the high-dimensional input data $\pmb{X}\in \mathbb{R}^s$ with $N$ observations, a low-dimensional embedding $\pmb{Y} \in \mathbb{R}^d$ can be computed. Most manifold learning methods involve the construction of the nearest neighbor graph based on which the Laplace-Beltrami operator $\Delta_M$ is built. The Laplacian is quite useful because it can be coordinate-free while containing all the important geometry.
+@Perrault-Joncas2013-pq have stated one way to compute the approximated $\Delta_M$ with a discrete consistent estimator, the geometric graph Laplacian $\hat{\mathcal{L}}_{\varepsilon,n}$ [@Zhou2011-za], where $\varepsilon$ is the radius parameter for the nearest neighbor graph.
+The graph Laplacian estimator together with the embedding $\pmb{Y}$ could further be used to achieve the augmented embedding with the Riemannian metric, $(\pmb{Y}, \pmb{H})$.
+This algorithm is implemented in a Python library *megaman* [@McQueen2016-xz]. It is designed to apply the manifold learning methods to large-scale data sets, as well as compute the Riemannian metric of the manifold. We have re-implemented the algorithm in *R*. 
 
-As pointed out by @Perrault-Joncas2013-pq, if the embedding dimension $s$ is larger than the manifold intrinsic dimension $d$, the rank of the embedding metric $h_n(p)$ is $d$; otherwise, the Riemannian metric $g_n$ will be returned. This algorithm is also implemented in a Python library *megaman* [@McQueen2016-xz]. It is designed to apply the manifold learning methods to large-scale data sets, as well as compute the Riemannian metric of the manifold.
+As pointed out by @Perrault-Joncas2013-pq, if the embedding dimension is larger than the manifold intrinsic dimension $d$, the rank of the embedding metric $\pmb{H}(p)$ is equal to $d$; otherwise, the Riemannian metric will be returned. 
+To ensure that the estimated Riemannian metric is returned as a $d\times d$ matrix, for unknown manifold dimension, we apply the intrinsic dimension (id) selection algorithm called *two-nearest neighbor estimator (TWO-NN estimator)* [@Facco2017-rl; @Denti2021-jl] to derive id estimator from a Poisson point process. @Facco2017-rl point out that of the distances between a point and its second and first neareast neighbors follow a Pareto distribution with scale parameter $1$ and shape parameter $d$, the intrinsic dimension of the manifold [@Facco2017-rl]. By fitting a Pareto distribution to proper transformed data, the intrinsic dimension could be estimated. An *R* library named *intRinsic* has implemented this algorithm and we are going to apply it to when $d$ is unknown.
 
-<!-- ```{=tex} -->
 \begin{algorithm}[!htb]
   \caption{Learn metric algorithm in \cite{Perrault-Joncas2013-pq} }
   \label{alg:learnmetric}
   \DontPrintSemicolon
   \SetAlgoLined
   \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}\SetKwInOut{OptParameter}{optimization parameter}
-  \Input{ high-dimensional data $x_i \in \mathcal{R}^s$ for all $i=1,\ldots,N$ }
-  \Output{ low-dimensional data $y_i \in \mathcal{R}^d$ and its Riemannian metric $h_i$ for all $i=1,\ldots,N$ }
+  \Input{ high-dimensional data $\pmb{x}_i \in \mathbb{R}^s$ for all $i=1,\ldots,N$ }
+  \Output{ low-dimensional data $\pmb{y}_i \in \mathbb{R}^d$ and its Riemannian metric $\pmb{H}(\pmb{y}_i)$ for all $i=1,\ldots,N$ }
   \Parameter{ embedding dimension $d$, bandwidth parameter $\sqrt{\varepsilon}$, manifold learning algorithm }
-  \OptParameter{ manifold learning parameters }
+  \OptParameter{ manifold learning parameters $MANILEARN$}
   \BlankLine
   \begin{algorithmic}[1]
 
-  \STATE Construct a weighted neighborhood graph $\mathcal{G}_{w,\varepsilon}$ with weight matrix $W$ where $w_{i,j}=\exp(-\frac{1}{\varepsilon}\|x_i-x_j\|^2)$ for data points $x_i,x_j \in \mathbb{R}^s$;
+  \STATE Construct a weighted neighborhood graph $\mathcal{G}_{w,\varepsilon}$ with weight matrix $\pmb{W}$ where $w_{i,j}=\exp(-\frac{1}{\varepsilon}\|\pmb{x}_i-\pmb{x}_j\|^2)$ for data points $\pmb{x}_i,\pmb{x}_j \in \mathbb{R}^s$;
 
   \STATE Calculate the $N\times N$ geometric graph Laplacian $\widetilde{\mathcal{L}}_{\varepsilon,N}$ by
   $$
@@ -289,24 +290,26 @@ As pointed out by @Perrault-Joncas2013-pq, if the embedding dimension $s$ is lar
   $$
   where $\widetilde{D}=diag{\widetilde{W}\pmb{1}}$, $\widetilde{W} = D^{-1}WD^{-1}$, and $D = diag{W\pmb{1}}$;
 
-  \STATE Embed each data point $x_i\in \mathcal{R}^s$ to embedding coordinates $\pmb{y}=(\pmb{y}^1,\dots,\pmb{y}^d)^\prime$ by any existing manifold learning algorithm;
+  \STATE Embed all data point $\pmb{X}\in \mathbb{R}^s$ to embedding coordinates $\pmb{Y}=(\pmb{y}^1,\dots,\pmb{y}^d)^\prime$ by any existing manifold learning algorithm $MANILEARN$;
 
-  \STATE Obtain the matrix $\pmb{\tilde{h}}$ of all data point by applying the graph Laplacian $\widetilde{\mathcal{L}}_{\sqrt{\varepsilon},N}$ to the embedding coordinates matrix $\pmb{y}$ with each element vector in $\pmb{\tilde{h}}$ being
+  \STATE Obtain the matrix $\pmb{\tilde{H}}$ of all data point by applying the graph Laplacian $\widetilde{\mathcal{L}}_{\sqrt{\varepsilon},N}$ to the embedding coordinates matrix $\pmb{Y}$ with each element vector in $\pmb{\tilde{H}}$ being
   $$
-    \pmb{\tilde{h}}^{i j} = \frac{1}{2} \left[\tilde{\mathcal{L}}_{\varepsilon, N}\left(y^i \cdot \pmb{y}^j\right) - \pmb{y}_i \cdot\left(\tilde{\mathcal{L}}_{\varepsilon, n} \pmb{y}^j\right) - \pmb{y}^j \cdot\left(\tilde{\mathcal{L}}_{\varepsilon, n} \pmb{y}^i\right)\right],
+    \pmb{\tilde{H}}^{i j} = \frac{1}{2} \left[\tilde{\mathcal{L}}_{\varepsilon, N}\left(\pmb{y}^i \cdot \pmb{y}^j\right) - \pmb{y}_i \cdot\left(\tilde{\mathcal{L}}_{\varepsilon, n} \pmb{y}^j\right) - \pmb{y}^j \cdot\left(\tilde{\mathcal{L}}_{\varepsilon, n} \pmb{y}^i\right)\right],
   $$
   where $i,j=1,\dots,d$ and the $\cdot$ calculation is the elementwise product between two vectors; 
 
-  \STATE Calculate the Riemannian metric $\pmb{h}$ as the rank $d$ pseudo inverse of $\tilde{\pmb{    h}}$ with 
+  \STATE Calculate the Riemannian metric $\pmb{H}$ as the rank $d$ pseudo inverse of $\tilde{\pmb{H}}$ with 
   $$
-    \pmb{h} = U diag{1/(\Lambda[1:d])} U^\prime,
+    \pmb{H} = \pmb{U} diag{1/(\Lambda[1:d])} \pmb{U}^\prime,
   $$
-  where $[U, \Lambda]$ is the eigendecomposition of matrix $\pmb{\tilde{h}}(x)$, and $U$ is the matrix of column eigenvectors ordered by the eigenvalues $\Lambda$ in descending order.
+  where $[\pmb{U}, \Lambda]$ is the eigendecomposition of matrix $\pmb{\tilde{h}}(x)$, and $U$ is the matrix of column eigenvectors ordered by the eigenvalues $\Lambda$ in descending order.
 
   \end{algorithmic}
 \end{algorithm}
 
 ## Outlier detection on manifold learning embedding
+
+Now we are able to generate kernel density estimates of the underlying manifold using the estimator in Equation \@ref(eq:denestimator).
 
 Now we present our proposed algorithm for anomaly detection based on variable kernel density estimates in \@ref(alg:vkderm). There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \@ref(alg:learnmetric) to the input high-dimensional data $x_i,i=1,\ldots,N$ where $x_i\in \mathcal{R^s}$ to get the low-dimensional embedding $y_i$, where $y_i\in \mathcal{R^d}$ and the Riemannian metric $\pmb{H}_i$ with dimension $d\times d$ for each observation. Two parameters $\sqrt{\varepsilon} = 0.4$ and $c=0.25$ are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \@ref(eq:denestimator). The top outliers of size $n\_outliers$ are obtained by ordering the embedding points $y_i$ according to their density estimates $f_N(\pmb{y}_i)$.
 
