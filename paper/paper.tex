@@ -341,22 +341,22 @@ The rest of the paper is organized as follows. In \autoref{kderm}, we present ou
 \hypertarget{kderm}{%
 \section{Kernel density estimate on Riemannian manifold embedding}\label{kderm}}
 
-For multivariate data, variable kernel density estimator with adaptive bandwidth matrix at each sample point can be used to capture the local structure of the data. \textcite{Pelletier2005-vu} generalize the multivariate kernel density esitmator to Riemnnian manifolds. However, it is not applicable when the underlying manifold is not known or when the true manifold is mapped in a much higher dimensional space. Therefore, we propose a distortion-corrected kernel density estimator as in Equation \eqref{eq:denestimator0} based on the low-dimensional embedding, \(\pmb{y}_i \in \mathbb{R}^d, i = 1, 2, \dots, N\), of the high-dimensional data with \(N\) data points,
+For multivariate data, variable kernel density estimator with adaptive bandwidth matrix at each sample point can be used to capture the local structure of the data. \textcite{Pelletier2005-vu} generalize the multivariate kernel density esitmator to Riemnnian manifolds. However, it is not applicable when the underlying manifold is unknown or when the manifold is mapped in a much higher dimensional space. Therefore, we propose a distortion-corrected kernel density estimator as in Equation \eqref{eq:denestimator0} based on the low-dimensional manifold learning embedding, \(\pmb{y}_i \in \mathbb{R}^d, i = 1, 2, \dots, N\), of the high-dimensional data,
 \begin{equation}
 \label{eq:denestimator0}
-\hat{f}(\pmb{p}) = \frac{1}{CN} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\det \pmb{H}(\pmb{p})|^{1/2}}{|\det \pmb{H}(\pmb{y}_i)|^{1/2}} K\bigg( \frac{ \sqrt{(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)} }{r} \bigg),
+\hat{f}(\pmb{p}) = \frac{1}{CN} \sum_{i=1}^{N} \frac{1}{r^d} \bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{-1/2} K\bigg( \frac{ \pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
 \end{equation}
 where \(\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N\) is the pointwise adaptive Riemannian matrix of dimension \(d \times d\).
-The proposed estimator could be used as an estimate of the density of the true manifold, with the local distortion at each point corrected by volume density functions. These densities could further be used for unsupervised tasks including anomaly detection when outliers are defined as the points with the lowest densities.
+The proposed estimator could be used as an estimate of the true manifold density, with the local distortion corrected by volume density function at each point. These densities could further be used for unsupervised tasks including anomaly detection when outliers are defined as the points with the lowest densities.
 
-To start with, we introduce the multivariate kernel density estimation method with variable bandwidth matrix and Pelletier's estimator for Riemannian manifolds. Then we propose our distortion-corrected estimator, followed by details about how to estimate the Riemannian metric using the Learn Metric algorithm in \textcite{Perrault-Joncas2013-pq}. Finally, we show how to use these densities to carrt out anomaly detection tasks for high dimensional data that lies on a Riemannian manifold densities.
+To start with, we introduce the multivariate kernel density estimation method with variable bandwidth matrix and Pelletier's kernel density estimator for Riemannian manifolds. Then we propose our distortion-corrected estimator, followed by details about how to estimate the Riemannian metric using the Learn Metric algorithm from \textcite{Perrault-Joncas2013-pq}. Finally, we show how to use these densities to carrt out anomaly detection tasks for high dimensional data that lies on Riemannian manifolds.
 
 \hypertarget{mvkde}{%
 \subsection{Multivariate kernel density estimation}\label{mvkde}}
 
 Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data. \textcite{Scott2015-vl} covers a wide range of techniques for estimating the kernel densities of multivariate data.
-In general, given a multivariate random sample \(\pmb{X}_1, \dots, \pmb{X}_N \in \mathcal{R}^d\)
-drawn from a density \(f\), the variable kernel density estimate \autocite{Breiman1977-qc,Jones1990-oe,Terrell1992-ut} of \(f\) at point \(\pmb{x}=(x_1, x_2, \dots, x_d)^\prime \in \mathcal{R}^d\) is given by
+In general, given multivariate random samples \(\pmb{X}_1, \dots, \pmb{X}_N \in \mathbb{R}^d\)
+drawn from a density \(f\), the variable kernel density estimate \autocite{Breiman1977-qc,Jones1990-oe,Terrell1992-ut} of \(f\) at point \(\pmb{x}=(x^1, x^2, \dots, x^d)^\prime \in \mathbb{R}^d\) is given by
 \begin{equation}
 \label{eq:vkde}
 \hat{f}(\pmb{x};\pmb{H}_i)=\frac{1}{N}\sum\limits_{i=1}^N K_{\pmb{H}_i}(\pmb{x}-\pmb{X}_i).
@@ -380,12 +380,12 @@ More importantly, the estimator in Equation \eqref{eq:vkde} is only applicable w
 \hypertarget{riemest}{%
 \subsection{Kernel density estimator on Riemannian manifolds}\label{riemest}}
 
-Consider a compact Riemannian manifold \((M, g)\) of dimension \(d\) without boundary and a probability distribution with density \(f\) on the manifold. Assume \((M, d_g)\) is a complete metric space, where \(d_g\) is the geodesic distance induced by the Riemannian metric \(g\) and the strictly positive injectivity radius of the manifold \(inj_g(M)\) \autocite{Chavel2006-mp}. Denote \(\pmb{X}_i, i = 1, 2, \dots, N\), where \(\pmb{X}_i \in \mathcal{R}^d\), as i.i.d. random objects on \(M\) with density \(f\). To estimate the density of the manifold, \textcite{Pelletier2005-vu} proposed a kernel density estimator for \(f\) at point \(\pmb{p}\in M\) as
+Consider a compact Riemannian manifold \((M, g)\) of dimension \(d\) without boundary and a probability distribution with density \(f\) on the manifold. Assume \((M, d_g)\) as a complete metric space, where \(d_g\) is the geodesic distance induced by the Riemannian metric \(g\) and the strictly positive injectivity radius of the manifold \(inj_g(M)\) \autocite{Chavel2006-mp}. Denote \(\pmb{X}_i, i = 1, 2, \dots, N\), where \(\pmb{X}_i \in \mathbb{R}^d\), as i.i.d. random objects on \(M\) with density \(f\). To estimate the density of the manifold, \textcite{Pelletier2005-vu} propose a kernel density estimator for \(f\) at point \(\pmb{p}\in M\) as
 \begin{equation}
 \label{eq:denriem}
 \hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{\pmb{X}_i}(\pmb{p})} K(\frac{d_g(\pmb{p}, \pmb{X}_i)}{r}),
 \end{equation}
-where \(r\) is the global bandwidth satisfying \(r \leq r_0\) for fixed \(r_0\) such that \(0\leq r_0\leq inj_g(M)\), \(K: \mathcal{R}_{+} \rightarrow \mathcal{R}\) is a non-negative map, and \(\theta_{\pmb{X}_i}(\pmb{p})\) is the volume density function on the manifold for point \(\pmb{X}_i\). The estimator in \eqref{eq:denriem} is also proved to be consistent with the kernel density estimators in the Euclidean case and converges at the same rate as the Euclidean estimator \autocite{Henry2009-ll}.
+where \(r\) is the global bandwidth satisfying \(r \leq r_0\) for fixed \(r_0\) such that \(0\leq r_0\leq inj_g(M)\), \(K: \mathbb{R}_{+} \rightarrow \mathbb{R}\) is a non-negative map, and \(\theta_{\pmb{X}_i}(\pmb{p})\) is the volume density function on the manifold for point \(\pmb{X}_i\). The estimator in \eqref{eq:denriem} is also proved to be consistent with the kernel density estimators in the Euclidean case and converges at the same rate as the Euclidean estimator \autocite{Henry2009-ll}.
 
 Denote \(\lambda\) as the Lebesque measure of \(\mathbb{R}^d\). The kernels \(K\) in \eqref{eq:denriem} are functions of the geodesic distance of the manifold \(d_g\) and they satisfy the following conditions \autocite{Pelletier2005-vu}:
 \begin{align}
@@ -411,7 +411,8 @@ For the exponential map \(\exp_p: T_pM \rightarrow M\) induced by pullback of a 
 d\exp_p^*\textit{Vo}l(u) = \theta_p(u)du,
 \]
 in normal coordinates \autocite{Le_Brigant2019-lj}. The volume density function is motivated by how a measure \(du\) changes under the change of coordinates. The volume form is variant to the exponential map except that the manifold is flat. Therefore, a multiplicative corrected term called the volume density function has to be added in the estimator so that it will integral to 1. It is closely related to the integration on manifolds and plays an important part in studying the density of manifolds.
-\textcite{Pelletier2005-vu} mentions that the volume density function \(\theta_q(p)\) defined for \(p\) in a neighborhood of \(q\) on the manifold, with the geodesic normal coordinates at \(q\), is equal to the determinant of the Riemannian metric \(g\) expressed in the coordinates at the logarithm map of q, \(\exp_q^{-1}(p)\).
+
+\textcite{Pelletier2005-vu} mention that the volume density function \(\theta_q(p)\) defined for \(p\) in a neighborhood of \(q\) on the manifold, with the geodesic normal coordinates at \(q\), is equal to the determinant of the Riemannian metric \(g\) expressed in the coordinates at the logarithm map of q, \(\exp_q^{-1}(p)\).
 Note that this is true only when using the geodesic normal coordinates. If the mapping function is not exponential/logarithm map, the volume density function is calculated otherwise. Therefore, the Riemannian manifold density estimator in \textcite{Pelletier2005-vu} only works when the true manifold \(M\) is known.
 Further, the fixed bandwidth assumes that the smoothing is the same across the entire manifold and there is no local distortion at each sample point, which needs to be corrected using an adaptive bandwidth matrix when distortion exists.
 
@@ -422,12 +423,12 @@ In application, we usually find the observations lying on a \(d\)-dimensional ma
 Notice that this representation is not necessarily isometry to \(M\), and the underlying manifold tends to be unknown in real data sets. We could use the low-dimensional embedding as an approximation of the true manifold \(M\). However, the pointwise distortion induced by the manifold learning process needs to be taken care of to accurately estimate the density of the manifold. Therefore, the kernel density estimator in Equation \eqref{eq:denriem} no longer applies because of the unknown geodesic distance \(d_g\) and the volume density function \(\theta_{\pmb{X}_i}(\pmb{p})\).
 Further, the bandwidth matrix should be adaptive to each sample point to take the distortion into account.
 
-Motivated by the estimator in \eqref{eq:denriem}, we restate below our proposed distortion-corrected kernel density estimator (DC-KDE) of \(f\), same as \eqref{eq:denestimator0}, based on the manifold embedding \(\pmb{y}_i, i = 1, 2, \dots, N\),
+Motivated by the estimator in \eqref{eq:denriem}, we restate below our proposed distortion-corrected kernel density estimator (DC-KDE) of \(f\), same as \eqref{eq:denestimator0}, based on the manifold learning embedding \(\pmb{y}_i, i = 1, 2, \dots, N\),
 \begin{equation}
 \label{eq:denestimator}
-\hat{f}(\pmb{p}) = \frac{1}{CN} \sum_{i=1}^{N} \frac{1}{r^d} \frac{|\det \pmb{H}(\pmb{p})|^{1/2}}{|\det \pmb{H}(\pmb{y}_i)|^{1/2}} K\bigg( \frac{ \sqrt{(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)} }{r} \bigg),
+\hat{f}(\pmb{p}) = \frac{1}{CN} \sum_{i=1}^{N} \frac{1}{r^d} \bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{-1/2} K\bigg( \frac{ \pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
 \end{equation}
-where \(r\) is a global bandwidth scalar, \(\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N\), is the pointwise variable Riemannian matrix and it is positive definite with dimension \(d\times d\), \(\frac{|\det \pmb{H}(\pmb{p})|^{1/2}}{|\det \pmb{H}(\pmb{y}_i)|^{1/2}}\) is the estimated volume density function when using the coordinates from any manifold learning mapping, \(\sqrt{(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}\) is the first-order estimated geodesic distance with the distortion corrected by the Riemannian metric \(\pmb{H}(\pmb{y}_i)\), and \(C\) is a correction term for the volume between the spaces so that the integral is 1. We will now state below how to calculate each term in the estimator. Then the only problem left is the estimation of the Riemannian metric at each embedding point, to be discussed in \autoref{riemmetric}.
+where \(r\) is a global bandwidth scalar, \(\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N\), is the pointwise variable Riemannian matrix and it is positive definite with dimension \(d\times d\), \(\bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{1/2}\) is the estimated volume density function when using the coordinates from any manifold learning mapping, \(\pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)\) is the first-order estimated geodesic distance with the distortion corrected by the Riemannian metric \(\pmb{H}(\pmb{y}_i)\), and \(C = \sum_{i=1}^{N} \sqrt{\det(\pmb{H}(\pmb{y}_i))} \Delta y^1(\pmb{y}_i)\dots \Delta y^d(\pmb{y}_i)\) is a correction term for the volume between the spaces so that the integral is 1. We will now state below how to calculate each term in the estimator. And the only problem left is the estimation of the Riemannian metric at each embedding point, to be discussed in \autoref{riemmetric}.
 
 By the definition of the volume density function in Equation \eqref{eq:volden}, we could calculate how the volume change under the change of coordinates. When using the logarithm map, the coordinates of points on the manifold are transformed into their coordinates in the tangent space, i.e.~geodesic normal coordinates. In this case, \textcite{Pelletier2005-vu} gives the volume density function from the manifold to the tangent space, which is equal to the determinant of the Riemannian metric expressed in the geodesic normal coordinates at the logarithm map, \(|\det g(\exp^{-1}_p(q)) |\).
 In order to estimate the density of the true manifold, we first map the high-dimensional data to a low-dimensional embedding, then we apply a kernel density estimator to the embedding. Since the logarithm map of the manifold is also unknown, the volume density function in \textcite{Pelletier2005-vu} is no longer valid. Instead, we need a volume density function independent of the chart.
@@ -446,23 +447,23 @@ Now we consider the case with the manifold learning embedding. Consider the char
 Then the volume density function is given by
 \begin{equation}
 \label{eq:volumedensityest}
-\theta_{\pmb{y}_i}(\pmb{p}) = \frac{|\det \pmb{H}(\pmb{p})|^{1/2}}{|\det \pmb{H}(\pmb{y}_i)|^{1/2}},
+\theta_{\pmb{y}_i}(\pmb{p}) = \bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{1/2},
 \end{equation}
 where \(\pmb{H}\) is the estimated Riemannian metric for the unknown manifold.
-Again, the volume density function is not defined for all \(\pmb{p}\) but for points within the geodesic ball satisfying \(\pmb{p} \in B(\pmb{y}_i,r)\), which is related to the support of \(K\) being \([0,1]\) in condition (v) of \eqref{eq:kernelcondition}.
+Again, the volume density function is not defined for all \(\pmb{p}\) but for points within the geodesic ball satisfying \(\pmb{p} \in B(\pmb{y}_i,r)\), which is related to the support of \(K\) being \([0,1]\) in Condition (v) of \eqref{eq:kernelcondition}.
 
 As for the geodesic distance \(d_g\) in \eqref{eq:denriem}, we propose a distortion-fixed geodesic distance with the use of estimated Riemannian metric as
 \begin{equation}
 \label{eq:dgestimate}
-\hat{d}_g(\pmb{p}, \pmb{y}_i) = \sqrt{(\pmb{p} - \pmb{y}_i)^\prime \pmb{H}^{-1}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)},
+\hat{d}_g(\pmb{p}, \pmb{y}_i) = \pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i),
 \end{equation}
 where \(\pmb{H}(\pmb{y}_i)\) is the estimated Riemannian metric at embedding point \(\pmb{y}_i\).
 
-For two points \(p,q \in M\), the geodesic distance between \(p\) and \(q\) is defined as the length of the shortest curve from \(p\) to \(q\) along the manifold.
+For two points \(\pmb{p},\pmb{q} \in M\), the geodesic distance between \(\pmb{p}\) and \(\pmb{q}\) is defined as the length of the shortest curve from \(\pmb{p}\) to \(\pmb{q}\) along the manifold.
 The geodesic distance is intrinsic, which means it is a coordinate-independent quantity. The Riemannian metric functions as the correction term for different coordinates of manifold learning embedding.
 By using the first-order distance estimator, \(\hat{d}_g(\pmb{p}, \pmb{y}_i)\) serves as a good approximation of the true geodesic distance \(d_g\) with the distortion corrected at each embedding point \(\pmb{y}_i\). Compared with the graph distance, the shortest path between point in the neighborhood graph \(G\), our proposed \(\hat{d}_g\) is better because we use the same graph \(G\) for all manifold learning embeddings but the distances between different nodes in \(G\) might not be the same due to the distortion.
 
-As pointed out by \textcite{Perrault-Joncas2013-pq}, the naive distance \(\|p-q\|\) underestimates \(d_g\), and the graph shortest distance \(d_G\) overestimates \(d_g\) by the triangle inequality. By using only the first-order correction in \(\hat{d}_g\), our estimator is also affected by the estimated Riemannian metric. In order to correct for the estimation error in \(\pmb{H}(\pmb{y}_i)\), we further divide the density estimator in \eqref{eq:denestimator} by a constant term \(C\) so that the integral of the kernel is equal to 1. The constant term in \(1\)-d is given by the \emph{area under the curve (AUC)}, and can be named as the \emph{volume between the surface (VBS)} in higher dimension. We use the volume estimator in Section 6.4 of \textcite{Perrault-Joncas2013-pq} to sum over all embedding points \(\pmb{y}_i\) and get
+As pointed out by \textcite{Perrault-Joncas2013-pq}, the naive distance \(\|\pmb{p}-\pmb{q}\|\) underestimates \(d_g\), and the graph shortest distance \(d_G\) overestimates \(d_g\) by the triangle inequality. By using only the first-order correction in \(\hat{d}_g\), our estimator is also affected by the estimated Riemannian metric. In order to correct for the estimation error in \(\pmb{H}(\pmb{y}_i)\), we further divide the density estimator in \eqref{eq:denestimator} by a constant term \(C\) so that the integral of the kernel is equal to 1. The constant term in \(1\)-d is given by the \emph{area under the curve (AUC)}, and can be named as the \emph{volume between the surface (VBS)} in higher dimension. We use the volume estimator in Section 6.4 of \textcite{Perrault-Joncas2013-pq} to sum over all embedding points \(\pmb{y}_i\) and get
 \begin{equation}
 \label{eq:vbs}
 C = \sum_{i=1}^{N} \sqrt{\det(\pmb{H}(\pmb{y}_i))} \Delta y^1(\pmb{y}_i)\dots \Delta y^d(\pmb{y}_i),
@@ -477,10 +478,11 @@ Now we have all the components needed to estimate the density of manifold learni
 An important goal of manifold learning is to recover the local or global features of the data. However, manifold learning algorithms usually fail to generate an isometric embedding.
 In order to recover the geometry of the manifold, \textcite{Perrault-Joncas2013-pq} propose a method to augment any existing reasonable embedding and allow for the computation of geometric values to be calculated with an estimated Riemannian metric. Instead of developing a new manifold learning method, they aim to fix the geometric distortion in the embedding. It is worth noticing that the Riemannian metric from \textcite{Perrault-Joncas2013-pq} is a \(d\times d\) positive definite matrix variable at each data point. The estimated Riemannian metric completes our proposed kernel density estimation in \autoref{dckde} and enables us to take the geometric distortion into consideration when estimating the densities of the manifold.
 
-The Riemannian metric \(g\) is a symmetric and positive definite tensor field which defines an inner product \(\langle,\rangle_g\) on the tangent space \(T_pM\) for every point \(p \in M\). If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. For each point \(p\in M\) in any embedding coordinate system, the Riemannian metric \(g\) is a \(d\times d\) symmetric positive definite matrix, where \(d\) is the dimension of the manifold.
+The Riemannian metric \(g\) is a symmetric and positive definite tensor field which defines an inner product \(\langle,\rangle_g\) on the tangent space \(T_{\pmb{p}} M\) for every point \(\pmb{p} \in M\). If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. For each point \(\pmb{p} \in M\) in any embedding coordinate system, the Riemannian metric \(g\) is a \(d\times d\) symmetric positive definite matrix, where \(d\) is the dimension of the manifold.
 
-The inner product between two vectors \(u,v \in T_pM\), given by \(\langle u,v \rangle_g=g_{ij}u^iv^j\){[}\^{}1{]}, can be used to define some geometric quantities, such as the vector norm \(|u|=\sqrt{\langle u,u \rangle_g}\) and the angle between two vectors \(\cos{\theta}=\frac{\langle u,v \rangle_g}{|u| |v|}\) in the tangent space.
+The inner product between two vectors \(u,v \in T_{\pmb{p}}M\), given by \(\langle u,v \rangle_g=g_{ij}u^iv^j\){[}\^{}1{]}, can be used to define some geometric quantities, such as the vector norm \(|u|=\sqrt{\langle u,u \rangle_g}\) and the angle between two vectors \(\cos{\theta}=\frac{\langle u,v \rangle_g}{|u| |v|}\) in the tangent space.
 {[}\^{}1{]}: Here the Einstein notation is used where superscripts denote summation over \(i\) and \(j\).
+
 The line element and volume element of the full manifold or a subset of the manifold can also be computed from \(g\). The arc length of a curve \(c\) along the manifold is defined as
 \[
 l(c)=\int_a^b \sqrt{g_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt}} dt,
@@ -498,7 +500,7 @@ The graph Laplacian estimator together with the embedding \(\pmb{Y}\) could furt
 This algorithm is implemented in a Python library \emph{megaman} \autocite{McQueen2016-xz}. It is designed to apply the manifold learning methods to large-scale data sets, as well as compute the Riemannian metric of the manifold. We have re-implemented the algorithm in \emph{R}.
 
 As pointed out by \textcite{Perrault-Joncas2013-pq}, if the embedding dimension is larger than the manifold intrinsic dimension \(d\), the rank of the embedding metric \(\pmb{H}(p)\) is equal to \(d\); otherwise, the Riemannian metric will be returned.
-To ensure that the estimated Riemannian metric is returned as a \(d\times d\) matrix, for unknown manifold dimension, we apply the intrinsic dimension (id) selection algorithm called \emph{two-nearest neighbor estimator (TWO-NN estimator)} \autocite{Facco2017-rl,Denti2021-jl} to derive id estimator from a Poisson point process. \textcite{Facco2017-rl} point out that of the distances between a point and its second and first neareast neighbors follow a Pareto distribution with scale parameter \(1\) and shape parameter \(d\), the intrinsic dimension of the manifold \autocite{Facco2017-rl}. By fitting a Pareto distribution to proper transformed data, the intrinsic dimension could be estimated. An \emph{R} library named \emph{intRinsic} has implemented this algorithm and we are going to apply it to when \(d\) is unknown.
+To ensure that the estimated Riemannian metric is returned as a \(d\times d\) matrix, for unknown manifold dimension, we apply the intrinsic dimension (id) selection algorithm called \emph{two-nearest neighbor estimator (TWO-NN estimator)} \autocite{Facco2017-rl,Denti2021-jl} to derive id estimator from a Poisson point process. \textcite{Facco2017-rl} point out that of the distances between a point and its second and first neareast neighbors follow a Pareto distribution with scale parameter \(1\) and shape parameter \(d\), the intrinsic dimension of the manifold \autocite{Facco2017-rl}. By fitting a Pareto distribution to proper transformed data, the intrinsic dimension could be estimated. An \emph{R} library named \emph{intRinsic} \autocite{Denti2021-qc} has implemented this algorithm and we are going to apply it to when \(d\) is unknown.
 
 \begin{algorithm}[!htb]
   \caption{Learn metric algorithm in \cite{Perrault-Joncas2013-pq} }
@@ -509,7 +511,7 @@ To ensure that the estimated Riemannian metric is returned as a \(d\times d\) ma
   \Input{ high-dimensional data $\pmb{x}_i \in \mathbb{R}^s$ for all $i=1,\ldots,N$ }
   \Output{ low-dimensional data $\pmb{y}_i \in \mathbb{R}^d$ and its Riemannian metric $\pmb{H}(\pmb{y}_i)$ for all $i=1,\ldots,N$ }
   \Parameter{ embedding dimension $d$, bandwidth parameter $\sqrt{\varepsilon}$, manifold learning algorithm }
-  \OptParameter{ manifold learning parameters $MANILEARN$}
+  \OptParameter{ manifold learning parameters EMBED }
   \BlankLine
   \begin{algorithmic}[1]
 
@@ -521,7 +523,7 @@ To ensure that the estimated Riemannian metric is returned as a \(d\times d\) ma
   $$
   where $\widetilde{D}=diag{\widetilde{W}\pmb{1}}$, $\widetilde{W} = D^{-1}WD^{-1}$, and $D = diag{W\pmb{1}}$;
 
-  \STATE Embed all data point $\pmb{X}\in \mathbb{R}^s$ to embedding coordinates $\pmb{Y}=(\pmb{y}^1,\dots,\pmb{y}^d)^\prime$ by any existing manifold learning algorithm $MANILEARN$;
+  \STATE Embed all data point $\pmb{X}\in \mathbb{R}^s$ to embedding coordinates $\pmb{Y}=(\pmb{y}^1,\dots,\pmb{y}^d)^\prime$ by any existing manifold learning algorithm EMBED;
 
   \STATE Obtain the matrix $\pmb{\tilde{H}}$ of all data point by applying the graph Laplacian $\widetilde{\mathcal{L}}_{\sqrt{\varepsilon},N}$ to the embedding coordinates matrix $\pmb{Y}$ with each element vector in $\pmb{\tilde{H}}$ being
   $$
@@ -542,7 +544,7 @@ To ensure that the estimated Riemannian metric is returned as a \(d\times d\) ma
 \subsection{Outlier detection on manifold learning embedding}\label{outlier-detection-on-manifold-learning-embedding}}
 
 Now we are able to generate kernel density estimates of the underlying manifold using the estimator in Equation \eqref{eq:denestimator}. The densities could be further applied to unsupervised learning tasks such as clustering and anomaly detection. As one way to utilize the kernel density estimates, we propose an algorithm for anomaly detection in \ref{alg:kdeanomaly}.
-There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \ref{alg:learnmetric} to the input high-dimensional data \(x_i,i=1,\ldots,N\) where \(x_i\in \mathcal{R^s}\) to get the low-dimensional embedding \(y_i\), where \(y_i\in \mathcal{R^d}\) and the Riemannian metric \(\pmb{H}_i\) with dimension \(d\times d\) for each observation. Two parameters \(\sqrt{\varepsilon} = 0.4\) and \(c=0.25\) are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \eqref{eq:denestimator}. The top outliers of size \(n\_outliers\) are obtained by ordering the embedding points \(y_i\) according to their density estimates \(f_N(\pmb{y}_i)\).
+There are mainly four steps involved in the algorithm. The first step is to apply the Learn metric algorithm described in \ref{alg:learnmetric} to the input high-dimensional data \(x_i,i=1,\ldots,N\) where \(x_i\in \mathcal{R^s}\) to get the low-dimensional embedding \(y_i\), where \(y_i\in \mathcal{R^d}\) and the Riemannian metric \(\pmb{H}_i\) with dimension \(d\times d\) for each observation. Two parameters \(\sqrt{\varepsilon} = 0.4\) and \(c=0.25\) are given for Gaussian kernels. Then we could use the pointwise Riemannian metric to calculate the kernel density estimate with our proposed estimator in Equation \eqref{eq:denestimator}. The top outliers of size \(n\_outliers\) are obtained by ordering the embedding points \(y_i\) according to their density estimates \(f(\pmb{y}_i)\).
 
 \begin{algorithm}[!htb]
   \caption{Anomaly detection with distortion-corrected kernel density estimates}
@@ -570,7 +572,7 @@ The proposed schematic is shown in Figure \ref{fig:vkde}. The last two steps in 
 
 \begin{figure}
 
-{\centering \includegraphics[width=0.95\linewidth]{figures/kde_h-vkde} 
+{\centering \includegraphics[width=0.95\linewidth]{figures/DC-KDE} 
 
 }
 
