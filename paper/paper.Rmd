@@ -250,8 +250,6 @@ In order to recover the geometry of the manifold, @Perrault-Joncas2013-pq propos
 The Riemannian metric $g$ is a symmetric and positive definite tensor field which defines an inner product $\langle,\rangle_g$ on the tangent space $T_{\pmb{p}} M$ for every point $\pmb{p} \in M$. If the inner product of the tangent space is known for a given geometry, the Riemannian metric is a good measure to recover the geometry of the manifold. For each point $\pmb{p} \in M$ in any embedding coordinate system, the Riemannian metric $g$ is a $d\times d$ symmetric positive definite matrix, where $d$ is the dimension of the manifold.
 
 The inner product between two vectors $u,v \in T_{\pmb{p}}M$, given by $\langle u,v \rangle_g=g_{ij}u^iv^j$[^1], can be used to define some geometric quantities, such as the vector norm $|u|=\sqrt{\langle u,u \rangle_g}$ and the angle between two vectors $\cos{\theta}=\frac{\langle u,v \rangle_g}{|u| |v|}$ in the tangent space.
-[^1]: Here the Einstein notation is used where superscripts denote summation over $i$ and $j$.
-
 The line element and volume element of the full manifold or a subset of the manifold can also be computed from $g$. The arc length of a curve $c$ along the manifold is defined as
 $$
 l(c)=\int_a^b \sqrt{g_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt}} dt,
@@ -261,6 +259,8 @@ $$
 Vol(V)=\int_V \sqrt{|\det g|} dx^1\dots dx^d.
 $$ 
 Both the concepts of distance and volume are relevant to kernel density estimation as we have shown in Equation \@ref(eq:volumedensityratio), \@ref(eq:volumedensityest), \@ref(eq:dgestimate), and \@ref(eq:vbs).
+
+[^1]: Here the Einstein notation is used where superscripts denote summation over $i$ and $j$.
 
 @Perrault-Joncas2013-pq propose the Learn Metric algorithm to augment any manifold learning embedding with the estimated Riemannian metric. There are mainly four steps in the algorithm: weighted neighborhood graph construction; geometric graph Laplacian calculation; manifold learning; and Riemannian metric calculation. We restate these four steps in Algorithm \@ref(alg:learnmetric). 
 By applying an existing manifold learning algorithm to the high-dimensional input data $\pmb{X}\in \mathbb{R}^s$ with $N$ observations, a low-dimensional embedding $\pmb{Y} \in \mathbb{R}^d$ can be computed. Most manifold learning methods involve the construction of the nearest neighbor graph based on which the Laplace-Beltrami operator $\Delta_M$ is built. The Laplacian is quite useful because it can be coordinate-free while containing all the important geometry.
@@ -347,7 +347,7 @@ knitr::include_graphics("figures/DC-KDE.png")
 # Simulations {#simulation}
 
 In this section, we examine two scenarios for both low and high dimensions to test our proposed algorithm. For visualization purposes, \autoref{twodgaussian} presents a 2-D meta data example. We first simulate the data of size $N=2,000$ from a mixture of four Gaussian kernels with the same covariance but different means, each consisting of $500$ points. Different mapping functions are then applied to the 2-D meta data to be mapped in a 3-D feature space, which gives the higher-dimensional input for different manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. The embedded dimension is set as $d=2$, the same as the meta data dimension.
-This enables us to compare the manifold learning embedding with the true meta data. We could now apply Algorithm \@ref(alg:vkderm) to get the density estimates of all data points and further detect anomalies. As a high-dimensional example, the second simulation in \autoref{fivedgaussian} is based on a 5-D meta data of size $N=2,000$ embedded in a 100-D space and the corresponding embedding dimension is $d=5$.
+This enables us to compare the manifold learning embedding with the true meta data. We could now apply Algorithm \@ref(alg:kdeanomaly) to get the density estimates of all data points and further detect anomalies. As a high-dimensional example, the second simulation in \autoref{fivedgaussian} is based on a 5-D meta data of size $N=2,000$ embedded in a 100-D space and the corresponding embedding dimension is $d=5$.
 
 ## 3-D mapping from a 2-D Gaussian Mixture Model {#twodgaussian}
 
@@ -475,7 +475,7 @@ $535$ days.
 For the electricity consumption data of residential individuals, it would be worthwhile to explore the distribution of electricity demand rather than the raw consumption data to study the usage patterns of different households or different periods or the week [@Hyndman2018-ia].
 @Cheng2021-ex propose two non-Euclidean distance estimators to enable manifold learning algorithms in statistical manifolds with each observation as a distribution. @Cheng2021-ex use the same smart meter data for identifying outliers with kernel bandwidth estimation but fail to consider the distortion and information loss in the 2-dimensional embeddings given that the input data dimension is much higher. By introducing the Riemannian metric as the bandwidth matrix, we could take into account the distortion in the 2-D embedding and further improve the accuracy of the density estimation.
 
-In this section, we first calculated the same empirical distributions of the $336$ half-hourly periods of the week for each household, and apply the total variation distance estimator proposed in @Cheng2021-ex in the statistical manifold learning to get the 2-D embedding of all households. Algorithm \@ref(alg:vkderm) is then used to obtain density estimates with the pointwise variable Riemannian metric as the bandwidth matrix and detect outliers. The data processing steps have been clearly
+In this section, we first calculated the same empirical distributions of the $336$ half-hourly periods of the week for each household, and apply the total variation distance estimator proposed in @Cheng2021-ex in the statistical manifold learning to get the 2-D embedding of all households. Algorithm \@ref(alg:kdeanomaly) is then used to obtain density estimates with the pointwise variable Riemannian metric as the bandwidth matrix and detect outliers. The data processing steps have been clearly
 stated in the application section of @Cheng2021-ex and they are skipped here. Unlike the simulations in \autoref{simulation}, we know nothing about the true density of the electricity distributions for all periods of the week and all households, so it is impossible to compare the estimated densities with the true meta data density as in \autoref{fig:fivedisomapden}. However, we could generate all the density estimates with the existing KDE method with fixed bandwidth, which is an optimal method for density estimation, and compare the densities from our proposed method with them.
 
 ```{r electricityoutliers, fig.align = 'center', out.width = "90%", fig.cap="Electricity usage plots of all 535 days for the most typical household and two anomalies in rows and two bandwidth selection methods in columns.", echo = FALSE, eval=T}
