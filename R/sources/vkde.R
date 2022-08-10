@@ -90,7 +90,7 @@ vkde <- function(x, h = NULL, vh = NULL, r = NULL, gridsize = 20, xmin = apply(x
       hi <- hi / mean(vh[,,bindex])
       for(j in bindex) {
         hj <- vh[,,j]
-        z[i,j] <- (det(hj) / det(hi)) ^ (-0.5) * (2 * pi) ^ (-d / 2) * r ^ (-1/d) * exp( -0.5 / (r^2) * t(eval.points[i,] - eval.points[j,]) %*% solve(hi) %*% (eval.points[i,] - eval.points[j,]) ) / (pnorm(1) - pnorm(-1)) # suppK = [0,1], scale to integral to 1
+        z[i,j] <- (det(hj) / det(hi)) ^ (-0.5) * (2 * pi) ^ (-d / 2) * r ^ (-d) * exp( -0.5 / (r^2) * t(eval.points[i,] - eval.points[j,]) %*% solve(hi) %*% (eval.points[i,] - eval.points[j,]) ) / (pnorm(1) - pnorm(-1)) # suppK = [0,1], scale to integral to 1
       }
     }
     z <- colMeans(z, na.rm = TRUE)
