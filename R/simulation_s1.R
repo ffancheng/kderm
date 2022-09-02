@@ -11,7 +11,7 @@ set.seed(1)
 ###########################################################
 ### Data generation
 ###########################################################
-N <- 10000
+N <- 1000
 d <- 1
 distribution <- c("uniform", "normal", "beta", "lognormal", "mixed")[4] # CHANGE DISTRIBUTION OF THETA
 switch(distribution,
@@ -144,7 +144,7 @@ comp.den <- function(x, y, row.name = "", cor.method = "s") {
   rownames(dat) <- row.name
   return(dat)
 }
-rbind(comp.den(dentheta, ftheta_kde, paste0("KDE ", "h=", round(h,3))), 
+rbind(comp.den(dentheta, ftheta_kde, paste0("KDE ", "h=", round(h_kde,3))), 
       comp.den(dentheta, ftheta_dckde, paste0("DC-KDE ", "r=", round(r,3)))
 )
 # cor(dentheta, ftheta_kde, method = "s")
@@ -243,7 +243,7 @@ train <- data.frame(x = x, y = y)
 N <- nrow(train)
 s <- 1
 k <- 10
-method <- "Isomap"
+method <- "annIsomap"
 annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
@@ -404,7 +404,7 @@ opt_index <- floor( mean(c(which.min(fhat[, "mse"]), which.max(fhat[, "rankcor"]
 ## Plotting
 par(mfrow=c(1,1))
 plot(theta, fhat[opt_index, 1:N], main = paste("Estimated density of fn", "h=", round(r_opt, 3)), cex = .2, col = "red", lty = 3, xlim = c(min(theta), max(theta)),
-     ylim = c(0, max(dentheta, fhat_kde, fhat[,1:N]))
+     ylim = c(0, max(dentheta, fhat_kde, fhat[,1:N], na.rm = T))
 )
 points(theta, dentheta, lty = 1, cex = .2, col = 1)
 # text(x = 0.5, y = 0.5, paste("f(theta) = ", round(dentheta[1], 3)), col = "red")
