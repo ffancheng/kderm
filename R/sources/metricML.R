@@ -4,7 +4,7 @@
 #' @param s The number of the dimensions of the embedding
 #' @param k The number of nearest neighbors in manifold learning
 #' @param radius The radius for nearest neighbor searching 
-#' @param bandwidth The bandwidth parameter of the kernel for weighted graph matrix, \code{\sqrt{0.4} for heat kernel}
+#' @param bandwidth The bandwidth parameter of the kernel for weighted graph matrix, \code{\sqrt{0.4} for heat kernel}, could be the same as \code{radius}
 #' @param const The constant term for the estimeted Laplacian matrix that depends on the choice of kernel, const = 0.25 as suggested in the Learn Metric algorithm
 #' @param adjacency The adjacency matrix of the data of dimension \code{n*n}, NULL by default
 #' @param affinity The weighted adjacency matrix with gaussian kernel of dimension \code{n*n}, NULL by default
@@ -102,7 +102,7 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
     
     N <- nrow(x)
     if (searchtype == "radius") {  
-      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges; in nn2(), k is the maximum number of NNs to compute, so k is set as N even if radius is large
+      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges; in nn2(), k is the maximum number of NNs to output, so k is set as N even if radius is large
     }
     
     ###--------------------------
@@ -118,11 +118,17 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
                                               radius = radius),
     )
     names(nn2res) <- c("nn.idx", "nn.dists")
+    
+    W <- matrix(0, N, N)
+    for(i in 1:N) {
+      W[i, nn2res$nn.idx[i,]] <- exp(-nn2res$nn.dists[i, nn2res$nn.idx[i,] != 0] / (bandwidth ^ 2))
+    }
 
+    # get pairwise distance matrix
     Kn <- nn2dist(nn2res, N = N) # TODO: check the weight matrix
-    W <- exp(- Kn / (bandwidth ^ 2)) # heat kernel for weighted graph
+    # W <- exp(- Kn / (bandwidth ^ 2)) # heat kernel for weighted graph
     Kn[Kn == 1e+05] <- 0
-    g <- igraph::graph_from_adjacency_matrix(Kn)
+    # g <- igraph::graph_from_adjacency_matrix(Kn)
     
   }
       
@@ -141,7 +147,7 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   
   return(list(embedding=fn, 
               rmetric=hn, 
-              weighted_graph=g,
+              weighted_matrix=W,
               adj_matrix=Kn,
               laplacian=Ln,
               nn2res = nn2res
