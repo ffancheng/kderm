@@ -3,6 +3,7 @@ rm(list = ls())
 library(tidyverse)
 library(scatterplot3d)
 library(dimRed)
+library(kableExtra)
 Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1)
 
@@ -204,20 +205,77 @@ sqrt(det(rmetric[,,N]) * mean(apply(rmetric, 3, det)[nn.idx[N,]]) ) * fn[N,]
 sqrt(det(rmetric[,,N]) / mean(apply(rmetric, 3, det)[nn.idx[N,]]) ) * fn[N,]
 sqrt(mean(apply(rmetric, 3, det)[nn.idx[N,]]) / det(rmetric[,,N]) ) * fn[N,]
 
+
+
+## TODO: check local coordinate change 
+# g_q = h_p ^ {-.5} %*% h_q %*% h_p ^ {-.5}
 rmetric_det <- apply(rmetric, 3, det)
 r <- 1
 fn_dc <- matrix(NA, N, 2)
 theta <- rep(NA, N)
 for(i in 1:N){
   bindex <- which(adj_matrix[i,] <= r)
-  # theta[i] <- sqrt(det(rmetric[,,i])) ^ (-1)
-  # theta[i] <- sqrt(mean(rmetric_det[bindex]) * det(rmetric[,,i]) ) ^ (-1)
-  # theta[i] <- sqrt(mean(rmetric_det[bindex]) / det(rmetric[,,i]) ) ^ (-1)
-  theta[i] <- sqrt( mean(rmetric_det[bindex]) / det(rmetric[,,i]) ) # used in the paper, (\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} )^{1/2}
+  # theta[i] <- sqrt(rmetric_det[i])
+  # theta[i] <- sqrt(rmetric_det[i]) ^ (-1)
+  # theta[i] <- sqrt(mean(rmetric_det[bindex]) * rmetric_det[i] ) ^ (-1)
+  # theta[i] <- sqrt(mean(rmetric_det[bindex]) / rmetric_det[i] ) ^ (-1)
+  theta[i] <- sqrt( mean(rmetric_det[bindex]) / rmetric_det[i] ) # used in the paper, (\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} )^{1/2}
   fn_dc[i,] <- fn[i,] * theta[i]
 }
-# par(mfrow=c(3,2))
-plot(rbind(y, c(0,0)), asp = 1, col = c(cc, "red"))
-plot(fn, asp = 1, col = c(cc, "red"))
-plot(fn_dc, asp = 1, col = c(cc, "red"))
+par(mfrow=c(1,3))
+plot(rbind(y, c(0,0)), asp = 1, col = c(cc, "red"), xlim = c(-2, 2), ylim=c(-2, 2))
+plot(fn, asp = 1, col = c(cc, "red"), xlim = c(-2, 2), ylim=c(-2, 2))
+plot(fn_dc, asp = 1, col = c(cc, "red"), xlim = c(-2, 2), ylim=c(-2, 2))
 
+
+
+
+
+
+## Assume that the distortion-corrected coordinates gives another embedding
+# Now the problem is to compare which embedding is better
+# fn or fn_dc
+# compared with the logarithm map around p=c(0,0,1), rbind(y, c(0,0)
+
+# cap_index <- c(which(cc == "black"), N) ## to check only the cap area
+cap_index <- 1:N ## to check the half sphere
+
+# Three objects to be compared
+f_log <- rbind(y, c(0,0))[cap_index,]
+f_ml <- fn[cap_index,]
+f_dc <- fn_dc[cap_index,]
+
+# summary(f_log))
+# summary(f_ml)
+# summary(f_dc)
+
+# Sum of squared error
+sum((f_log - f_dc) ^ 2)
+sum((f_log - f_ml) ^ 2)
+
+# procrustes measure
+vegan::procrustes((f_log), f_dc)
+vegan::procrustes((f_log), f_ml)
+
+# embedding qualities
+dr_quality(f_log, f_dc, K = 20)
+# $quality
+# M_T       M_C      LCMC      Qnx         W_n       W_nu       Rnx
+# 0.9991575 0.9993159 0.8638992 0.884391 0.001838109 0.00159078 0.8819724
+
+dr_quality(f_log, f_ml, K = 20)
+# $quality
+# M_T       M_C      LCMC       Qnx         W_n        W_nu       Rnx
+# 0.9989322 0.9979771 0.8183004 0.8387922 0.002183664 0.002038867 0.8354197
+
+
+measures <- tibble(sse = c(sum((f_log - f_dc) ^ 2),
+               sum((f_log - f_ml) ^ 2)),
+       proc = c(vegan::procrustes((f_log), f_dc)$ss,
+                vegan::procrustes((f_log), f_ml)$ss),
+       rbind(dr_quality(f_log, f_dc, K = 20)$quality,
+             dr_quality(f_log, f_ml, K = 20)$quality)
+       )
+kable(measures, booktabs = TRUE, digits = 5, escape = FALSE) %>%
+  kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = FALSE) 
