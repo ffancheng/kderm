@@ -42,7 +42,9 @@ dr_quality <- function(X, Y, K = 20, nn.idx, treetype = "kd", searchtype = "stan
   # auc_lnK_Rnx <- dimRed::quality(e, "AUC_lnK_R_NX")
   # suppressMessages(procrustes <- proc.measure(X, Y, K, nn.idx, treetype = treetype, searchtype = searchtype)$R)
   
+  ## UNCOMMENT IF PROCRUSTES MEASURE IS NEEDED
   # procrustes <- proc.measure(X, Y, K, nn.idx, treetype = treetype, searchtype = searchtype)$R_N # standerdized procrustes measure R_N, unstanderdized $R
+  
   # K_optim <- as.numeric(names(Qglobal))
   
   return(list(Q = Q, 

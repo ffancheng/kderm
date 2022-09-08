@@ -89,6 +89,7 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
          "Twin Peak" = {
            u <- 2 * co[, 1:2] - 1
            data <- twinPeaksMapping(u[,1], u[,2])
+           den <- 1/2 * den # change of coordinates from co to u
          }, 
          "S Curve" = {
            u <- cbind(1.5 * pi * (2 * co[,1] - 1), 2 * co[,2])
