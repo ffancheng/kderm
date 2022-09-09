@@ -36,7 +36,7 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
           "gaussian" = {
             n <- round(N/4)
             R <- matrix(c(.02, 0,
-                          0, .02), # variance-covariance matrix
+                          0, .02)*.5, # variance-covariance matrix
                         nrow = 2, ncol = 2)
             # mu <- matrix(#~mu1, ~mu2,
             #               c(7.5, 7.5,
@@ -79,21 +79,24 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
          "Swiss Roll" = {
            u <- (1.5 * pi) * (1 + 2 * co[, 1:2]) 
            data <- swissRollMapping(u[,1], u[,2])
+           co[, "den"] <- co[, "den"] / (3 * pi)
          }, 
          "semi-sphere" = {
            # u <- tibble(x = co[,1], y = co[,2]) %>% 
            #   mutate(x = 2 * pi * x, y = 2 * y - 1)
            u <- cbind(x = pi * co[,1], y = 2 * co[,2] - 1)
            data <- sphereMapping(u[,1], u[,2])
+           # density with change of coordinates
          }, 
          "Twin Peak" = {
            u <- 2 * co[, 1:2] - 1
            data <- twinPeaksMapping(u[,1], u[,2])
-           den <- 1/2 * den # change of coordinates from co to u
+           co[, "den"] <- co[, "den"] / 2 # change of coordinates from co to u
          }, 
          "S Curve" = {
            u <- cbind(1.5 * pi * (2 * co[,1] - 1), 2 * co[,2])
            data <- sCurveMapping(u[,1], u[,2])
+           # density with change of coordinates
          })
   
   colnames(data) <- c("x", "y", "z")
@@ -113,7 +116,7 @@ swissRollMapping <- function (x, y) { # U(1.5pi, 4.5pi)
 # semi-sphere mapping
 sphereMapping <- function (phi, psi) { # y~U(-1,1), x~U(0,pi)
   cbind(x = cos(phi) * sin(psi),
-        y =sin(phi) * sin(psi),
+        y = sin(phi) * sin(psi),
         z = cos(psi)
           )
   # cbind(x = x,   # x,y~U(-1,1)
