@@ -1,5 +1,9 @@
+# How to sample uniformly from 3-D manifolds (mapping function) and transform the density after change of coordinates
+
 library(scatterplot3d)
+## --------------------------------------------------------
 # 1. Sample uniformly from the unit disk
+## --------------------------------------------------------
 # The unit disk is given by the polar coordinates in the set [0,1] x [0,2pi)
 # How to sample the polar coordinates so that the resulting point distribution is uniform on the disk
 # Reference: Section 3.3 of https://www.cs.cornell.edu/courses/cs6630/2015fa/notes/pdf-transform.pdf
@@ -29,7 +33,11 @@ plot(x, y, asp = 1)
 # ks.test(cbind(x,y), "punif", 0, 1)
 
 
+## --------------------------------------------------------
 # 2. Sample uniformly from the sphere S^2
+## --------------------------------------------------------
+# (theta, phi) \in (0, pi) x [0, 2pi)
+# P_B(w(theta, phi)) = P_A(theta, phi) / sin(theta)
 # phi := 2*pi*e2; cos(theta) := 1 - 2*e1
 # x:=sqrt(1 - cos(theta)^2) * cos(phi); y:=sqrt(1 - cos(theta)^2) * sin(phi); z:=cos(theta)
 z <- 1 - 2 * e1
@@ -41,7 +49,9 @@ scatterplot3d(x, y, z,
               pch = 20)
 
 
-# 3. Sample uniformly from twin peaks
+## --------------------------------------------------------
+# 3. Sample from twin peaks
+## --------------------------------------------------------
 set.seed(1)
 mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[3] # only run [1] and [3]
 sr <- mldata(N = N, meta = "gaussian", mapping = mapping)
@@ -63,5 +73,4 @@ den_twinpeaks <- sr$den / sqrt(1 + (pi * cos(pi * u) * tan(3 * v)) ^ 2 + 9 * sin
 summary(den_twinpeaks)
 plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = den_twinpeaks, # colored with 3d density
         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
-
 
