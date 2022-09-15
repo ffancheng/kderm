@@ -36,7 +36,7 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
           "gaussian" = {
             n <- round(N/4)
             R <- matrix(c(.02, 0,
-                          0, .02)*.5, # variance-covariance matrix
+                          0, .02) * .5, # variance-covariance matrix
                         nrow = 2, ncol = 2)
             # mu <- matrix(#~mu1, ~mu2,
             #               c(7.5, 7.5,

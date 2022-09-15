@@ -87,20 +87,21 @@ vkde <- function(x, h = NULL, vh = NULL, r = NULL, gridsize = 20, xmin = apply(x
       hi <- vh[,,i]
       # z <- cbind(z, mvtnorm::dmvnorm(x = eval.points, mean = x[k,], sigma = hk))  # stack vector of length n
       bindex <- which(adj_matrix[i,] <= r) # only smooth over points within the bandwidth radius ## ADD AN ARGUMENT AND CHECK DIMENSION, NEW RADIUS
-      # hi <- hi / mean(vh[,,bindex]) ## ???
+      # hi <- hi / mean(vh[,,bindex]) ## NOT used
       for(j in bindex) {
         hj <- vh[,,j]
         z[i,j] <- 
-          # (det(hj) / det(hi)) ^ (-0.5) * # volume density function !!! (1)
-          # (det(hj) / det(hi)) ^ (0.5) * # (2)
-          # (det(hj) * det(hi)) ^ (-0.5) * # (3)
-          (det(hj) * det(hi)) ^ (0.5) * # (4)
+          (det(hi) / det(hj)) ^ (-0.5) * # volume density function !!! (1)
+          # (det(hi) / det(hj)) ^ (0.5) * # (2) reversed theta
+          # (det(hi) * det(hj)) ^ (-0.5) * # (3)
+          # (det(hi) * det(hj)) ^ (0.5) * # (4)
           (2 * pi) ^ (-d / 2) * r ^ (-d) * 
           exp( -0.5 / (r^2) * t(eval.points[i,] - eval.points[j,]) %*% solve(hi) %*% (eval.points[i,] - eval.points[j,]) ) / 
           (pnorm(1) - pnorm(-1)) # suppK = [0,1], scale to integral to 1
       }
     }
-    z <- colMeans(z, na.rm = TRUE)
+    # Density for y_i
+    z <- rowMeans(z, na.rm = TRUE) # !!! rowMeans for hi; colMeans for hj, change d_g accordingly
     
     f <- list(x = x, eval.points = eval.points, estimate = z, H = vh, r = r, gridded = FALSE)
   }
