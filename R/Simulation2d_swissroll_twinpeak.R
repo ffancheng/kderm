@@ -24,7 +24,7 @@ Jmisc::sourceAll(here::here("R/sources"))
 # set.seed(1)
 
 # data size
-N <- 2000
+N <- 1000
 p <- 2
 
 # # ----Swiss roll dataset with a sparse area------------------------

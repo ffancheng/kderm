@@ -1,6 +1,8 @@
 # How to sample uniformly from 3-D manifolds (mapping function) and transform the density after change of coordinates
-
+library(tidyverse)
 library(scatterplot3d)
+library(plotly)
+source("R/sources/mldata.R")
 ## --------------------------------------------------------
 # 1. Sample uniformly from the unit disk
 ## --------------------------------------------------------
