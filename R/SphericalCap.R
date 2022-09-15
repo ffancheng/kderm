@@ -213,6 +213,10 @@ fn[N,]
 rmetric[,,N]
 # adj_matrix[N,]
 
+
+
+
+
 ## --------------------------------------------------------
 # Metric embedding of p: locally isometric embedding
 # fn_metric = hn ^ (-1/2) %*% fn # WRONG
@@ -259,6 +263,9 @@ points(f_metric, col = "green")
 
 
 
+
+
+
 ## --------------------------------------------------------
 ## Check local coordinate change 
 # g_q = h_p ^ {-.5} %*% h_q %*% h_p ^ {-.5}
@@ -271,19 +278,15 @@ for(i in 1:N){
   bindex <- which(adj_matrix[i,] <= r)
   # theta[i] <- sqrt(rmetric_det[i])
   # theta[i] <- sqrt(rmetric_det[i]) ^ (-1)
-  theta[i] <- sqrt(mean(rmetric_det[bindex]) * rmetric_det[i] )
+  # theta[i] <- sqrt(mean(rmetric_det[bindex]) * rmetric_det[i] )
   # theta[i] <- sqrt(mean(rmetric_det[bindex]) / rmetric_det[i] ) ^ (-1)
-  # theta[i] <- sqrt( mean(rmetric_det[bindex]) / rmetric_det[i] ) # used in the paper, (\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} )^{1/2}
-  fn_dc[i,] <- fn[i,] * theta[i]
+  theta[i] <- sqrt( rmetric_det[i] / mean(rmetric_det[bindex]) ) # used in the paper, (\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} )^{1/2}
+  fn_dc[i,] <- fn[i,] * theta[i] ^ (-1)
 }
 par(mfrow=c(1,3))
 plot(rbind(y, c(0,0)), asp = 1, col = c(cc, "red"), xlim = c(-2, 2), ylim=c(-2, 2))
 plot(fn_dc, asp = 1, col = c(cc, "red"), xlim = c(-2, 2), ylim=c(-2, 2))
 plot(fn, asp = 1, col = c(cc, "red"), xlim = c(-2, 2), ylim=c(-2, 2))
-
-
-
-
 
 
 ## --------------------------------------------------------
@@ -317,7 +320,6 @@ f_dc <- fn_dc[cap_index,]
 # # $quality
 # # M_T       M_C      LCMC      Qnx         W_n       W_nu       Rnx
 # # 0.9991575 0.9993159 0.8638992 0.884391 0.001838109 0.00159078 0.8819724
-# 
 # dr_quality(f_log, f_ml, K = 20)
 # # $quality
 # # M_T       M_C      LCMC       Qnx         W_n        W_nu       Rnx
@@ -338,6 +340,9 @@ kable(measures, booktabs = TRUE, digits = 5, escape = FALSE) %>%
 
 
 
+
+
+
 ## --------------------------------------------------------
 # Matrix multiplication to compute the Riemannian matrix only around p=c(0,0,1)
 ## --------------------------------------------------------
@@ -345,6 +350,7 @@ kable(measures, booktabs = TRUE, digits = 5, escape = FALSE) %>%
 hp <- expm::sqrtm(solve(rmetric[,,N])) # h_N^(-.5)
 # all.equal(hp %*% hp, solve(rmetric[,,N]), tolerance = 1e-10)
 
+cap_index <- c(which(cc == "black"), N)
 # r <- 1
 fn_dc <- matrix(NA, N, 2)
 theta <- rep(NA, N)
