@@ -1,42 +1,32 @@
-## ----setup, include=FALSE-------------------------------------------------------
-# knitr::opts_chunk$set(echo = TRUE)
-
-
-## ----libraries, message=FALSE, echo=TRUE, results='hide'------------------------
-rm(list= ls())
+rm(list = ls())
 library(tidyverse)
 library(dimRed)
-# library(reticulate)
-# library(here)
 library(viridis)
 library(hdrcde)
 library(igraph)
 library(matrixcalc)
-# library(akima)
-# library(car)
 library(ggforce)
 library(ks)
 library(patchwork)
-# library(copula)
 library(plotly)
 library(kableExtra)
 Jmisc::sourceAll(here::here("R/sources"))
 
-# data size
-N <- 1000
+# Data size
+N <- 2000
 p <- 2
 
 ###--------------------------------------------------------
 ## Start from here! 
 ###--------------------------------------------------------
-set.seed(123)
+set.seed(1234)
 mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[3] # only run [1] and [3]
 sr <- mldata(N = N, meta = "gaussian", mapping = mapping)
 # sr <- mldata(N = N, meta = "uniform", mapping = mapping)
 swissroll <- sr$data %>% as.data.frame()
 preswissroll <- sr$metadata %>% as_tibble() %>% mutate(den = sr$den, label = c(rep(1:4, each = N / 4)))
 colnames(preswissroll) <- c("X1", "X2", "den", "label")
-plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den, # colored with 2d density
+plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = sr$den, # colored with 2d meta data density
         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
 summary(sr$den) # [0, 1]
 
@@ -67,13 +57,13 @@ y <- sr$metadata # given known embedding with known density
 # y <- NULL
 N <- nrow(x)
 s <- 2
-k <- 20
+k <- N - 1
 method <- "Isomap"
 annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
-searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+searchtype <- "priority" # change searchtype for radius search based on `radius`, or KNN search based on `k`
+# radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
 gridsize <- 20
 noutliers <- 20
@@ -90,7 +80,7 @@ Rn <- metric_meta$rmetric
 # ## ----ggellipse, include=FALSE, eval=FALSE---------------------------------------
 # plot_embedding(metric_meta) +
 #   labs(x = "ISO1", y = "ISO2")
-# plot_ellipse(metric_meta, add = F, ell.no = 50, ell.size = .1,
+# plot_ellipse(metric_meta, add = F, ell.no = 500, ell.size = .1,
 #              color = blues9[5], fill = blues9[5], alpha = 0.2)
 
 
@@ -104,11 +94,16 @@ summary(den_2dmanifold)
 plotmanifold <- preswissroll %>%
   as_tibble() %>%
   mutate(label = as.factor(label)) %>%
-  ggplot(aes(X1, X2, col = den_2dmanifold, shape = label)) +
+  ggplot(aes(X1, X2, col = den_2dmanifold # , shape = label
+             )) +
   geom_point() +
   scale_color_viridis(option = "B") +
-  labs(color = "Density", shape = "Kernels")
+  labs(color = "Density" # , shape = "Kernels"
+       )
 plotmanifold
+# plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = den_2dmanifold, # colored with 3d density
+#         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
+trueden <- den_2dmanifold # sr$den
 
 
 # 0. THE FOLLOWING ESTIMATION IS BASED ON THE META DATA
@@ -128,16 +123,14 @@ riem.scale <- 1 # h_hdr_meta
 # r <- .1
 r <- sqrt(median(apply(Rn, 3, det)))
 fmeta <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
-
-## ----hdroutliers----------------------------------------------------------------
 p_meta <- plot_outlier(x = metric_meta, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fmeta, ell.size = 0)
 
 
 # Rank correlation
 cormethod <- c("pearson", "kendall", "spearman")[3]
 trueden <- den_2dmanifold # sr$den
-# cor(trueden, p_meta$densities, method = cormethod)
-# cor(trueden, p_hdr_meta$densities, method = cormethod)
+cor(trueden, p_meta$densities, method = cormethod)
+cor(trueden, p_hdr_meta$densities, method = cormethod)
 mean((trueden - p_meta$densities) ^ 2)
 mean((trueden - p_hdr_meta$densities) ^ 2)
 # truerank <- rank(trueden) # top 10 are the 10 anomalies
@@ -150,7 +143,7 @@ f <- tibble(fxy = trueden, # true densities
 )
 # # Plot ranks instead of densities
 # uncomment when plotting ranks instead of densities
-f <- f %>% summarise_all(rank)
+# f <- f %>% summarise_all(rank)
 # cor(f$fxy_vkde, f$fxy, method = "spearman")
 # cor(f$fxy_hdr, f$fxy, method = "spearman")
 
@@ -173,22 +166,65 @@ pf_vkde + pf_hdr
 
 # Plotting
 outliers <- head(order(trueden), noutliers)
-p_den_meta <- plot_embedding(metric_meta) + 
-  geom_point(aes(col = trueden)) + 
-  scale_color_viridis(option = "inferno") +
-  labs(color = "Density") +
+# p_den_meta <- plot_embedding(metric_meta) + 
+#   geom_point(aes(col = trueden)) + 
+#   scale_color_viridis(option = "inferno") +
+#   labs(color = "Density") +
+#   ggplot2::annotate("text",
+#                     x = metric_meta$embedding[outliers, 1] + diff(range(metric_meta$embedding[,1])) / 50, 
+#                     y = metric_meta$embedding[outliers, 2] + diff(range(metric_meta$embedding[,2])) / 50,
+#                     label = outliers, col = "blue", cex = 2.5 ) 
+
+# Categorize density to 5 levels
+if(max(prob) > 50){ # Assume prob is coverage percentage
+  alpha <- (100 - prob) / 100
+} else {# prob is tail probability (for backward compatibility)
+  alpha <- prob
+}
+alpha <- sort(alpha)
+falpha <- quantile(trueden, alpha)
+region <- numeric(N) + 100
+for (i in seq_along(prob)) region[trueden > falpha[i]] <- 100 - prob[i]
+if (is.null(noutliers)) noutliers <- sum(region > max(prob))
+noutliers <- min(noutliers, N)
+
+# Construct region factor
+prob <- sort(unique(region[region < 100]), decreasing = TRUE)
+prob <- c(prob, 100)
+Region <- factor(region,
+                 levels = prob,
+                 labels = c(paste(head(prob, -1)), ">99")
+                 )
+# Sort data so the larger regions go first (other than outliers)
+rr <- region
+rr[region == 100] <- 0
+ord <- order(rr, decreasing = TRUE)
+den <- trueden[ord] # data is reordered by ord
+
+if (noutliers > 0) {
+  outlier_rank <- order(trueden[ord])  # order den$fxy as well to match the new data
+  outliers <- outlier_rank[seq_len(noutliers)] # take top noutliers labels for annotation
+}
+
+p_den_meta <- plot_embedding(metric_meta) +
+  ggplot2::geom_point(ggplot2::aes_string(col = "Region")) + 
+  ggplot2::scale_colour_manual(
+    name = "HDRs",
+    breaks = c(paste(head(sort(prob), -1)), ">99"),
+    values = c(RColorBrewer::brewer.pal(length(prob), "YlOrRd")[-1], "#000000")) + 
   ggplot2::annotate("text",
-                    x = metric_meta$embedding[outliers, 1] + diff(range(metric_meta$embedding[,1])) / 50, 
-                    y = metric_meta$embedding[outliers, 2] + diff(range(metric_meta$embedding[,2])) / 50,
-                    label = outliers, col = "blue", cex = 2.5 ) 
+                    x = fn[outliers, 1] + diff(range(fn[outliers, 1])) / 50, 
+                    y = fn[outliers, 2] + diff(range(fn[outliers, 2])) / 50,
+                    label = outliers, col = "blue", cex = 2.5
+  )
+
 (p_den_meta + p_meta$p + p_hdr_meta$p) + 
   coord_fixed() + 
   plot_annotation(title = "Left: True manifold; Middle: DC-KDE; Right: KDE", theme = theme(plot.title = element_text(hjust = 0.5)))
 # ggsave("~/Desktop/hdrplot_meta_metafn_density_compare_thetaform1.png", width = 12, height = 6)
 # ggsave(paste0("~/Desktop/hdrplot_swissroll_meta_metafn_density_compare_thetaform2_riem", r, "_", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 6)
 
-
-
+  
 
 
 
@@ -223,6 +259,8 @@ p_hdr_isomap$densities %>% summary()
 fisomap <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
 p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
 
+plot_ellipse(metric_isomap, add = F, ell.no = 500, ell.size = .1,
+             color = blues9[5], fill = blues9[5], alpha = 0.2)
 
 
 # LLE
@@ -384,7 +422,7 @@ p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutlie
 
 
 ## -------trueoutliers------------------------------------------------------------------------
-trueden <- den_2dmanifold  # preswissroll$den
+trueden <- den_2dmanifold  # NOT preswissroll$den
 outliers <- head(order(trueden), noutliers)
 p_den_isomap <- plot_embedding(metric_isomap) + 
   geom_point(aes(col = trueden)) + 
@@ -512,10 +550,7 @@ f
 cor(f$fxy_vkde, f$fxy, method = "spearman")
 cor(f$fxy_hdr, f$fxy, method = "spearman")
 # # Plot ranks instead of densities
-# uncomment when plotting ranks instead of densities
-# f <- f %>% summarise_all(rank)
-# cor(f$fxy_vkde, f$fxy, method = "spearman")
-# cor(f$fxy_hdr, f$fxy, method = "spearman")
+f <- f %>% summarise_all(rank)
 
 pf_vkde <- f %>% 
   ggplot(aes(x = fxy, y = fxy_vkde, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
@@ -673,9 +708,14 @@ prank_isomap <- (
   # (pf_vkde + pf_hdr ) + # + ylim(0, max(f[,2:3]))
   plot_layout(guides = 'collect') & 
   theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
-
-ggsave(paste0("~/Downloads/", mapping, "_density_comparison_isomapvs4ml_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), "_rank.png"), prank_isomap, width = 8, height = 10, dpi = 300)
-
-
+prank_isomap
+# ggsave(paste0("~/Downloads/", mapping, "_density_comparison_isomapvs4ml_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), "_rank.png"), prank_isomap, width = 8, height = 10, dpi = 300)
 
 
+
+
+# TODO:
+# Spec and sensitivity for correctly categorized outliers, over a small area in the top left
+# Change plot of true density colors to 5 levels
+# Table of 
+# 
