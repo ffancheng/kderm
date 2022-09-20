@@ -6,7 +6,7 @@
 #' "copula" for Clayton copula, or "gaussian" for Gaussian mixture from four kernels.
 #' @param mapping 3-D Mapping type for the meta data. 
 #'
-#' @return List of six components: 3-D mapping data, 2-D meta data with true densities.
+#' @return A list of four components: 3-D mapping data, 2-D meta data with its densities.
 #' 
 #' @export
 #'
@@ -36,7 +36,7 @@ mldata <- function(N = 2000, p = 2, meta = c("uniform", "copula", "gaussian"),
           "gaussian" = {
             n <- round(N/4)
             R <- matrix(c(.02, 0,
-                          0, .02) * .5, # variance-covariance matrix
+                          0, .02) * .8, # variance-covariance matrix
                         nrow = 2, ncol = 2)
             # mu <- matrix(#~mu1, ~mu2,
             #               c(7.5, 7.5,

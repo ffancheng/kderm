@@ -13,7 +13,7 @@ library(kableExtra)
 Jmisc::sourceAll(here::here("R/sources"))
 
 # Data size
-N <- 2000
+N <- 1000
 p <- 2
 
 ###--------------------------------------------------------
@@ -57,13 +57,13 @@ y <- sr$metadata # given known embedding with known density
 # y <- NULL
 N <- nrow(x)
 s <- 2
-k <- N - 1
+k <- N / 20
 method <- "Isomap"
 annmethod <- "kdtree"
 distance <- "euclidean"
 treetype <- "kd"
 searchtype <- "priority" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-# radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
 gridsize <- 20
 noutliers <- 20
@@ -121,7 +121,7 @@ adj_matrix <- metric_meta$adj_matrix
 opt.method <- c("AMISE", "MEAN", "SCALED")[3] # 3 ONLY FOR NOW, no scaling for Rn
 riem.scale <- 1 # h_hdr_meta
 # r <- .1
-r <- sqrt(median(apply(Rn, 3, det)))
+r <- sqrt(mean(apply(Rn, 3, det)))
 fmeta <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
 p_meta <- plot_outlier(x = metric_meta, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fmeta, ell.size = 0)
 
@@ -143,7 +143,7 @@ f <- tibble(fxy = trueden, # true densities
 )
 # # Plot ranks instead of densities
 # uncomment when plotting ranks instead of densities
-# f <- f %>% summarise_all(rank)
+f <- f %>% summarise_all(rank)
 # cor(f$fxy_vkde, f$fxy, method = "spearman")
 # cor(f$fxy_hdr, f$fxy, method = "spearman")
 
@@ -165,64 +165,72 @@ pf_vkde + pf_hdr
 
 
 # Plotting
-outliers <- head(order(trueden), noutliers)
-# p_den_meta <- plot_embedding(metric_meta) + 
-#   geom_point(aes(col = trueden)) + 
+trueoutliers <- head(order(trueden), noutliers)
+# p_den_meta <- plot_embedding(metric_meta) +
+#   geom_point(aes(col = trueden)) +
 #   scale_color_viridis(option = "inferno") +
 #   labs(color = "Density") +
 #   ggplot2::annotate("text",
-#                     x = metric_meta$embedding[outliers, 1] + diff(range(metric_meta$embedding[,1])) / 50, 
-#                     y = metric_meta$embedding[outliers, 2] + diff(range(metric_meta$embedding[,2])) / 50,
-#                     label = outliers, col = "blue", cex = 2.5 ) 
+#                     x = metric_meta$embedding[trueoutliers, 1] + diff(range(metric_meta$embedding[,1])) / 50,
+#                     y = metric_meta$embedding[trueoutliers, 2] + diff(range(metric_meta$embedding[,2])) / 50,
+#                     label = trueoutliers, col = "blue", cex = 2.5 )
 
-# Categorize density to 5 levels
-if(max(prob) > 50){ # Assume prob is coverage percentage
-  alpha <- (100 - prob) / 100
-} else {# prob is tail probability (for backward compatibility)
-  alpha <- prob
-}
-alpha <- sort(alpha)
-falpha <- quantile(trueden, alpha)
-region <- numeric(N) + 100
-for (i in seq_along(prob)) region[trueden > falpha[i]] <- 100 - prob[i]
-if (is.null(noutliers)) noutliers <- sum(region > max(prob))
-noutliers <- min(noutliers, N)
-
-# Construct region factor
-prob <- sort(unique(region[region < 100]), decreasing = TRUE)
-prob <- c(prob, 100)
-Region <- factor(region,
-                 levels = prob,
-                 labels = c(paste(head(prob, -1)), ">99")
-                 )
-# Sort data so the larger regions go first (other than outliers)
-rr <- region
-rr[region == 100] <- 0
-ord <- order(rr, decreasing = TRUE)
-den <- trueden[ord] # data is reordered by ord
-
-if (noutliers > 0) {
-  outlier_rank <- order(trueden[ord])  # order den$fxy as well to match the new data
-  outliers <- outlier_rank[seq_len(noutliers)] # take top noutliers labels for annotation
-}
-
-p_den_meta <- plot_embedding(metric_meta) +
-  ggplot2::geom_point(ggplot2::aes_string(col = "Region")) + 
-  ggplot2::scale_colour_manual(
-    name = "HDRs",
-    breaks = c(paste(head(sort(prob), -1)), ">99"),
-    values = c(RColorBrewer::brewer.pal(length(prob), "YlOrRd")[-1], "#000000")) + 
-  ggplot2::annotate("text",
-                    x = fn[outliers, 1] + diff(range(fn[outliers, 1])) / 50, 
-                    y = fn[outliers, 2] + diff(range(fn[outliers, 2])) / 50,
-                    label = outliers, col = "blue", cex = 2.5
+# Categorize density to 5 levels prob
+plot_embedding_color_levels <- function(x = trueden, N, prob = c(1, 50, 95, 99), noutliers, fn = NULL) {
+  if(max(prob) > 50){ # Assume prob is coverage percentage
+    alpha <- (100 - prob) / 100
+  } else {# prob is tail probability (for backward compatibility)
+    alpha <- prob
+  }
+  alpha <- sort(alpha)
+  falpha <- quantile(x, alpha)
+  region <- numeric(N) + 100
+  for (i in seq_along(prob)) region[x > falpha[i]] <- 100 - prob[i]
+  if (is.null(noutliers)) noutliers <- sum(region > max(prob))
+  noutliers <- min(noutliers, N)
+  
+  # Construct region factor
+  prob <- sort(unique(region[region < 100]), decreasing = TRUE)
+  prob <- c(prob, 100)
+  Region <- factor(region,
+                   levels = prob,
+                   labels = c(paste(head(prob, -1)), ">99")
   )
+  # Sort data so the larger regions go first (other than outliers)
+  rr <- region
+  rr[region == 100] <- 0
+  ord <- order(rr, decreasing = TRUE)
+  fn <- fn[ord,] # data is reordered by ord
+  
+  if (noutliers > 0) {
+    outlier_rank <- order(x[ord])  # order den$fxy as well to match the new data
+    outliers <- outlier_rank[seq_len(noutliers)] # take top noutliers labels for annotation
+  }
+  
+  p <- fn %>% 
+    as_tibble() %>% 
+    ggplot(aes(x = E1, y = E2)) + 
+    ggplot2::geom_point(ggplot2::aes_string(col = "Region")) + 
+    ggplot2::scale_colour_manual(
+      name = "HDRs",
+      breaks = c(paste(head(sort(prob), -1)), ">99"),
+      values = c(RColorBrewer::brewer.pal(length(prob), "YlOrRd")[-1], "#000000")) + 
+    ggplot2::annotate("text",
+                      x = fn[outliers, 1] + diff(range(fn[outliers, 1])) / 50, 
+                      y = fn[outliers, 2] + diff(range(fn[outliers, 2])) / 50,
+                      label = seq_len(N)[ord[outliers]], col = "blue", cex = 2.5
+    )
+  
+  return(p)
+}
+
+p_den_meta <- plot_embedding_color_levels(x = trueden, N, prob, noutliers, fn = metric_meta$embedding)
 
 (p_den_meta + p_meta$p + p_hdr_meta$p) + 
   coord_fixed() + 
-  plot_annotation(title = "Left: True manifold; Middle: DC-KDE; Right: KDE", theme = theme(plot.title = element_text(hjust = 0.5)))
-# ggsave("~/Desktop/hdrplot_meta_metafn_density_compare_thetaform1.png", width = 12, height = 6)
-# ggsave(paste0("~/Desktop/hdrplot_swissroll_meta_metafn_density_compare_thetaform2_riem", r, "_", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 6)
+  plot_annotation(title = "Left: True manifold density; Middle: DC-KDE; Right: KDE", theme = theme(plot.title = element_text(hjust = 0.5)))
+# ggsave("~/Downloads/hdrplot_meta_metafn_density_compare.png", width = 12, height = 6)
+# ggsave(paste0("~/Downloads/hdrplot_swissroll_meta_metafn_density_compare_thetaform2_riem", r, "_", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 6)
 
   
 
@@ -233,9 +241,10 @@ p_den_meta <- plot_embedding(metric_meta) +
 ## -------------------------------------------------------------------------------
 x <- train
 y <- NULL
-method <- "annIsomap"
+searchtype <- "radius"
+method <- "Isomap"
 metric_isomap <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
-                          # annmethod = annmethod, distance = distance, treetype = treetype, 
+                          annmethod = annmethod, distance = distance, treetype = treetype,
                           searchtype = searchtype
                           )
 fn <- metric_isomap$embedding
@@ -246,7 +255,7 @@ adj_matrix <- metric_isomap$adj_matrix
 # KDE with KDE
 E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
 E2 <- fn[,2]
-prob <- c(1, 50, 95, 99) # c(1, 10, 50, 95, 99) #
+# prob <- c(1, 50, 95, 99) # c(1, 10, 50, 95, 99) #
 p_hdr_isomap <- hdrscatterplot_new(E1, E2, kde.package = "ks", levels = prob, noutliers = noutliers, label = NULL)
 h_hdr_isomap <- p_hdr_isomap$den$den$h # same as ks::Hpi.diag(fn)
 p_hdr_isomap$densities %>% summary()
@@ -259,15 +268,19 @@ p_hdr_isomap$densities %>% summary()
 fisomap <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
 p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
 
-plot_ellipse(metric_isomap, add = F, ell.no = 500, ell.size = .1,
-             color = blues9[5], fill = blues9[5], alpha = 0.2)
+# plot_ellipse(metric_isomap, add = F, ell.no = 500, ell.size = .1,
+#              color = blues9[5], fill = blues9[5], alpha = 0.2)
+
+p_den_isomap <- plot_embedding_color_levels(p = plot_embedding(metric_isomap), x = trueden, N, prob, noutliers, fn = metric_isomap$embedding)
+(p_den_isomap + p_isomap$p + p_hdr_isomap$p)+ 
+  coord_fixed()
 
 
 # LLE
 x <- train
 method <- "annLLE"
 metric_lle <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
-                                # annmethod = annmethod, distance = distance, treetype = treetype, 
+                                annmethod = annmethod, distance = distance, treetype = treetype,
                                 searchtype = searchtype
 )
 fn <- metric_lle$embedding
@@ -320,7 +333,7 @@ p_hdr_lle <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutlier
 x <- train
 method <- "annLaplacianEigenmaps"
 metric_le <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
-                      # annmethod = annmethod, distance = distance, treetype = treetype, 
+                      annmethod = annmethod, distance = distance, treetype = treetype,
                       searchtype = searchtype
 )
 fn <- metric_le$embedding
@@ -423,47 +436,53 @@ p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutlie
 
 ## -------trueoutliers------------------------------------------------------------------------
 trueden <- den_2dmanifold  # NOT preswissroll$den
-outliers <- head(order(trueden), noutliers)
-p_den_isomap <- plot_embedding(metric_isomap) + 
-  geom_point(aes(col = trueden)) + 
-  scale_color_viridis(option = "inferno") +
-  labs(color = "Density") +
-  ggplot2::annotate("text",
-                    x = metric_isomap$embedding[outliers, 1] + diff(range(metric_isomap$embedding[,1])) / 50, 
-                    y = metric_isomap$embedding[outliers, 2] + diff(range(metric_isomap$embedding[,2])) / 50,
-                    label = outliers, col = "blue", cex = 2.5 ) 
-p_den_lle <- plot_embedding(metric_lle) + 
-  geom_point(aes(col = trueden))  + 
-  scale_color_viridis(option = "inferno") +
-  labs(color = "Density") +
-  ggplot2::annotate("text",
-                    x = metric_lle$embedding[outliers, 1] + diff(range(metric_lle$embedding[,1])) / 50, 
-                    y = metric_lle$embedding[outliers, 2] + diff(range(metric_lle$embedding[,2])) / 50,
-                    label = outliers, col = "blue", cex = 2.5 ) 
-p_den_le <- plot_embedding(metric_le) + 
-  geom_point(aes(col = trueden)) + 
-  scale_color_viridis(option = "inferno") +
-  labs(color = "Density")  +
-  ggplot2::annotate("text",
-                    x = metric_le$embedding[outliers, 1] + diff(range(metric_le$embedding[,1])) / 50, 
-                    y = metric_le$embedding[outliers, 2] + diff(range(metric_le$embedding[,2])) / 50,
-                    label = outliers, col = "blue", cex = 2.5 ) 
-p_den_tsne <- plot_embedding(metric_tsne) + 
-  geom_point(aes(col = trueden)) + 
-  scale_color_viridis(option = "inferno") +
-  labs(color = "Density") +
-  ggplot2::annotate("text",
-                    x = metric_tsne$embedding[outliers, 1] + diff(range(metric_tsne$embedding[,1])) / 50, 
-                    y = metric_tsne$embedding[outliers, 2] + diff(range(metric_tsne$embedding[,2])) / 50,
-                    label = outliers, col = "blue", cex = 2.5 ) 
-p_den_umap <- plot_embedding(metric_umap) + 
-  geom_point(aes(col = trueden)) + 
-  scale_color_viridis(option = "inferno") +
-  labs(color = "Density") +
-  ggplot2::annotate("text",
-                    x = metric_umap$embedding[outliers, 1] + diff(range(metric_umap$embedding[,1])) / 50, 
-                    y = metric_umap$embedding[outliers, 2] + diff(range(metric_umap$embedding[,2])) / 50,
-                    label = outliers, col = "blue", cex = 2.5 )  
+trueoutliers <- head(order(trueden), noutliers)
+p_den_isomap <- plot_embedding_color_levels(p = plot_embedding(metric_isomap), x = trueden, N, prob, noutliers, fn = metric_isomap$embedding)
+p_den_lle <- plot_embedding_color_levels(p = plot_embedding(metric_lle), x = trueden, N, prob, noutliers, fn = metric_lle$embedding)
+p_den_le <- plot_embedding_color_levels(p = plot_embedding(metric_le), x = trueden, N, prob, noutliers, fn = metric_le$embedding)
+p_den_tsne <- plot_embedding_color_levels(p = plot_embedding(metric_tsne), x = trueden, N, prob, noutliers, fn = metric_tsne$embedding)
+p_den_umap <- plot_embedding_color_levels(p = plot_embedding(metric_umap), x = trueden, N, prob, noutliers, fn = metric_umap$embedding)
+
+# p_den_isomap <- plot_embedding(metric_isomap) + 
+#   geom_point(aes(col = trueden)) + 
+#   scale_color_viridis(option = "inferno") +
+#   labs(color = "Density") +
+#   ggplot2::annotate("text",
+#                     x = metric_isomap$embedding[outliers, 1] + diff(range(metric_isomap$embedding[,1])) / 50, 
+#                     y = metric_isomap$embedding[outliers, 2] + diff(range(metric_isomap$embedding[,2])) / 50,
+#                     label = outliers, col = "blue", cex = 2.5 ) 
+# p_den_lle <- plot_embedding(metric_lle) + 
+#   geom_point(aes(col = trueden))  + 
+#   scale_color_viridis(option = "inferno") +
+#   labs(color = "Density") +
+#   ggplot2::annotate("text",
+#                     x = metric_lle$embedding[outliers, 1] + diff(range(metric_lle$embedding[,1])) / 50, 
+#                     y = metric_lle$embedding[outliers, 2] + diff(range(metric_lle$embedding[,2])) / 50,
+#                     label = outliers, col = "blue", cex = 2.5 ) 
+# p_den_le <- plot_embedding(metric_le) + 
+#   geom_point(aes(col = trueden)) + 
+#   scale_color_viridis(option = "inferno") +
+#   labs(color = "Density")  +
+#   ggplot2::annotate("text",
+#                     x = metric_le$embedding[outliers, 1] + diff(range(metric_le$embedding[,1])) / 50, 
+#                     y = metric_le$embedding[outliers, 2] + diff(range(metric_le$embedding[,2])) / 50,
+#                     label = outliers, col = "blue", cex = 2.5 ) 
+# p_den_tsne <- plot_embedding(metric_tsne) + 
+#   geom_point(aes(col = trueden)) + 
+#   scale_color_viridis(option = "inferno") +
+#   labs(color = "Density") +
+#   ggplot2::annotate("text",
+#                     x = metric_tsne$embedding[outliers, 1] + diff(range(metric_tsne$embedding[,1])) / 50, 
+#                     y = metric_tsne$embedding[outliers, 2] + diff(range(metric_tsne$embedding[,2])) / 50,
+#                     label = outliers, col = "blue", cex = 2.5 ) 
+# p_den_umap <- plot_embedding(metric_umap) + 
+#   geom_point(aes(col = trueden)) + 
+#   scale_color_viridis(option = "inferno") +
+#   labs(color = "Density") +
+#   ggplot2::annotate("text",
+#                     x = metric_umap$embedding[outliers, 1] + diff(range(metric_umap$embedding[,1])) / 50, 
+#                     y = metric_umap$embedding[outliers, 2] + diff(range(metric_umap$embedding[,2])) / 50,
+#                     label = outliers, col = "blue", cex = 2.5 )  
 
 
 ## FINAL plot to use
@@ -507,7 +526,7 @@ p <- (
         legend.box = "horizontal",
         plot.title = element_text(hjust = 0.5, face = "bold"))
 p
-# ggsave(paste0("~/Downloads/", mapping, "_5levels_outliers_comparison_5ml_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), p, width = 8, height = 10, dpi = 300)
+ggsave(paste0("~/Downloads/", mapping, N, "_5levels_outliers_comparison_5ml_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), p, width = 8, height = 10, dpi = 300)
 
 # ISOMAP only for slides
 ((p_den_isomap + labs(x = "", y = "ISOMAP", title = "True density") ) |
@@ -517,7 +536,7 @@ p
   theme(legend.direction = "horizontal", legend.position = "bottom", 
         legend.box = "horizontal",
         plot.title = element_text(hjust = 0.5, face = "bold"))
-# ggsave(paste0("~/Downloads/", mapping, "_5levels_outliers_comparison_isomap_3cases_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
+ggsave(paste0("~/Downloads/", mapping, N,"_5levels_outliers_comparison_isomap_3cases_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
 
 
 
@@ -621,7 +640,7 @@ result <-
 gt <- patchwork::patchworkGrob(result)
 gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
 
-# ggsave(paste0("~/Downloads/", mapping, "_density_comparison_5ml_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), "_rank.png"), gt, width = 8, height = 10, dpi = 300)
+ggsave(paste0("~/Downloads/", mapping, N,"_density_comparison_5ml_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), "_rank.png"), gt, width = 8, height = 10, dpi = 300)
 
 
 
@@ -645,7 +664,7 @@ cors %>%
   kable_styling(latex_options = "scale_down") %>%
   kable_paper(full_width = TRUE)
 
-# save(cors, file = paste0("~/Downloads/CorrelationTable_", mapping, "_5ml_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".rda"))
+save(cors, file = paste0("~/Downloads/CorrelationTable_", mapping, N,"_5ml_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".rda"))
 
 
 
@@ -709,7 +728,7 @@ prank_isomap <- (
   plot_layout(guides = 'collect') & 
   theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
 prank_isomap
-# ggsave(paste0("~/Downloads/", mapping, "_density_comparison_isomapvs4ml_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), "_rank.png"), prank_isomap, width = 8, height = 10, dpi = 300)
+ggsave(paste0("~/Downloads/", mapping, N,"_density_comparison_isomapvs4ml_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), "_rank.png"), prank_isomap, width = 8, height = 10, dpi = 300)
 
 
 
