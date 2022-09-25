@@ -13,7 +13,7 @@ library(kableExtra)
 Jmisc::sourceAll(here::here("R/sources"))
 
 # Data size
-N <- 1000
+N <- 2000
 p <- 2
 
 ###--------------------------------------------------------
@@ -111,7 +111,7 @@ trueden <- den_2dmanifold # sr$den
 # KDE with KDE
 E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
 E2 <- fn[,2]
-prob <- c(1, 50, 95, 99) # c(1, 10, 50, 95, 99) #
+prob <- c(1, 10, 50, 95, 99) #
 p_hdr_meta <- hdrscatterplot_new(E1, E2, kde.package = "ks", levels = prob, noutliers = noutliers, label = NULL)
 h_hdr_meta <- p_hdr_meta$den$den$h # same as ks::Hpi.diag(fn)
 p_hdr_meta$densities %>% summary()
@@ -120,15 +120,15 @@ p_hdr_meta$densities %>% summary()
 adj_matrix <- metric_meta$adj_matrix
 opt.method <- c("AMISE", "MEAN", "SCALED")[3] # 3 ONLY FOR NOW, no scaling for Rn
 riem.scale <- 1 # h_hdr_meta
-# r <- .1
-r <- sqrt(mean(apply(Rn, 3, det)))
+r <- .5 # 0.829 vs 0.773
+# r <- sqrt(mean(apply(Rn, 3, det)))
 fmeta <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
 p_meta <- plot_outlier(x = metric_meta, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fmeta, ell.size = 0)
-
+p_meta$densities %>% summary()
 
 # Rank correlation
 cormethod <- c("pearson", "kendall", "spearman")[3]
-trueden <- den_2dmanifold # sr$den
+# trueden <- den_2dmanifold # sr$den
 cor(trueden, p_meta$densities, method = cormethod)
 cor(trueden, p_hdr_meta$densities, method = cormethod)
 mean((trueden - p_meta$densities) ^ 2)
@@ -182,9 +182,9 @@ plot_embedding_color_levels <- function(x = trueden, N, prob = c(1, 50, 95, 99),
   } else {# prob is tail probability (for backward compatibility)
     alpha <- prob
   }
-  alpha <- sort(alpha)
-  falpha <- quantile(x, alpha)
-  region <- numeric(N) + 100
+  alpha <- sort(alpha) # 0.99 0.50 0.05 0.01
+  falpha <- quantile(x, alpha) # increasing
+  region <- numeric(N) + 100 # rep(100, N)
   for (i in seq_along(prob)) region[x > falpha[i]] <- 100 - prob[i]
   if (is.null(noutliers)) noutliers <- sum(region > max(prob))
   noutliers <- min(noutliers, N)
@@ -194,19 +194,21 @@ plot_embedding_color_levels <- function(x = trueden, N, prob = c(1, 50, 95, 99),
   prob <- c(prob, 100)
   Region <- factor(region,
                    levels = prob,
-                   labels = c(paste(head(prob, -1)), ">99")
+                   labels = c(paste(head(prob, -1)), ">99") # "99"  "50"  "5"   "1"   ">99"
   )
   # Sort data so the larger regions go first (other than outliers)
-  rr <- region
-  rr[region == 100] <- 0
-  ord <- order(rr, decreasing = TRUE)
-  fn <- fn[ord,] # data is reordered by ord
+  # rr <- region
+  # rr[region == 100] <- 0
+  # ord <- order(rr, decreasing = TRUE)
+  ord <- order(x, decreasing = T)  # outliers at the end
+  # fn_dec <- fn[ord,] # data is reordered by ord
+  outliers <- tail(ord, noutliers)
   
-  if (noutliers > 0) {
-    outlier_rank <- order(x[ord])  # order den$fxy as well to match the new data
-    outliers <- outlier_rank[seq_len(noutliers)] # take top noutliers labels for annotation
-  }
-  
+  # if (noutliers > 0) {
+  #   outlier_rank <- order(x[ord])  # order density as well to match the new data
+  #   outliers <- outlier_rank[seq_len(noutliers)] # take top noutliers labels for annotation
+  # }
+
   p <- fn %>% 
     as_tibble() %>% 
     ggplot(aes(x = E1, y = E2)) + 
@@ -218,8 +220,9 @@ plot_embedding_color_levels <- function(x = trueden, N, prob = c(1, 50, 95, 99),
     ggplot2::annotate("text",
                       x = fn[outliers, 1] + diff(range(fn[outliers, 1])) / 50, 
                       y = fn[outliers, 2] + diff(range(fn[outliers, 2])) / 50,
-                      label = seq_len(N)[ord[outliers]], col = "blue", cex = 2.5
-    )
+                      label = outliers, # seq_len(N)[outliers], 
+                      col = "blue", cex = 2.5
+                      )
   
   return(p)
 }
@@ -271,8 +274,8 @@ p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, ri
 # plot_ellipse(metric_isomap, add = F, ell.no = 500, ell.size = .1,
 #              color = blues9[5], fill = blues9[5], alpha = 0.2)
 
-p_den_isomap <- plot_embedding_color_levels(p = plot_embedding(metric_isomap), x = trueden, N, prob, noutliers, fn = metric_isomap$embedding)
-(p_den_isomap + p_isomap$p + p_hdr_isomap$p)+ 
+p_den_isomap <- plot_embedding_color_levels(x = trueden, N, prob, noutliers, fn = metric_isomap$embedding)
+(p_den_isomap + p_isomap$p + p_hdr_isomap$p) + 
   coord_fixed()
 
 
@@ -437,11 +440,11 @@ p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutlie
 ## -------trueoutliers------------------------------------------------------------------------
 trueden <- den_2dmanifold  # NOT preswissroll$den
 trueoutliers <- head(order(trueden), noutliers)
-p_den_isomap <- plot_embedding_color_levels(p = plot_embedding(metric_isomap), x = trueden, N, prob, noutliers, fn = metric_isomap$embedding)
-p_den_lle <- plot_embedding_color_levels(p = plot_embedding(metric_lle), x = trueden, N, prob, noutliers, fn = metric_lle$embedding)
-p_den_le <- plot_embedding_color_levels(p = plot_embedding(metric_le), x = trueden, N, prob, noutliers, fn = metric_le$embedding)
-p_den_tsne <- plot_embedding_color_levels(p = plot_embedding(metric_tsne), x = trueden, N, prob, noutliers, fn = metric_tsne$embedding)
-p_den_umap <- plot_embedding_color_levels(p = plot_embedding(metric_umap), x = trueden, N, prob, noutliers, fn = metric_umap$embedding)
+p_den_isomap <- plot_embedding_color_levels(x = trueden, N, prob, noutliers, fn = metric_isomap$embedding)
+p_den_lle <- plot_embedding_color_levels(x = trueden, N, prob, noutliers, fn = metric_lle$embedding)
+p_den_le <- plot_embedding_color_levels(x = trueden, N, prob, noutliers, fn = metric_le$embedding)
+p_den_tsne <- plot_embedding_color_levels(x = trueden, N, prob, noutliers, fn = metric_tsne$embedding)
+p_den_umap <- plot_embedding_color_levels(x = trueden, N, prob, noutliers, fn = metric_umap$embedding)
 
 # p_den_isomap <- plot_embedding(metric_isomap) + 
 #   geom_point(aes(col = trueden)) + 
@@ -526,7 +529,7 @@ p <- (
         legend.box = "horizontal",
         plot.title = element_text(hjust = 0.5, face = "bold"))
 p
-ggsave(paste0("~/Downloads/", mapping, N, "_5levels_outliers_comparison_5ml_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), p, width = 8, height = 10, dpi = 300)
+# ggsave(paste0("~/Downloads/", mapping, N, "_5levels_outliers_comparison_5ml_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), p, width = 8, height = 10, dpi = 300)
 
 # ISOMAP only for slides
 ((p_den_isomap + labs(x = "", y = "ISOMAP", title = "True density") ) |
@@ -536,7 +539,7 @@ ggsave(paste0("~/Downloads/", mapping, N, "_5levels_outliers_comparison_5ml_", o
   theme(legend.direction = "horizontal", legend.position = "bottom", 
         legend.box = "horizontal",
         plot.title = element_text(hjust = 0.5, face = "bold"))
-ggsave(paste0("~/Downloads/", mapping, N,"_5levels_outliers_comparison_isomap_3cases_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
+# ggsave(paste0("~/Downloads/", mapping, N,"_5levels_outliers_comparison_isomap_3cases_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
 
 
 
@@ -590,7 +593,7 @@ pf_vkde_lle <- f %>%
 pf_hdr_lle <- f %>%
   ggplot(aes(x = fxy, y = fxy_hdr_lle, col = factor(preswissroll$label), shape = factor(preswissroll$label))) +
   geom_point() +
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("DC-KDE correlation", round(cor(f$fxy_hdr_lle, f$fxy, method = "spearman"), 3)) ) +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("KDE correlation", round(cor(f$fxy_hdr_lle, f$fxy, method = "spearman"), 3)) ) +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr_lle)), n.breaks = 7)
 
 pf_vkde_le <- f %>%
@@ -601,7 +604,7 @@ pf_vkde_le <- f %>%
 pf_hdr_le <- f %>%
   ggplot(aes(x = fxy, y = fxy_hdr_le, col = factor(preswissroll$label), shape = factor(preswissroll$label))) +
   geom_point() +
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("DC-KDE correlation", round(cor(f$fxy_hdr_le, f$fxy, method = "spearman"), 3)) ) +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("KDE correlation", round(cor(f$fxy_hdr_le, f$fxy, method = "spearman"), 3)) ) +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr_le)), n.breaks = 7)
 
 pf_vkde_tsne <- f %>%
@@ -612,7 +615,7 @@ pf_vkde_tsne <- f %>%
 pf_hdr_tsne <- f %>%
   ggplot(aes(x = fxy, y = fxy_hdr_tsne, col = factor(preswissroll$label), shape = factor(preswissroll$label))) +
   geom_point() +
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("DC-KDE correlation", round(cor(f$fxy_hdr_tsne, f$fxy, method = "spearman"), 3)) ) +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("KDE correlation", round(cor(f$fxy_hdr_tsne, f$fxy, method = "spearman"), 3)) ) +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr_tsne)), n.breaks = 7)
 
 pf_vkde_umap <- f %>%
@@ -623,7 +626,7 @@ pf_vkde_umap <- f %>%
 pf_hdr_umap <- f %>%
   ggplot(aes(x = fxy, y = fxy_hdr_umap, col = factor(preswissroll$label), shape = factor(preswissroll$label))) +
   geom_point() +
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("DC-KDE correlation", round(cor(f$fxy_hdr_umap, f$fxy, method = "spearman"), 3)) ) +
+  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("KDE correlation", round(cor(f$fxy_hdr_umap, f$fxy, method = "spearman"), 3)) ) +
   scale_y_continuous(limits = c(0, max(f$fxy_hdr_umap)), n.breaks = 7)
 
 
@@ -664,7 +667,7 @@ cors %>%
   kable_styling(latex_options = "scale_down") %>%
   kable_paper(full_width = TRUE)
 
-save(cors, file = paste0("~/Downloads/CorrelationTable_", mapping, N,"_5ml_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".rda"))
+# save(cors, file = paste0("~/Downloads/CorrelationTable_", mapping, N,"_5ml_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".rda"))
 
 
 
