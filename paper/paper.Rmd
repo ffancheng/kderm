@@ -233,16 +233,16 @@ For two points $\pmb{p},\pmb{q} \in M$, the geodesic distance between $\pmb{p}$ 
 The geodesic distance is intrinsic, which means it is a coordinate-independent quantity. The Riemannian metric functions as the correction term for different coordinates of manifold learning embedding. 
 By using the first-order distance estimator, $\hat{d}_g(\pmb{p}, \pmb{y}_i)$ serves as a good approximation of the true geodesic distance $d_g$ with the distortion corrected at each embedding point $\pmb{y}_i$. Compared with the graph distance, the shortest path between point in the neighborhood graph $G$, our proposed $\hat{d}_g$ is better because we use the same graph $G$ for all manifold learning embeddings but the distances between different nodes in $G$ might not be the same due to the distortion.
 
-As pointed out by @Perrault-Joncas2013-pq, the naive distance $\|\pmb{p}-\pmb{q}\|$ underestimates $d_g$, and the graph shortest distance $d_G$ overestimates $d_g$ by the triangle inequality. By using only the first-order correction in $\hat{d}_g$, our estimator is also affected by the estimated Riemannian metric. In order to correct for the estimation error in $\pmb{H}(\pmb{y}_i)$, we further divide the density estimator in \@ref(eq:denestimator) by a constant term $C$ so that the integral of the kernel is equal to 1. The constant term in $1$-d is given by the *area under the curve (AUC)*, and can be named as the *volume between the surface (VBS)* in higher dimension. We use the volume estimator in Section 6.4 of @Perrault-Joncas2013-pq to sum over all embedding points $\pmb{y}_i$ and the estimated point $\pmb{p}$ so that for $\pmb{Z} = \{\pmb{y}_1, \dots, \pmb{y}_N, \pmb{p}\}$, we have
-\begin{equation}
-\label{eq:vbs}
-C(\pmb{p}) = \sum_{i=1}^{N+1} \sqrt{\det(\pmb{H}(\pmb{z}_i))} \Delta z^1(\pmb{z}_i)\dots \Delta z^d(\pmb{z}_i),
-\end{equation}
-where $\pmb{z}_i=(z^1(\pmb{z}_i),\dots, z^d(\pmb{z}_i))$. The distortions are corrected for the tangent plane of the embedding points. Since we aim to estimate the density of the manifold for the embedding of sample points, $\pmb{p}$ is equal to $\pmb{y}_i$, for $i=1,\dots,N$. Therefore, we have
-\begin{equation}
-\label{eq:vbsyi}
-C = \sum_{i=1}^{N} \sqrt{\det(\pmb{H}(\pmb{y}_i))} \Delta y^1(\pmb{y}_i)\dots \Delta y^d(\pmb{y}_i).
-\end{equation}
+<!-- As pointed out by @Perrault-Joncas2013-pq, the naive distance $\|\pmb{p}-\pmb{q}\|$ underestimates $d_g$, and the graph shortest distance $d_G$ overestimates $d_g$ by the triangle inequality. By using only the first-order correction in $\hat{d}_g$, our estimator is also affected by the estimated Riemannian metric. In order to correct for the estimation error in $\pmb{H}(\pmb{y}_i)$, we further divide the density estimator in \@ref(eq:denestimator) by a constant term $C$ so that the integral of the kernel is equal to 1. The constant term in $1$-d is given by the *area under the curve (AUC)*, and can be named as the *volume between the surface (VBS)* in higher dimension. We use the volume estimator in Section 6.4 of @Perrault-Joncas2013-pq to sum over all embedding points $\pmb{y}_i$ and the estimated point $\pmb{p}$ so that for $\pmb{Z} = \{\pmb{y}_1, \dots, \pmb{y}_N, \pmb{p}\}$, we have -->
+<!-- \begin{equation} -->
+<!-- \label{eq:vbs} -->
+<!-- C(\pmb{p}) = \sum_{i=1}^{N+1} \sqrt{\det(\pmb{H}(\pmb{z}_i))} \Delta z^1(\pmb{z}_i)\dots \Delta z^d(\pmb{z}_i), -->
+<!-- \end{equation} -->
+<!-- where $\pmb{z}_i=(z^1(\pmb{z}_i),\dots, z^d(\pmb{z}_i))$. The distortions are corrected for the tangent plane of the embedding points. Since we aim to estimate the density of the manifold for the embedding of sample points, $\pmb{p}$ is equal to $\pmb{y}_i$, for $i=1,\dots,N$. Therefore, we have -->
+<!-- \begin{equation} -->
+<!-- \label{eq:vbsyi} -->
+<!-- C = \sum_{i=1}^{N} \sqrt{\det(\pmb{H}(\pmb{y}_i))} \Delta y^1(\pmb{y}_i)\dots \Delta y^d(\pmb{y}_i). -->
+<!-- \end{equation} -->
 
 Now we have all the components needed to estimate the density of manifold learning embedding in Equation \@ref(eq:denestimator) except for the Riemannian metric. The Riemannian metric is a key to correct the distortion from the manifold learning algorithms and we discuss its estimation in \autoref{riemmetric}.
 
@@ -354,7 +354,7 @@ This enables us to compare the manifold learning embedding with the true meta da
 ## 3-D mapping from a 2-D Gaussian Mixture Model {#twodgaussian}
 
 We first generate a 2-dimensional data of size $N=2000$ from a Gaussian mixture model with four components with different means
-$\pmb{\mu_1}=(0.25, 0.25)^\prime, \pmb{\mu_2}=(0.25, 0.75)^\prime, \pmb{\mu_3}=(0.75, 0.25)^\prime, \pmb{\mu_4}=(0.75, 0.75)^\prime$ and the same variance-covariance matrix $\pmb{\Sigma}_i=diag(0.02, 0.02), i=1,2,3,4$. The mixture proportions
+$\pmb{\mu_1}=(0.25, 0.25)^\prime, \pmb{\mu_2}=(0.25, 0.75)^\prime, \pmb{\mu_3}=(0.75, 0.25)^\prime, \pmb{\mu_4}=(0.75, 0.75)^\prime$ and the same variance-covariance matrix $\pmb{\Sigma}_i=diag(0.016, 0.016), i=1,2,3,4$. The mixture proportions
 are equally set as $\pi_i=0.25, i=1,2,3,4$.
 <!-- $\big(\begin{smallmatrix} 0.02&0\\ 0&0.02 \end{smallmatrix}\big)$. -->
 Then the mixture Gaussian mixture density function is a weighted linear combination of the four component Gaussian densities as 
@@ -362,13 +362,6 @@ Then the mixture Gaussian mixture density function is a weighted linear combinat
 \label{eq:gmm}
 P(\pmb{X}=\pmb{x}) = \sum_{i=1}^{4}\pi_i \frac{1}{(2\pi)^{d/2}|\pmb{\Sigma}_i|^{-1/2}} \exp{\{-\frac{1}{2} (\pmb{x}-\pmb{\mu_i})^\prime \pmb{\Sigma}_i^{-1} (\pmb{x}-\pmb{\mu_i}) \}}.
 \end{equation} 
-
-\autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points calculated from \@ref(eq:gmm), with brighter colors showing higher densities and darker colors showing lower densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. These are *true outliers* to be compared with outliers from the
-kernel density estimates.
-
-```{r metadensity, fig.align = 'center', out.width = "80%", fig.cap="True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.02, 0.02)$. The colors indicate the density of the data and lower density points in darker colors are scattered both in the outer and center areas. The shapes indicate the four kernels.", echo = FALSE}
-knitr::include_graphics("figures/truedensity_twinpeaks_dc.png")
-```
 
 ```{r mappings, fig.align = 'center', out.width = "80%", fig.cap="3-D Mappings of the meta data with colors and shapes indicating the four kernels. Left: swiss roll mapping. Right: twin peak mapping.", echo = FALSE}
 knitr::include_graphics("figures/mappings_sr_tp.png")
@@ -386,6 +379,15 @@ Z = \sin(\pi X_1) \tanh (3 X_2).
 \end{array}
 \right.
 \end{equation}
+
+```{r metadensity, fig.align = 'center', out.width = "80%", fig.cap="True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.016, 0.016)$. The colors indicate the density of the data and lower density points in darker colors are scattered both in the outer and center areas. The shapes indicate the four kernels.", echo = FALSE}
+knitr::include_graphics("figures/truedensity_twinpeaks_dc.png")
+```
+
+We use the multivariate KDE with a fixed plug-in bandwidth in \autoref{mvkde} as the optimal density estimates of the manifold to test the proposed DC-KDE. To compare both density estimation methods, it is essential to know the *true density* of the 2-D manifold. The Gaussian mixture distribution is known from \@ref(eq:gmm), however, it is not the density of the manifold because of the mapping function in \autoref{eq:twinpeak} distorts the distribution and the manifold of the density is no longer the Gaussian mixture density. Therefore, we apply DC-KDE to the 3-D twin peaks data and set the embedding as the 2-D meta data (true manifold) to first calculate the true density of the manifold. We use this technique to obtain the true density of the manifold throughout the simulation process.
+
+\autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points calculated from \@ref(eq:gmm), with brighter colors showing higher densities and darker colors showing lower densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. These are *true outliers* to be compared with outliers from the kernel density estimates.
+
 
 ```{r tpoutliers, fig.align = 'center', out.width = "95%", fig.cap="Highest density region plots of four manifold learning embeddings of the twin peak data. Variable KDE preforms better in finding kernel structures with ISOMAP and LLE, and in locating outliers with t-SNE and UMAP.", echo = FALSE}
 knitr::include_graphics("figures/Twin Peak2000_5levels_outliers_comparison_5ml_r0_5.png")
@@ -414,8 +416,8 @@ data.frame(cors) %>%
 
 We can gain further insight by comparing the correlation between ranks of true densities and estimated densities from variable and fixed bandwidth KDE by \autoref{tab:tpcors}. Again the highest correlations appear from embedding with higher quality, including ISOMAP, Laplacian Eigenmaps, and UMAP. The rank correlations between variable and fixed bandwidth are equivalent to the third decimal place in Laplacian Eigemaps and UMAP. As for t-SNE, the four clusters in the embedding are less separated than in UMAP and our proposed method has misidentified the kernel cores, leading to a lower rank correlation in variable bandwidth. Since the embeddings from twin peak data generally capture the rectangular structure in the meta data than those from the swiss roll data, the rank correlations are much higher in \autoref{tab:tpcors} than in \autoref{tab:srcors}, with the lowest correlation being `r round(min(cors), 3)`. This again suggests that the accuracy of outlier detection is highly related to the quality of manifold learning embedding.
 
-```{r tpisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density ranks of ISOMAP embedding for KDE with both variable and fixed bandwidth. The four colors and shapes represents the four gaussian kernels in the 2-D meta data. DC-KDE shows a strong linear positive relationship.", echo = FALSE}
-knitr::include_graphics("figures/Twin Peak2000_density_isomap_r0_5_rank.png")
+```{r tpisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density ranks of ISOMAP embedding for KDE with both variable and fixed bandwidth. DC-KDE shows a strong linear positive relationship.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_density_isomap_r0_5_rank_nocolor.png")
 ```
 
 In \autoref{fig:tpisomapden}, we plot the estimated density against the true density of the ISOMAP embedding for KDE with variable and fixed bandwidth, with colors and shapes showing the four kernels in the meta data. The linear positive relationship between the true densities and variable KDEs on the left handside is stronger than that of the fixed bandwidth KDEs. Combined with the top-right subplot in \autoref{fig:tpoutliers}, we could tell that most points are underestimated near the true kernel cores, which also suggests that the fixed bandwidth tries to smooth across all the data points and fails to
