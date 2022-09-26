@@ -1,12 +1,15 @@
-#' Metric manifold learning algorithm modified from the python megaman package
+#' Learn Metric algorithm modified from the python megaman package
 #'
 #' @param x A set of \code{n} data points in \mathcal{R}^r
 #' @param s The number of the dimensions of the embedding
 #' @param k The number of nearest neighbors in manifold learning
-#' @param radius The bandwidth parameter for radius nearest neighbor searching 
+#' @param radius The radius for nearest neighbor searching 
+#' @param bandwidth The bandwidth parameter of the kernel for weighted graph matrix, \code{\sqrt{0.4} for heat kernel}, could be the same as \code{radius}
+#' @param const The constant term for the estimeted Laplacian matrix that depends on the choice of kernel, const = 0.25 as suggested in the Learn Metric algorithm
 #' @param adjacency The adjacency matrix of the data of dimension \code{n*n}, NULL by default
 #' @param affinity The weighted adjacency matrix with gaussian kernel of dimension \code{n*n}, NULL by default
 #' @param method The manifold learning algorithm to be applied to the data \code{x}
+#' @param fn The low-dimensional embedding from manifold learning, NULL by default
 #' @param annmethod The approximate nearest neighbor searching method to be applied in manifold learning. The three methods are \code{"kdtree"}, \code{"annoy"}, and \code{"hnsw"}, but only \code{"kdtree"} is implemented for radius search now
 #' @param eps The parameter for k-d trees to search within \code{(1+epsilon)*distance} radius
 #' @param nt The number of trees parameter for Annoy algorithm
@@ -27,8 +30,9 @@
 #' metricML(x, s = 3, k = 10, method = "annLLE", annmethod = "annoy", nt = 50, distance = "manhattan")
 #' 
 metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0, 
+                     bandwidth = 0.4, const = 0.25, 
                      adjacency = NULL, affinity = NULL,
-                     method, 
+                     method, fn = NULL,
                      annmethod = c("kdtree", "annoy", "hnsw"),
                      eps = 0, nt = 50, nlinks = 16, ef.construction = 200, ef.search = 10,
                      distance = c("euclidean", "manhattan")[1], diag = FALSE,
@@ -67,35 +71,38 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
     ##--------------------------
     # Step3: embedding coordinates fn
     ##--------------------------
-    e <- embed(x,
-               .method = method,
-               knn = k,
-               ndim = s,
-               annmethod = annmethod,
-               radius = radius,
-               eps = eps,
-               nt = nt,
-               nlinks = nlinks,
-               ef.construction = ef.construction,
-               ef.search = ef.search,
-               distance = distance,
-               treetype = treetype,
-               searchtype = searchtype,
-               perplexity = perplexity,
-               theta = theta,
-               .mute = c("output"),
-               # ...
-                       
-    )
-    fn <- e@data@data
+    if(is.null(fn)) { # skipped if the embedding fn is given
+      e <- embed(x,
+                 .method = method,
+                 knn = k,
+                 ndim = s,
+                 annmethod = annmethod,
+                 radius = radius,
+                 eps = eps,
+                 nt = nt,
+                 nlinks = nlinks,
+                 ef.construction = ef.construction,
+                 ef.search = ef.search,
+                 distance = distance,
+                 treetype = treetype,
+                 searchtype = searchtype,
+                 perplexity = perplexity,
+                 theta = theta,
+                 .mute = c("output"),
+                 # ...
+                 
+      )
+      fn <- e@data@data
+    }
     
     # geodist <- igraph::distances(g, algorithm = "dijkstra")
     # fn <- cmdscale(geodist, k = 2)
-    colnames(fn) <- paste0("E", 1:s)  
+    s <- ncol(fn)
+    colnames(fn) <- paste0("E", 1:s) 
     
     N <- nrow(x)
     if (searchtype == "radius") {  
-      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges; in nn2(), k is the maximum number of NNs to compute, so k is set as N even if radius is large
+      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges; in nn2(), k is the maximum number of NNs to output, so k is set as N even if radius is large
     }
     
     ###--------------------------
@@ -111,10 +118,17 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
                                               radius = radius),
     )
     names(nn2res) <- c("nn.idx", "nn.dists")
+    
+    W <- matrix(0, N, N)
+    for(i in 1:N) {
+      W[i, nn2res$nn.idx[i,]] <- exp(-nn2res$nn.dists[i, nn2res$nn.idx[i,] != 0] / (bandwidth ^ 2))
+    }
 
-    Kn <- nn2dist(nn2res, N = N)
+    # get pairwise distance matrix
+    Kn <- nn2dist(nn2res, N = N) # TODO: check the weight matrix
+    # W <- exp(- Kn / (bandwidth ^ 2)) # heat kernel for weighted graph
     Kn[Kn == 1e+05] <- 0
-    g <- igraph::graph_from_adjacency_matrix(Kn)
+    # g <- igraph::graph_from_adjacency_matrix(Kn)
     
   }
       
@@ -123,7 +137,7 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   ## Step2: Laplacian matrix
   ###--------------------------
   # igraph::laplacian_matrix(g)
-  Ln <- Laplacian(W = Kn, radius = radius, lambda = 1)
+  Ln <- Laplacian(W = W, bandwidth = bandwidth, lambda = 1)
   
 
   ###--------------------------
@@ -133,25 +147,24 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
   
   return(list(embedding=fn, 
               rmetric=hn, 
-              weighted_graph=g,
+              weighted_matrix=W,
               adj_matrix=Kn,
               laplacian=Ln,
               nn2res = nn2res
-              # nn2res = e@nn.idx # nn.idx not added as dimRedResult-class
               ))
 }
 
 
 
 # Function for graph Laplacian
-# Input: W: N*N weight matrix for the neighborhood graph, radius: bandwidth parameter
+# Input: W: N*N weight matrix for the neighborhood graph, bandwidth: bandwidth parameter
 # Output: L: N*N graph Laplacian matrix
-Laplacian <- function(W, radius, lambda = 1){
+Laplacian <- function(W, bandwidth = 0.4, lambda = 1){
   
   D <- Matrix::Diagonal(x = rowSums(W)^(-lambda)) # inverse of a diagonal matrix
   W1 <- D %*% W %*% D
   D1 <- Matrix::Diagonal(x = 1 / rowSums(W1)) # inverse of Tn1
-  L <- 4 / (radius^2) * (D1 %*% W1 - Matrix::Diagonal(nrow(W))) # c=1/4 for heat kernel, depending on the choice of weights
+  L <- 4 / (bandwidth^2) * (D1 %*% W1 - Matrix::Diagonal(nrow(W))) # c=1/4 for heat kernel, depending on the choice of weights
   
   return(L)
 }

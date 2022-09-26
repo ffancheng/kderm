@@ -268,7 +268,7 @@
 Monash University
 \newline{Email: \href{mailto:Fan.Cheng@monash.edu}{\nolinkurl{Fan.Cheng@monash.edu}}}\\[1cm]
 \textbf{Anastasios Panagiotelis}\newline
-University of Sydney
+The University of Sydney
 \newline{Email: \href{mailto:Anastasios.Panagiotelis@sydney.edu.au}{\nolinkurl{Anastasios.Panagiotelis@sydney.edu.au}}}\\[1cm]
 \textbf{Rob J Hyndman}\newline
 Monash University
@@ -323,14 +323,14 @@ manifold learning, variable bandwidth, Riemannian metric, geodesic distance, Gau
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data which usually belongs to a subset of \(\mathbb{R}^d\). Applications of kernel density estimation \autocites[KDE;][]{Parzen1962-gt}{Chen2017-dw} include finding hot spots of traffic network in the GIS environment \autocite{Xie2008-eb,Okabe2009-nb}, automatic detection in visual surveillance systems \autocite{Elgammal2002-cw}, wind power density detection \autocite{Jeon2012-ac}, prime prediction via Twitter messages \autocite{Gerber2014-tq}, and so on. However, when samples are assumed to be drawn from a Riemannian manifold embedded in a high-dimensional space of much more than \(\mathbb{R}^d\), kernel density estimation has to be generalized to a non-Euclidean space and further approximation methods have to be adapted. \textcite{Pelletier2005-vu} propose a kernel density estimator based on the Riemannian geodesic distance of the manifold but it is only applicable when the underlying manifold is known. Manifold learning algorithms could be applied to reduce the dimension and get an approximation of the manifold, but different manifold learning algorithms could induce different distortions of the same manifold. Therefore, we propose a distortion-corrected kernel density estimator for Riemannian manifolds embedded in more than \(\mathbb{R}^d\). Our estimator could be applied to any reasonable manifold learning embedding from the high-dimensional sample data and fix the distortions at each point with estimated Riemannian geodesic distance and volume density function. This estimator could be further applied for unsupervised tasks such as anomaly detection where the outliers are the lowest density points.
+Multivariate kernel density estimation has gained lots of attention in exploratory data analysis. It is a non-parametric technique to estimate the data density based on weighted kernels centered at the data which usually belongs to a subset of \(\mathbb{R}^d\). Applications of kernel density estimation {[}KDE; \textcite{Parzen1962-gt}; \textcite{Chen2017-dw}{]} include finding hot spots of traffic network in the GIS environment \autocite{Xie2008-eb,Okabe2009-nb}, automatic detection in visual surveillance systems \autocite{Elgammal2002-cw}, wind power density detection \autocite{Jeon2012-ac}, prime prediction via Twitter messages \autocite{Gerber2014-tq}, and so on. However, when samples are assumed to be drawn from a Riemannian manifold embedded in a high-dimensional space of much more than \(\mathbb{R}^d\), kernel density estimation has to be generalized to a non-Euclidean space and further approximation methods have to be adapted. \textcite{Pelletier2005-vu} propose a kernel density estimator based on the Riemannian geodesic distance of the manifold but it is only applicable when the underlying manifold is known. Manifold learning algorithms could be applied to reduce the dimension and get an approximation of the manifold, but different manifold learning algorithms could induce different distortions of the same manifold. Therefore, we propose a distortion-corrected kernel density estimator for Riemannian manifolds embedded in more than \(\mathbb{R}^d\). Our estimator could be applied to any reasonable manifold learning embedding from the high-dimensional sample data and fix the distortions at each point with estimated Riemannian geodesic distance and volume density function. This estimator could be further applied for unsupervised tasks such as anomaly detection where the outliers are the lowest density points.
 
 For a given kernel function, kernel density estimation is flexible to learn the shape of the underlying density of the data controlled by the bandwidth and the selection of bandwidth is crucial in KDE \autocite{Jones1990-oe,Terrell1992-ut}.
-Many bandwidth selection methods have been proposed in the literature, including the rule-of-thumb, cross-validation \autocite{Jones1992-ta,Sain1994-gr} and plug-in methods \autocites[See][]{Heidenreich2013-bl}[ for details]{Scott2015-vl}.
-For univariate kernel density estimation, the bandwidth selection problem has been thoroughly investigated \autocites[See][]{Jones1992-ef}{Cao1994-st}{Jones1996-cb}[ for reviews]{Wand1994-xu}. The generalization to multivariate case could mostly be found in \textcite{Duong2003-sp}, \textcite{Duong2004-rh}, and \textcite{Chacon2010-wm}. In this paper, we focus on the multivariate kernel density estimation.
+Many bandwidth selection methods have been proposed in the literature, including the rule-of-thumb, cross-validation \autocite{Jones1992-ta,Sain1994-gr} and plug-in methods \autocites[See][ for details]{Heidenreich2013-bl,Scott2015-vl}.
+For univariate kernel density estimation, the bandwidth selection problem has been thoroughly investigated \autocites[See][ for reviews]{Jones1992-ef,Cao1994-st,Jones1996-cb,Wand1994-xu}. The generalization to multivariate case could mostly be found in \textcite{Duong2003-sp}, \textcite{Duong2004-rh}, and \textcite{Chacon2010-wm}. In this paper, we focus on the multivariate kernel density estimation.
 
 Note that a fixed bandwidth matrix \(\pmb{H}\) is a global smoothing parameter for all data points. However, when the local data structure is not universal for all sample data, which is true in most applications, an adaptive bandwidth matrix that is varying rather than fixed at each data point is needed.
-The bandwidth is varied depending on either the location of the sample points \autocite[sample smoothing estimator;][]{Terrell1992-ut} or that of the estimated points \autocite[balloon estimator;][]{Terrell1992-ut}. In this paper, the densities are estimated at the sample points themselves, so we only need to consider the case where the bandwidth changes for each sample point and will refer to this as the \emph{variable/adaptive kernel density estimation} \autocite[VKDE; Section 6.6 of][]{Scott2015-vl} unless otherwise stated.
+The bandwidth is varied depending on either the location of the sample points {[}sample smoothing estimator; \textcite{Terrell1992-ut}{]} or that of the estimated points {[}balloon estimator; \textcite{Terrell1992-ut}{]}. In this paper, the densities are estimated at the sample points themselves, so we only need to consider the case where the bandwidth changes for each sample point and will refer to this as the \emph{variable/adaptive kernel density estimation} {[}VKDE; Section 6.6 of \textcite{Scott2015-vl}{]} unless otherwise stated.
 However, these kernel density estimators are based on random samples in the Euclidean space.
 
 For samples points lying on a manifold with the differentiable structure called the Riemannian manifold, \textcite{Pelletier2005-vu} generalize the kernel density estimator based on the kernel weights from the geodesic distance between the estimated points and the sample points. The idea of the estimator is to use a strictly positive function of the geodesic distance on the manifold and then normalize it with the volume density function of the Riemannian manifold for curvature \autocite{Henry2009-ll}.
@@ -352,7 +352,7 @@ The rest of the paper is organized as follows. In \autoref{kderm}, we present ou
 For multivariate data, variable kernel density estimator with adaptive bandwidth matrix at each sample point can be used to capture the local structure of the data. \textcite{Pelletier2005-vu} generalize the multivariate kernel density estimator to Riemannian manifolds. However, it is not applicable when the underlying manifold is unknown or when the manifold is mapped in a much higher dimensional space. Therefore, we propose a distortion-corrected kernel density estimator as in Equation \eqref{eq:denestimator0} based on the low-dimensional manifold learning embedding, \(\pmb{y}_i \in \mathbb{R}^d, i = 1, 2, \dots, N\), of the high-dimensional data,
 \begin{equation}
 \label{eq:denestimator0}
-\hat{f}(\pmb{p}) = \frac{1}{CN} \sum_{i=1}^{N} \frac{1}{r^d} \bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{-1/2} K\bigg( \frac{ \pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{-1/2} K\bigg( \frac{ \pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
 \end{equation}
 where \(\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N\) is the pointwise adaptive Riemannian matrix of dimension \(d \times d\).
 The proposed estimator could be used as an estimate of the true manifold density, with the local distortion corrected by the volume density function at each point. These densities could further be used for unsupervised tasks including anomaly detection when outliers are defined as the points with the lowest densities.
@@ -434,9 +434,10 @@ Further, the bandwidth matrix should be adaptive to each sample point to take th
 Motivated by the estimator in \eqref{eq:denriem}, we restate below our proposed distortion-corrected kernel density estimator (DC-KDE) of \(f\), same as \eqref{eq:denestimator0}, based on the manifold learning embedding \(\pmb{y}_i, i = 1, 2, \dots, N\),
 \begin{equation}
 \label{eq:denestimator}
-\hat{f}(\pmb{p}) = \frac{1}{CN} \sum_{i=1}^{N} \frac{1}{r^d} \bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{-1/2} K\bigg( \frac{ \pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{-1/2} K\bigg( \frac{ \pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)}{r} \bigg),
 \end{equation}
-where \(r\) is a global bandwidth scalar, \(\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N\), is the pointwise variable Riemannian matrix and it is positive definite with dimension \(d\times d\), \(\bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{1/2}\) is the estimated volume density function when using the coordinates from any manifold learning mapping, \(\pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)\) is the first-order estimated geodesic distance with the distortion corrected by the Riemannian metric \(\pmb{H}(\pmb{y}_i)\), and \(C = \sum_{i=1}^{N} \sqrt{\det(\pmb{H}(\pmb{y}_i))} \Delta y^1(\pmb{y}_i)\dots \Delta y^d(\pmb{y}_i)\) is a correction term for the volume between the surface when estimating over the sample points so that the integral of the density is 1. We will now state below how to calculate each term in the estimator. And the only problem left is the estimation of the Riemannian metric at each embedding point, to be discussed in \autoref{riemmetric}.
+where \(r\) is a global bandwidth scalar, \(\pmb{H}(\pmb{y}_i), i = 1, 2, \dots, N\), is the pointwise variable Riemannian matrix and it is positive definite with dimension \(d\times d\), \(\bigg(\frac{|\det \pmb{H}(\pmb{y}_i)|}{|\det \pmb{H}(\pmb{p})|} \bigg)^{1/2}\) is the estimated volume density function when using the coordinates from any manifold learning mapping, \(\pmb{H}^{-1/2}(\pmb{y}_i) (\pmb{p} - \pmb{y}_i)\) is the first-order estimated geodesic distance with the distortion corrected by the Riemannian metric \(\pmb{H}(\pmb{y}_i)\)
+. We will now state below how to calculate each term in the estimator. And the only problem left is the estimation of the Riemannian metric at each embedding point, to be discussed in \autoref{riemmetric}.
 
 By the definition of the volume density function in Equation \eqref{eq:volden}, we could calculate how the volume change under the change of coordinates. When using the logarithm map, the coordinates of points on the manifold are transformed into their coordinates in the tangent space, i.e.~geodesic normal coordinates. In this case, \textcite{Pelletier2005-vu} gives the volume density function from the manifold to the tangent space, which is equal to the determinant of the Riemannian metric expressed in the geodesic normal coordinates at the logarithm map, \(|\det g(\exp^{-1}_{\pmb{p}}(\pmb{q})) |\).
 In order to estimate the density of the true manifold, we first map the high-dimensional data to a low-dimensional embedding, then we apply a kernel density estimator to the embedding. Since the logarithm map of the manifold is also unknown, the volume density function in \textcite{Pelletier2005-vu} is no longer valid. Instead, we need a volume density function independent of the chart.
@@ -470,17 +471,6 @@ where \(\pmb{H}(\pmb{y}_i)\) is the estimated Riemannian metric at embedding poi
 For two points \(\pmb{p},\pmb{q} \in M\), the geodesic distance between \(\pmb{p}\) and \(\pmb{q}\) is defined as the length of the shortest curve from \(\pmb{p}\) to \(\pmb{q}\) along the manifold.
 The geodesic distance is intrinsic, which means it is a coordinate-independent quantity. The Riemannian metric functions as the correction term for different coordinates of manifold learning embedding.
 By using the first-order distance estimator, \(\hat{d}_g(\pmb{p}, \pmb{y}_i)\) serves as a good approximation of the true geodesic distance \(d_g\) with the distortion corrected at each embedding point \(\pmb{y}_i\). Compared with the graph distance, the shortest path between point in the neighborhood graph \(G\), our proposed \(\hat{d}_g\) is better because we use the same graph \(G\) for all manifold learning embeddings but the distances between different nodes in \(G\) might not be the same due to the distortion.
-
-As pointed out by \textcite{Perrault-Joncas2013-pq}, the naive distance \(\|\pmb{p}-\pmb{q}\|\) underestimates \(d_g\), and the graph shortest distance \(d_G\) overestimates \(d_g\) by the triangle inequality. By using only the first-order correction in \(\hat{d}_g\), our estimator is also affected by the estimated Riemannian metric. In order to correct for the estimation error in \(\pmb{H}(\pmb{y}_i)\), we further divide the density estimator in \eqref{eq:denestimator} by a constant term \(C\) so that the integral of the kernel is equal to 1. The constant term in \(1\)-d is given by the \emph{area under the curve (AUC)}, and can be named as the \emph{volume between the surface (VBS)} in higher dimension. We use the volume estimator in Section 6.4 of \textcite{Perrault-Joncas2013-pq} to sum over all embedding points \(\pmb{y}_i\) and the estimated point \(\pmb{p}\) so that for \(\pmb{Z} = \{\pmb{y}_1, \dots, \pmb{y}_N, \pmb{p}\}\), we have
-\begin{equation}
-\label{eq:vbs}
-C(\pmb{p}) = \sum_{i=1}^{N+1} \sqrt{\det(\pmb{H}(\pmb{z}_i))} \Delta z^1(\pmb{z}_i)\dots \Delta z^d(\pmb{z}_i),
-\end{equation}
-where \(\pmb{z}_i=(z^1(\pmb{z}_i),\dots, z^d(\pmb{z}_i))\). The distortions are corrected for the tangent plane of the embedding points. Since we aim to estimate the density of the manifold for the embedding of sample points, \(\pmb{p}\) is equal to \(\pmb{y}_i\), for \(i=1,\dots,N\). Therefore, we have
-\begin{equation}
-\label{eq:vbsyi}
-C = \sum_{i=1}^{N} \sqrt{\det(\pmb{H}(\pmb{y}_i))} \Delta y^1(\pmb{y}_i)\dots \Delta y^d(\pmb{y}_i).
-\end{equation}
 
 Now we have all the components needed to estimate the density of manifold learning embedding in Equation \eqref{eq:denestimator} except for the Riemannian metric. The Riemannian metric is a key to correct the distortion from the manifold learning algorithms and we discuss its estimation in \autoref{riemmetric}.
 
@@ -599,25 +589,13 @@ This enables us to compare the manifold learning embedding with the true meta da
 \subsection{3-D mapping from a 2-D Gaussian Mixture Model}\label{twodgaussian}}
 
 We first generate a 2-dimensional data of size \(N=2000\) from a Gaussian mixture model with four components with different means
-\(\pmb{\mu_1}=(0.25, 0.25)^\prime, \pmb{\mu_2}=(0.25, 0.75)^\prime, \pmb{\mu_3}=(0.75, 0.25)^\prime, \pmb{\mu_4}=(0.75, 0.75)^\prime\) and the same variance-covariance matrix \(\pmb{\Sigma}_i=diag(0.02, 0.02), i=1,2,3,4\). The mixture proportions
+\(\pmb{\mu_1}=(0.25, 0.25)^\prime, \pmb{\mu_2}=(0.25, 0.75)^\prime, \pmb{\mu_3}=(0.75, 0.25)^\prime, \pmb{\mu_4}=(0.75, 0.75)^\prime\) and the same variance-covariance matrix \(\pmb{\Sigma}_i=diag(0.016, 0.016), i=1,2,3,4\). The mixture proportions
 are equally set as \(\pi_i=0.25, i=1,2,3,4\).
 Then the mixture Gaussian mixture density function is a weighted linear combination of the four component Gaussian densities as
 \begin{equation}
 \label{eq:gmm}
 P(\pmb{X}=\pmb{x}) = \sum_{i=1}^{4}\pi_i \frac{1}{(2\pi)^{d/2}|\pmb{\Sigma}_i|^{-1/2}} \exp{\{-\frac{1}{2} (\pmb{x}-\pmb{\mu_i})^\prime \pmb{\Sigma}_i^{-1} (\pmb{x}-\pmb{\mu_i}) \}}.
 \end{equation}
-
-\autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points calculated from \eqref{eq:gmm}, with brighter colors showing higher densities and darker colors showing lower densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. These are \emph{true outliers} to be compared with outliers from the
-kernel density estimates.
-
-\begin{figure}
-
-{\centering \includegraphics[width=0.8\linewidth]{figures/truedensity_4kernels} 
-
-}
-
-\caption{True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.02, 0.02)$. The colors indicate the density of the data and lower density points in darker colors are scattered both in the outer and center areas. The shapes indicate the four kernels.}\label{fig:metadensity}
-\end{figure}
 
 \begin{figure}
 
@@ -643,7 +621,20 @@ Z = \sin(\pi X_1) \tanh (3 X_2).
 
 \begin{figure}
 
-{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak5levels_outliers_comparison_4ml_3cases_riem0_1} 
+{\centering \includegraphics[width=0.8\linewidth]{figures/truedensity_twinpeaks_dc} 
+
+}
+
+\caption{True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.016, 0.016)$. The colors indicate the density of the data and lower density points in darker colors are scattered both in the outer and center areas. The shapes indicate the four kernels.}\label{fig:metadensity}
+\end{figure}
+
+We use the multivariate KDE with a fixed plug-in bandwidth in \autoref{mvkde} as the optimal density estimates of the manifold to test the proposed DC-KDE. To compare both density estimation methods, it is essential to know the \emph{true density} of the 2-D manifold. The Gaussian mixture distribution is known from \eqref{eq:gmm}, however, it is not the density of the manifold because of the mapping function in \autoref{eq:twinpeak} distorts the distribution and the manifold of the density is no longer the Gaussian mixture density. Therefore, we apply DC-KDE to the 3-D twin peaks data and set the embedding as the 2-D meta data (true manifold) to first calculate the true density of the manifold. We use this technique to obtain the true density of the manifold throughout the simulation process.
+
+\autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points calculated from \eqref{eq:gmm}, with brighter colors showing higher densities and darker colors showing lower densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. These are \emph{true outliers} to be compared with outliers from the kernel density estimates.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak2000_5levels_outliers_comparison_5ml_r0_5} 
 
 }
 
@@ -662,25 +653,36 @@ found in UMAP are clustered.
 \toprule
   & ISOMAP & LLE & Laplacian.Eigenmaps & t.SNE & UMAP\\
 \midrule
-Variable bandwidth & \textbf{0.899} & 0.385 & 0.620 & 0.259 & \textbf{0.659}\\
-Fixed bandwidth & 0.626 & \textbf{0.399} & \textbf{0.622} & \textbf{0.663} & 0.653\\
+DC-KDE & \textbf{0.823} & \textbf{0.673} & \textbf{0.672} & \textbf{0.806} & \textbf{0.794}\\
+KDE & 0.798 & 0.500 & 0.606 & 0.451 & 0.469\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-We can gain further insight by comparing the correlation between ranks of true densities and estimated densities from variable and fixed bandwidth KDE by \autoref{tab:tpcors}. Again the highest correlations appear from embedding with higher quality, including ISOMAP, Laplacian Eigenmaps, and UMAP. The rank correlations between variable and fixed bandwidth are equivalent to the third decimal place in Laplacian Eigemaps and UMAP. As for t-SNE, the four clusters in the embedding are less separated than in UMAP and our proposed method has misidentified the kernel cores, leading to a lower rank correlation in variable bandwidth. Since the embeddings from twin peak data generally capture the rectangular structure in the meta data than those from the swiss roll data, the rank correlations are much higher in \autoref{tab:tpcors} than in \autoref{tab:srcors}, with the lowest correlation being 0.259. This again suggests that the accuracy of outlier detection is highly related to the quality of manifold learning embedding.
+We can gain further insight by comparing the correlation between ranks of true densities and estimated densities from variable and fixed bandwidth KDE by \autoref{tab:tpcors}. Again the highest correlations appear from embedding with higher quality, including ISOMAP, Laplacian Eigenmaps, and UMAP. The rank correlations between variable and fixed bandwidth are equivalent to the third decimal place in Laplacian Eigemaps and UMAP. As for t-SNE, the four clusters in the embedding are less separated than in UMAP and our proposed method has misidentified the kernel cores, leading to a lower rank correlation in variable bandwidth. Since the embeddings from twin peak data generally capture the rectangular structure in the meta data than those from the swiss roll data, the rank correlations are much higher in \autoref{tab:tpcors} than in \autoref{tab:srcors}, with the lowest correlation being 0.451. This again suggests that the accuracy of outlier detection is highly related to the quality of manifold learning embedding.
 
 \begin{figure}
 
-{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak_density_comparison_isomap_riem0_1_rank} 
+{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak2000_density_isomap_r0_5_rank_nocolor} 
 
 }
 
-\caption{Scatterplot of true density and estimated density ranks of ISOMAP embedding for KDE with both variable and fixed bandwidth. The four colors and shapes represents the four gaussian kernels in the 2-D meta data. Variable bandwidth shows a strong linear positive relationship.}\label{fig:tpisomapden}
+\caption{Scatterplot of true density and estimated density ranks of ISOMAP embedding for KDE with both variable and fixed bandwidth. DC-KDE shows a strong linear positive relationship.}\label{fig:tpisomapden}
 \end{figure}
 
 In \autoref{fig:tpisomapden}, we plot the estimated density against the true density of the ISOMAP embedding for KDE with variable and fixed bandwidth, with colors and shapes showing the four kernels in the meta data. The linear positive relationship between the true densities and variable KDEs on the left handside is stronger than that of the fixed bandwidth KDEs. Combined with the top-right subplot in \autoref{fig:tpoutliers}, we could tell that most points are underestimated near the true kernel cores, which also suggests that the fixed bandwidth tries to smooth across all the data points and fails to
 fix the local distortions in the manifold learning process like the proposed pointwise variable bandwidth.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak2000_density_comparison_isomapvs4ml_r0_5_rank} 
+
+}
+
+\caption{Comparison of outliers found by ISOMAP and other four manifold learning methods for DC-KDE (on the left panel) and KDE (on the right panel). The four colors and shapes represents the four gaussian kernels in the 2-D meta data. Outliers found by DC-KDE are more consistent regardless of the manifold learning embedding.}\label{fig:tpisomapvs4ml}
+\end{figure}
+
+Finally, \autoref(fig:tpisomapvs4ml) is used to show the robustness of the density estimates using DC-KDE regardless of the embedding method. By plotting the density ranks of LLE, Laplacian Eigenmaps, t-SNE, and UMAP against ISOMAP, we could tell that the rank correlation from DC-KDE is higher that that from KDE, meaning that the rank of DC-KDE are more consistent with the manifold learning methods. Compared with KDE where the density ranks varies with the embedding methods even for the same manifold, DC-KDE is more robust when the distortions are fixed.
 
 \hypertarget{fivedgaussian}{%
 \subsection{100-D mapping from a 5-D semi-hypersphere}\label{fivedgaussian}}
@@ -888,6 +890,116 @@ The tangent vectors \(\phi_*u\) are equivalent to the velocity vector of a curve
 d\phi_p(\gamma^{\prime}(0)) = (\phi \circ \gamma)^\prime (0).
 \]
 Similarly, the pullback maps the cotangent vectors \(z_{f(p)}\) at \(f(p) \in E\) to cotangent vectors at \(p \in M\) acting on tangent vectors \(u \in T_pM\). The linear map is called the pullback by \(\phi\) and is often denoted as \(\phi^*\).
+
+\hypertarget{s1simulation}{%
+\section{\texorpdfstring{Appendix: Simulation of \(S^1\) for manifold density estimation}{Appendix: Simulation of S\^{}1 for manifold density estimation}}\label{s1simulation}}
+
+To start with, we demonstrate the use of the proposed DC-KDE on a \(1\)-dimensional example. For a \(S^1\) curve centered at \(O\) with radius \(1\), the coordinated of points on the curve could be expressed in polar coordinates \((1, \alpha)\) or Cartesian coordinates \((x, \sqrt{1-x^2})\).
+
+The first simulation starts with a \(1\)-dimensional example.
+
+Manifold: \(S^1\) with center 0 and radius \(r=1\)
+
+Polar coordinates: \((r, \theta)\)
+
+Uniformly distributed angle: \(\theta \sim U(0, \pi/2)\) with \(f(\theta) = 2 / \pi\) for \(\theta \in [0, \pi /2]\).
+
+Cartesian coordinates: \((x, y)\) where \(x = \cos(\theta) \in [0, 1]\) and \(y = \sin(\theta) \in [0, 1]\)
+
+Density of \(\theta\): \(f(\theta) = 2 / \pi\)
+
+Density of \(x\): \(f(x) = \frac{2}{\pi \sqrt{1-x^2}}\)
+
+The CDF of X is given by
+\[
+P(X \leq x) = P(\cos(\theta) \leq x) \\
+= P(\theta \geq \arccos(x)) \\
+= \int_{\arccos(x)}^{\pi/2} f(\theta) d\theta \\
+=  \frac{2}{\pi} (\frac{\pi}{2} - \arccos(x) ) \\
+= 1 - \frac{2}{\pi} \arccos(x).
+\]
+Then the density of X is the derivative of the CDF w.r.t. \(x\) \[
+f(x) = -\frac{2}{\pi} (-\frac{1}{\sqrt{1 - x^2}}) \\
+= \frac{2}{\pi \sqrt{1 - x^2}}.
+\]
+
+Given \((x, y) \in \mathbb{R}^2\) as sample points from \(S^1\), we could
+estimate the density of each sample point \(X_i \in S^1, i = 1, \dots, N\)
+and compare it with its true density \(f(x)\).
+We use the density estimator in \textcite{Pelletier2005-vu}. For point \(p \in S^1\), the density at \(p\) is estimated by
+\[
+f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{X_i}(p)} K(\frac{d_g(p, X_i)}{r}),
+\]
+where \(d=1\), \(r\) is the bandwidth, \(\theta_{X_i}(p)\) is the volume density function at sample point \(X_i\), and \(d_g(p, X_i)\) is the geodesic distance between \(p\) and \(X_i\) along the manifold \(S^1\).
+
+Since the manifold is known (\(S^1\)), we know the geodesic distance is the arc length between two points on the manifold, which is given by \(L(\gamma) = r(\beta - \alpha)\) with \(r=1\). Therefore, the geodesic distance is
+\[
+d_g(p, X_i) = \arccos(p) - \arccos(X_i)
+\]
+As stated in \textcite{Pelletier2005-vu}, in terms of \emph{geodesic normal coordinates} at \(X_i\), the volume density function \(\theta_{X_i}(p)\) equals the determinant of the metric \(g\) expressed in these coordinates at the logarithm map \(\exp_{X_i}^{-1}(p)\), i.e.~\(|g(\exp_p^{-1}(x_i))|\).
+
+{[}When using normal coordinates(orthogonal basis) for tangent vector in \(T_{X_i}S^1\), the exponential map has \emph{geodesic normal coordinates}.{]}
+
+The Riemannian metric \(g\) for \(S^1\) is given by the inner products on the tangent spaces of \(S^1\). For each \(X_i \in M\),
+\[
+g_{X_i}: T_{X_i}M \times T_{X_i}M \rightarrow \pmb{R},
+\]
+is smooth in a local neighborhood \(U\) of \(M\).
+
+Then the volume density function \(\theta_{X_i}(p)\) is the inner product of the tangent vectors produced by the logarithm map from \(X_i\) to \(p\), which is given by
+\[
+\theta_{X_i}(p) = \sqrt{|\cos(d_g(p,q))|} = \sqrt{|\cos(\arccos(p) - \arccos(X_i))|}.
+\]
+Therefore, the estimator for \(p \in S^1\) is given by
+\[
+f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r \sqrt{|\cos(\arccos(p) - \arccos(X_i))|}} K\bigg(\frac{\|\arccos(p) - \arccos(X_i))\|}{r}\bigg),
+\]
+where the bandwidth \(r\) is selected with the plug-in bandwidth selector implemented by the R package \emph{ks}.
+
+\hypertarget{how-to-derive-volume-density-function-theta_x_ip}{%
+\subsubsection{\texorpdfstring{How to derive volume density function \(\theta_{X_i}(p)\)}{How to derive volume density function \textbackslash theta\_\{X\_i\}(p)}}\label{how-to-derive-volume-density-function-theta_x_ip}}
+
+\hypertarget{example-of-s2-in-henry2009-om.}{%
+\paragraph{\texorpdfstring{Example of \(S^2\) in \textcite{Henry2009-om}.}{Example of S\^{}2 in @Henry2009-om.}}\label{example-of-s2-in-henry2009-om.}}
+
+Let \(S^2\) be the two-dimensional sphere of radius 1 and \(p \in S^2\). Let \(v\) and \(w\) be vectors such that \(\|v\| = \|w\| = 1\) and \(\{v, w, p\}\) is the orthonormal basis of \(\mathbb{R}^3\). Consider the exponential chart \((U, \Psi)\) induced by the parametrisation \(\Psi^{-1}: B_\pi(0) \rightarrow S^2 \backslash \{-p\}\) given by
+\[
+\Psi^{-1}(s,t) = \cos(r)p + \frac{\sin(r)}{r}(sv+tw),
+\]
+if \((s,t) \neq (0,0)\) and \(\Psi^{-1}(0,0)=p\) where \(r=\sqrt{s^2 + t^2}\).
+Note that \(r=d_g(p,q)\) if \(q = \exp_p(sv+tw)\).
+Then we take the partial derivatives of \(\Psi^{-1}(s,t)\) with respect to the basis of the tangent space, \(s\) and \(t\), and have that
+\[
+A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}s}{r}p + \frac{\cos(r)rs^2+t^2\sin(r)}{r^3}v + \frac{(\cos(r)r-\sin(r))st}{r^3}w,
+\]
+\[
+B(s,t) = \frac{\partial}{\partial \Psi_2} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}t}{r}p + \frac{(\cos(r)r-\sin(r))st}{r^3}v + \frac{\cos(r)rt^2+\sin(r)s^2}{r^3}w.
+\]
+The coefficients for \(v\) and \(w\) gives the local coordinates of two tangent vectors.
+Further, since the riemannian metric is defined as the inner product between two tangent vectors, each component of the riemannian metric could be calculated as \(g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))\).
+Therefore, we obtain that the volume density on the sphere is
+\[
+\theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2} \\
+= \frac{|\sin(d_g(p,q))|}{d_g(p,g)},
+\]
+for \(q \neq p, -p\), and \(\theta_p(p) = 1\).
+
+\hypertarget{s1}{%
+\paragraph{\texorpdfstring{\(S^1\)}{S\^{}1}}\label{s1}}
+
+Similarly in \(S^1\), we could let \(\{v, p\}\) be the orthonormal basis of \(\mathbb{R}^2\). Then the exponential chart is induced by the parametrization
+\[
+\Psi^{-1}(s) = \cos(r)p + \frac{\sin(r)}{r}sv,
+\]
+and \(\Psi^{-1}(0) = p\) where \(r = s\). Again \(r = d_g(p,q)\) if \(q = \exp_p(sv)\). Then we have
+\[
+A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = - \sin(r)p + \cos(r)v.
+\]
+So the riemannian metric is \(g_q = \cos(r)\) and further,
+\[
+\theta_p(q) = \sqrt{|\cos(r)|} = \sqrt{|\cos(d_g(p,q))|},
+\]
+where the geodesic distance is \(d_g(p,q) = \arccos(p) - \arccos(q)\), and \(\theta_p(p) = 1\).
 
 \hypertarget{swissrollappe}{%
 \section{Appendix: Simulation with swiss roll mapping}\label{swissrollappe}}

@@ -24,7 +24,7 @@ Jmisc::sourceAll(here::here("R/sources"))
 # set.seed(1)
 
 # data size
-N <- 2000
+N <- 1000
 p <- 2
 
 # # ----Swiss roll dataset with a sparse area------------------------
@@ -257,6 +257,7 @@ adj_matrix <- metric_isomap$adj_matrix
 opt.method <- c("AMISE", "MEAN", "SCALED")[2]
 riem.scale <- 1 # h_hdr_isomap
 r <- .1
+r <- sqrt(median(apply(Rn, 3, det)))
 fisomap <- vkde(x = fn, h = h_hdr_isomap, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix) # 0.923
 # fisomap <- vkde(x = fn, h = Rn*riem.scale, gridsize = gridsize, eval.points = fn) # 0.64
 # # if scaling the bandwidth
