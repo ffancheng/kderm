@@ -1,7 +1,8 @@
 #' Change the list of nearest neighbor index and distances to square distance matrix
 #'
-#' @param nn A list of nearest neighbor index and distances. 
-#' @param sparse Whether a sparse distance matrix should be returned, TRUE by default. 
+#' @param nn A list of nearest neighbor index and distances generated from RANN::nn2(). 
+#' @param N Number of observations, if not provided, \code{N = nrow(nn$nn.idx)}.
+#' @param sparse Whether a sparse distance matrix should be returned, TRUE by default.
 #'
 #' @return A square matrix of distances
 #' @export

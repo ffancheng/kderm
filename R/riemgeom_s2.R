@@ -167,10 +167,10 @@ sum(diff(theta[id])*rollmean(fxkde[id],2)) # 0.98569 for kde
 # #> [1] 0.499534
 # area_under_curve(x, y, method = "spline")
 # #> [1] 0.498307
-library(bayestestR)
-area_under_curve(theta[id], fx[id], method = "trapezoid")
-area_under_curve(theta, fx, method = "step")
-# area_under_curve(theta, fx, method = "spline")
+# library(bayestestR)
+# area_under_curve(theta[id], fx[id], method = "trapezoid")
+# area_under_curve(theta, fx, method = "step")
+# # area_under_curve(theta, fx, method = "spline")
 
 
 
