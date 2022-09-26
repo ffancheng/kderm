@@ -69,7 +69,7 @@ gridsize <- 20
 noutliers <- 20
 
 metric_meta <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
-                          # annmethod = annmethod, distance = distance, treetype = treetype, 
+                          annmethod = annmethod, distance = distance, treetype = treetype,
                           searchtype = searchtype
 )
 # summary(metric_meta)
@@ -101,8 +101,9 @@ plotmanifold <- preswissroll %>%
   labs(color = "Density" # , shape = "Kernels"
        )
 plotmanifold
-# plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = den_2dmanifold, # colored with 3d density
-#         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
+ggsave("paper/figures/truedensity_twinpeaks_dc.png", plotmanifold, width = 8, height = 6, dpi = 300)
+plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = den_2dmanifold, # colored with 3d density
+        type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
 trueden <- den_2dmanifold # sr$den
 
 
@@ -288,6 +289,7 @@ metric_lle <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method
 )
 fn <- metric_lle$embedding
 Rn <- metric_lle$rmetric
+adj_matrix <- metric_lle$adj_matrix
 E1 <- fn[,1]; E2 <- fn[,2]
 # flle <- vkde2d(x = E1, y = E2, h = Rn*riem.scale, gridsize = gridsize)
 # fxy_lle <- hdrcde:::interp.2d(flle$x, flle$y, flle$z, x0 = E1, y0 = E2)
@@ -341,6 +343,7 @@ metric_le <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method,
 )
 fn <- metric_le$embedding
 Rn <- metric_le$rmetric
+adj_matrix <- metric_le$adj_matrix
 E1 <- fn[,1]; E2 <- fn[,2]
 # fle <- vkde2d(x = E1, y = E2, h = Rn*riem.scale, gridsize = gridsize)
 # fxy_le <- hdrcde:::interp.2d(fle$x, fle$y, fle$z, x0 = E1, y0 = E2)
@@ -377,6 +380,7 @@ metric_tsne <- metricML(x, fn = y, s = s, k = k, radius = radius, method = metho
                         perplexity = perplexity, theta = theta, invert.h = TRUE)
 fn <- metric_tsne$embedding
 Rn <- metric_tsne$rmetric
+adj_matrix <- metric_tsne$adj_matrix
 E1 <- fn[,1]; E2 <- fn[,2]
 # ftsne <- vkde2d(x = E1, y = E2, h = Rn*riem.scale, gridsize = gridsize)
 # fxy_tsne <- hdrcde:::interp.2d(ftsne$x, ftsne$y, ftsne$z, x0 = E1, y0 = E2)
@@ -416,6 +420,7 @@ metric_umap <- metricML(x, fn = y, s = s, k = k, radius = radius, method = metho
 fn <- metric_umap$embedding
 E1 <- fn[,1]; E2 <- fn[,2]
 Rn <- metric_umap$rmetric
+adj_matrix <- metric_umap$adj_matrix
 
 # opt.method <- c("AMISE", "MEAN", "SCALED")[2]
 # riem.scale <- .1
@@ -539,7 +544,7 @@ p
   theme(legend.direction = "horizontal", legend.position = "bottom", 
         legend.box = "horizontal",
         plot.title = element_text(hjust = 0.5, face = "bold"))
-# ggsave(paste0("~/Downloads/", mapping, N,"_5levels_outliers_comparison_isomap_3cases_", opt.method, "_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
+# ggsave(paste0("~/Downloads/", mapping, N,"_5levels_outliers_comparison_isomap_3cases_", opt.method, "_r", format(r, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
 
 
 
@@ -642,9 +647,14 @@ result <-
   theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
 gt <- patchwork::patchworkGrob(result)
 gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
-
 ggsave(paste0("~/Downloads/", mapping, N,"_density_comparison_5ml_riem", format(if(opt.method == "SCALED") riem.scale, decimal.mark = "_"), "_rank.png"), gt, width = 8, height = 10, dpi = 300)
 
+## Only isomap for the paper
+((pf_vkde + labs(x = "True density rank", y = "Estimated density rank")) + (pf_hdr + labs(x = "True density rank"))) + 
+  coord_fixed() + 
+  plot_layout(guides = 'collect') & 
+  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
+ggsave(paste0("~/Downloads/", mapping, N,"_density_isomap_r", format(r, decimal.mark = "_"), "_rank.png"), width = 10, height = 6, dpi = 300)
 
 
 

@@ -367,7 +367,7 @@ P(\pmb{X}=\pmb{x}) = \sum_{i=1}^{4}\pi_i \frac{1}{(2\pi)^{d/2}|\pmb{\Sigma}_i|^{
 kernel density estimates.
 
 ```{r metadensity, fig.align = 'center', out.width = "80%", fig.cap="True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.02, 0.02)$. The colors indicate the density of the data and lower density points in darker colors are scattered both in the outer and center areas. The shapes indicate the four kernels.", echo = FALSE}
-knitr::include_graphics("figures/truedensity_4kernels.png")
+knitr::include_graphics("figures/truedensity_twinpeaks_dc.png")
 ```
 
 ```{r mappings, fig.align = 'center', out.width = "80%", fig.cap="3-D Mappings of the meta data with colors and shapes indicating the four kernels. Left: swiss roll mapping. Right: twin peak mapping.", echo = FALSE}
@@ -388,7 +388,7 @@ Z = \sin(\pi X_1) \tanh (3 X_2).
 \end{equation}
 
 ```{r tpoutliers, fig.align = 'center', out.width = "95%", fig.cap="Highest density region plots of four manifold learning embeddings of the twin peak data. Variable KDE preforms better in finding kernel structures with ISOMAP and LLE, and in locating outliers with t-SNE and UMAP.", echo = FALSE}
-knitr::include_graphics("figures/Twin Peak5levels_outliers_comparison_4ml_3cases_riem0_1.png")
+knitr::include_graphics("figures/Twin Peak2000_5levels_outliers_comparison_5ml_r0_5.png")
 ```
 
 Similar to \autoref{fig:sroutliers}, different manifold learning embeddings are obtained and used to detect outliers with true densities and two bandwidth selection methods shown in \autoref{fig:tpoutliers}.
@@ -396,7 +396,7 @@ In general, the four highest density regions in yellow are identified in almost 
 found in UMAP are clustered.
 
 ```{r tpcors, echo=FALSE, message=FALSE, eval=T}
-load("figures/CorrelationTable_Twin Peak_4ml_riem0_1.rda")
+load("figures/CorrelationTable_Twin Peak2000_5ml_r0_5.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
 data.frame(cors) %>% 
@@ -414,12 +414,18 @@ data.frame(cors) %>%
 
 We can gain further insight by comparing the correlation between ranks of true densities and estimated densities from variable and fixed bandwidth KDE by \autoref{tab:tpcors}. Again the highest correlations appear from embedding with higher quality, including ISOMAP, Laplacian Eigenmaps, and UMAP. The rank correlations between variable and fixed bandwidth are equivalent to the third decimal place in Laplacian Eigemaps and UMAP. As for t-SNE, the four clusters in the embedding are less separated than in UMAP and our proposed method has misidentified the kernel cores, leading to a lower rank correlation in variable bandwidth. Since the embeddings from twin peak data generally capture the rectangular structure in the meta data than those from the swiss roll data, the rank correlations are much higher in \autoref{tab:tpcors} than in \autoref{tab:srcors}, with the lowest correlation being `r round(min(cors), 3)`. This again suggests that the accuracy of outlier detection is highly related to the quality of manifold learning embedding.
 
-```{r tpisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density ranks of ISOMAP embedding for KDE with both variable and fixed bandwidth. The four colors and shapes represents the four gaussian kernels in the 2-D meta data. Variable bandwidth shows a strong linear positive relationship.", echo = FALSE}
-knitr::include_graphics("figures/Twin Peak_density_comparison_isomap_riem0_1_rank.png")
+```{r tpisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density ranks of ISOMAP embedding for KDE with both variable and fixed bandwidth. The four colors and shapes represents the four gaussian kernels in the 2-D meta data. DC-KDE shows a strong linear positive relationship.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_density_isomap_r0_5_rank.png")
 ```
 
 In \autoref{fig:tpisomapden}, we plot the estimated density against the true density of the ISOMAP embedding for KDE with variable and fixed bandwidth, with colors and shapes showing the four kernels in the meta data. The linear positive relationship between the true densities and variable KDEs on the left handside is stronger than that of the fixed bandwidth KDEs. Combined with the top-right subplot in \autoref{fig:tpoutliers}, we could tell that most points are underestimated near the true kernel cores, which also suggests that the fixed bandwidth tries to smooth across all the data points and fails to
 fix the local distortions in the manifold learning process like the proposed pointwise variable bandwidth.
+
+```{r tpisomapvs4ml, fig.align = 'center', out.width = "95%", fig.cap="Comparison of outliers found by ISOMAP and other four manifold learning methods for DC-KDE (on the left panel) and KDE (on the right panel). The four colors and shapes represents the four gaussian kernels in the 2-D meta data. Outliers found by DC-KDE are more consistent regardless of the manifold learning embedding.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_density_comparison_isomapvs4ml_r0_5_rank.png")
+```
+
+Finally, \autoref(fig:tpisomapvs4ml) is used to show the robustness of the density estimates using DC-KDE regardless of the embedding method. By plotting the density ranks of LLE, Laplacian Eigenmaps, t-SNE, and UMAP against ISOMAP, we could tell that the rank correlation from DC-KDE is higher that that from KDE, meaning that the rank of DC-KDE are more consistent with the manifold learning methods. Compared with KDE where the density ranks varies with the embedding methods even for the same manifold, DC-KDE is more robust when the distortions are fixed.
 
 ## 100-D mapping from a 5-D semi-hypersphere {#fivedgaussian}
 
