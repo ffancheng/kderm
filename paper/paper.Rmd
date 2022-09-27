@@ -91,6 +91,41 @@ By exploiting the connection between the estimated Riemannian metric and the Rie
 The rest of the paper is organized as follows. In \autoref{kderm}, we present our distortion-corrected kernel density estimator for Riemannian manifolds. We start by introducing the multivariate kernel density estimate with adaptive bandwidth and the kernel density estimator for Riemannian manifolds. Then we provide justification for the use of Riemannian metric to correct the distortions in manifold learning embedding and further apply the proposed estimator for anomaly detection. \autoref{simulation} is composed of two simulations with the proposed anomaly detection algorithm; the first deals with 2-dimensional data from gaussian mixture model mapped into a 3-D twin peaks structure and the second with a 5-D semi-hypersphere data mapped in a 100-D space. Different manifold learning algorithms are applied to the high-dimensional data to get the low-dimensional embedding which are then used to estimate densities and detect anomalies.
 \autoref{application} contains the application to visualize and identify anomalous households in the Irish smart meter dataset. Conclusions and discussions are presented in \autoref{conclusion}. Readers interested in the notions of Riemannian geometry mentioned in this paper could use \autoref{riemgeo} as a reference.
 
+# Kernel density estimate on Riemannian manifolds - Tas {#kdermtas}
+
+In this section we introduce our method for kernel density estimation on manifolds that uses an embedding from a dimension reduction algorithm and the Metric Learning algorithm of @Perrault-Joncas2013-pq. We will do so by first introducing kernel density estimation for data in Euclidean space, then illustrating how this generalises to the estimator @Pelletier2005-vu, where the data lie on some known manifold. Finally we describing how our own proposed method generalises the estimator of @Pelletier2005-vu to the case where the underlying manifold is unknown. Denoting $\lambda$ as the Lebesgue measure of $\mathbb{R}^d$, letting $||.||$ be the usual Euclidean norm and following @Pelletier2005-vu we make these assumptions about the kernel function $K:\mathbb{R}_+\rightarrow\mathbb{R}$ 
+\begin{align}
+\label{eq:kernelcondition}
+& (i) \int_{\mathbb{R}^{d}} K(\|\pmb{x}\|) \mathrm{d} \lambda(\pmb{x})=1;
+(ii) \int_{\mathbb{R}^{d}} \pmb{x} K(\|\pmb{x}\|) \mathrm{d} \lambda(\pmb{x})=0;
+(iii) \int_{\mathbb{R}^{d}}\|\pmb{x}\|^{2} K(\|\pmb{x}\|) \mathrm{d} \lambda(\pmb{x})<\infty; \\
+& (iv) \supp K=[0; 1];
+(v) \sup K(||\pmb{x}||)=K(0).
+\end{align}
+Note that these conditions are different (and in some cases stricter) that those normally used for kernel density estimation. For instance condition (iv) requires the support of the kernel to be bounded. The reasons for this will become clearer when we discuss the manifold setting in more detail. Also, for illustration purposes, in this section we pay particular attention to the uniform kernel for which $K(z)$ equals one if $0\leq z\leq1$ and zero otherwise. In our empirical section more general kernel functions can be, and are, employed.
+
+Assume the data $\pmb{x}_i\in\mathbb{R}^d$ for $i=1,\dots,N$ and assuming a bandwidth matrix $r\bm{I}$ where $r$ is a global bandwidth, then the usual kernel density estimator at a point $\pmb{x}$ is given by
+
+\begin{equation}
+\label{eq:vkde}
+\hat{f}(\pmb{x})=\frac{1}{N}\sum\limits_{i=1}^N \frac{1}{r^d} K\left(\frac{||\pmb{x}-\pmb{x}_i||}{r}\right).
+\end{equation}
+
+where $||.||$ denotes the usual Euclidean norm. The intuition of this estimator is very clear for a uniform kernel. The density at a point $\pmb{x}$ is equal to the proportion of sample points that lie within a ball of radius $r$ centered at $\pmb{x}$, times a term that ensures the density integrates to 1. In general, the bandwidth matrix need not be proportional to the identity matrix. However, the intuition remains the same, only that the ball of radius $r$ centered at $\pmb{x}$ is found with respect to Mahalanobis distance rather than the usual Euclidean distance. For more on kernel density estimation in the Euclidean case see @Scott2015-vl and references therein.
+
+To extend this to the case where data are on a manifold $\pmb{p}_i\in\mathcal{M}$, for $i=1,\dots,N$, @Pelletier2005-vu propose the following estimator,
+
+\begin{equation}
+\label{eq:denriem}
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{\pmb{p}_i}(\pmb{p})} K\left(\frac{d_g(\pmb{p}, \pmb{p}_i)}{r}\right),
+\end{equation}
+
+where $d_g(\pmb{p}, \pmb{p}_i)$ denotes the geodesic distance between two points on the manifold $\pmb{p}$ and $\pmb{p}_i$ and $\theta_{\pmb{p}_i}(\pmb{p})$ is known as the volume density function. The intuition behind the term $K\left(\frac{d_g(\pmb{p}, \pmb{p}_i)}{r}\right)$ is relatively clear. For example, for a uniform kernel the estimator at point $\pmb{p}$ will still be depend on the proportion of sample points within a ball of radius $r$ centered at $\pmb{p}$. However in this case, the distance metric used is the geodesic distance on the manifold rather than Euclidean or Mahalanobis distance. An additional technical assumption is that $r$ is less than the injectivity radius of the manifold. A technical definition of the injectivity radius is given by @Chavel2006-mp and also provided in the appendix. For our purposes, it is sufficient to note that this assumption precludes the possibility that the radius of a ball around $\pmb{p}$ is so large that some points `fall inside' the ball more than once. This could occur with a ball on the surface of a sphere with radius greater than half the circumference of a great circle on that sphere. This phenomenon also explains why the kernel function must be bounded fore density estimation on manifolds.
+
+The inclusion of the volume density function  $\theta_{\pmb{p}_i}(\pmb{p})$ is perhaps not as immediately clear, therefore before providing formal details we will briefly discuss the intuition behind including this term. We have already highlighted that when using a uniform kernel, the kernel density estimate at a point $\pmb{p}$ directly depends on the proportion of sample points within a ball of radius $r$ around $\pmb{p}$. However what should also be taken into account the volume of a ball of radius $r$ around $\pmb{p}$. In Euclidean space, this is not relevant since a radius $r$ ball will always have the same volume regardless of its center. The same does not hold for manifolds and the volume density function corrects for this while ensuring that the density estimate integrates to one.
+
+Technical details discussion to come...
+
 # Kernel density estimate on Riemannian manifold embedding {#kderm}
 
 <!-- In this section, we introduce the proposed kernel density estimator on the embedding of Riemannian manifolds.  -->
