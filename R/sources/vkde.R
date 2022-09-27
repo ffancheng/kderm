@@ -7,7 +7,7 @@
 # eval.points by default make grids and generate estimates of grid points; if provided, eg. x, can evaluate density at certain points
 # output long list of x, eval.points (grid points or data points), estimates for density, bandwidth matrix, whether estimates are for grids
 
-vkde <- function(x, h = NULL, vh = NULL, r = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points, xextend = 0.15, kde.package = "ks", positive = FALSE, opt.method = c("AMISE", "MEAN", "SCALED"), riem.scale = 1, adj_matrix = NULL, ...){
+vkde <- function(x, h = NULL, vh = NULL, r = NULL, gridsize = 20, xmin = apply(x, 2, min), xmax = apply(x, 2, max), eval.points, xextend = 0.15, kde.package = "ks", positive = FALSE, opt.method = c("AMISE", "MEAN", "SCALED")[3], riem.scale = 1, adj_matrix = NULL, ...){
 
   n <- nrow(x)
   d <- ncol(x)
@@ -34,27 +34,27 @@ vkde <- function(x, h = NULL, vh = NULL, r = NULL, gridsize = 20, xmin = apply(x
   xmax <- xmax + xr * xextend
 
   # bandwidth is a d*d*nx array
-  ## TODO: optimize hi as bandwidth pointwise
-  if(opt.method == "MEAN"){
-    # Option 1: scale hi with mean_i(|hi|) / det(hi)
-    vhidet <- apply(vh, 3, det)
-    vh <- sweep(vh, 3, mean(vhidet) / vhidet, "*")
-  } else
+  # ## TODO: optimize hi as bandwidth pointwise
+  # if(opt.method == "MEAN"){
+  #   # Option 1: scale hi with mean_i(|hi|) / det(hi)
+  #   vhidet <- apply(vh, 3, det)
+  #   vh <- sweep(vh, 3, mean(vhidet) / vhidet, "*")
+  # } else
+  # 
+  # if(opt.method == "AMISE"){
+  # # Option 2: scale hi as mean(det(hi)) * const = det(hopt) 
+  # # # Use optimized bandwidth from minimizing AMISE for scaling
+  # # if (d == 1 & !positive) 
+  # #   H <- ks::hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  # # if (d > 1 & !positive) 
+  # #   H <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
+  # vhidet <- apply(vh, 3, det)
+  # # h <- h * ((det(H) / mean(hidet)))#^(1/d)
+  # vh <- sweep(vh, 3, det(H) / vhidet, "*")
+  # # h <- h * det(H)
+  # }
   
-  if(opt.method == "AMISE"){
-  # Option 2: scale hi as mean(det(hi)) * const = det(hopt) 
-  # # Use optimized bandwidth from minimizing AMISE for scaling
-  # if (d == 1 & !positive) 
-  #   H <- ks::hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
-  # if (d > 1 & !positive) 
-  #   H <- ks::Hpi(x = x, nstage = 2, binned = ks:::default.bflag(d = d, n = n), deriv.order = 0)
-  vhidet <- apply(vh, 3, det)
-  # h <- h * ((det(H) / mean(hidet)))#^(1/d)
-  vh <- sweep(vh, 3, det(H) / vhidet, "*")
-  # h <- h * det(H)
-  }
-  
-  if(opt.method == "SCALED") vh <- vh * riem.scale
+  if(opt.method == "SCALED") vh <- vh * riem.scale # NO SCALING NEEDED! SET PARAMETER AS 1
   # Option 3: scale all riemannian matrix by an input constant
   
   if(missing(eval.points)) {
