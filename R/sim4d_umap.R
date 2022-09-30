@@ -12,7 +12,8 @@ Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1234)
 r <- 1
 # # r <- as.numeric(commandArgs()[[6]])
-load("data/simdata_100d_4dmanifold_N10000_trueden_k200.rda")
+k <- 500
+load(paste0("data/simdata_100d_4dmanifold_N10000_trueden_k", k, ".rda"))
 
 paste("Start at:", Sys.time())
 # ----parameters----------------------------------------------------------------
@@ -20,7 +21,7 @@ x <- train
 y <- NULL # without pre-computed embedding
 N <- nrow(x)
 s <- 4 # embedded in 4-D
-k <- N / 50
+# k <- N / 50
 method <- "annUMAP"
 annmethod <- "kdtree"
 distance <- "euclidean"
@@ -33,10 +34,14 @@ opt.method <- c("AMISE", "MEAN", "SCALED")[3] # 3 ONLY FOR NOW, no scaling for R
 riem.scale <- 1 # tune parameter
 
 ## ----umap-------------------------------------------------------------------
-metric_umap <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
-                          annmethod = annmethod, distance = distance, treetype = treetype,
-                          searchtype = searchtype
-)
+if(file.exists("data/metric_umap_4d_N10000_radius10.rda")){
+  load("data/metric_umap_4d_N10000_radius10.rda")
+} else {
+  metric_umap <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
+                            annmethod = annmethod, distance = distance, treetype = treetype,
+                            searchtype = searchtype
+  )
+}
 fn <- metric_umap$embedding
 Rn <- metric_umap$rmetric
 adj_matrix <- metric_umap$adj_matrix
@@ -92,11 +97,11 @@ p <- f %>%
   labs(x = "True density rank", y = "Estimated density rank") +
   scale_y_continuous(n.breaks = 6)
 # p
-ggsave(paste0("figures/compareden_5d_N", N, "_", method, "_r", format(r, decimal.mark = "_"), ".png"), p, width = 10, height = 6, dpi = 300)
+ggsave(paste0("figures/rankplot_4d_N", N, "_", method, "_radius", radius, "_r", format(r, decimal.mark = "_"), ".png"), p, width = 10, height = 6, dpi = 300)
 
 
 save(method, fixden_umap, fumap, train, trueden, cors,
-     file = paste0("data/compareden_4d_N", N, "_", method, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_annumap.rda"))
-save(metric_umap, file = paste0("data/metric_umap_4d_N10000_radius", radius, ".rda"))
+     file = paste0("figures/compareden_4d_N", N, "_", method, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_truedenk", k, ".rda"))
+# save(metric_umap, file = paste0("data/metric_umap_4d_N10000_radius", radius, ".rda"))
 
 paste("End at:", Sys.time())

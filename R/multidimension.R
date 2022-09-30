@@ -154,7 +154,7 @@ all.equal(train %*% t(train), X_new %*% t(X_new))
 # Parameters fixed
 x <- train
 N <- nrow(x)
-s <- 5 # embedded in 5-D
+s <- 4 # embedded in 5-D
 k <- 20
 method <- "Isomap"
 annmethod <- "kdtree"
@@ -371,7 +371,13 @@ cor(den, fixden_umap$estimate)
 
 
 
-## ----compareDensity---------------------------------------------------------------------------
+
+
+
+###--------------------------------------------------------
+## compareDensity
+###--------------------------------------------------------
+# first load all .rda files
 fxy <- den
 label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
 dist2center <- sqrt(r^2 - X_new[,5]^2)

@@ -5,6 +5,7 @@
 # `radius=10`
 # Tune `r`, the bandwidth parameter, for DC-KDE
 # One ggplot for rank plots, and two .rda files for ML and density estimates
+# This script is modified for HPC jobs for four ML methods
 rm(list = ls())
 library(tidyverse)
 library(dimRed)
@@ -15,7 +16,8 @@ library(patchwork)
 Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1234)
 r <- 1
-load("data/simdata_100d_4dmanifold_N10000_trueden_k200.rda")
+k <- 500
+load(paste0("data/simdata_100d_4dmanifold_N10000_trueden_k", k, ".rda"))
 
 paste("Start at:", Sys.time())
 # ----parameters----------------------------------------------------------------
@@ -36,10 +38,14 @@ opt.method <- c("AMISE", "MEAN", "SCALED")[3] # 3 ONLY FOR NOW, no scaling for R
 riem.scale <- 1 # tune parameter
 
 ## ----isomap-------------------------------------------------------------------
-metric_isomap <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
-                          annmethod = annmethod, distance = distance, treetype = treetype,
-                          searchtype = searchtype
-)
+if(file.exists("data/metric_isomap_4d_N10000_radius10.rda")){
+  load("data/metric_isomap_4d_N10000_radius10.rda")
+} else {
+  metric_isomap <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
+                            annmethod = annmethod, distance = distance, treetype = treetype,
+                            searchtype = searchtype
+  )
+}
 fn <- metric_isomap$embedding
 Rn <- metric_isomap$rmetric
 adj_matrix <- metric_isomap$adj_matrix
@@ -100,6 +106,6 @@ ggsave(paste0("figures/compareden_5d_N", N, "_", method, "_r", format(r, decimal
 
 save(method, fixden_isomap, fisomap, train, trueden, cors,
      file = paste0("data/compareden_4d_N", N, "_", method, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_annIsomap.rda"))
-save(metric_isomap, file = paste0("data/metric_isomap_4d_N10000_radius", radius, ".rda"))
+if(!file.exists(paste0("data/metric_isomap_4d_N10000_radius", radius, ".rda"))) save(metric_isomap, file = paste0("data/metric_isomap_4d_N10000_radius", radius, ".rda"))
 
 paste("End at:", Sys.time())

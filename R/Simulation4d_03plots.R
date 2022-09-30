@@ -2,16 +2,21 @@
 ## Gather and plot the results from 4 senarios in HPC results
 ###--------------------------------------------------------
 # first load all .rda files
-load(paste0("data/compareden_4d_N", N, "_", method, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_annIsomap.rda"))
-fxy <- den
+library(viridis)
+N <- 10000
+radius <- 10
+r <- 1
+# method <- c("isomap", "lle", "le", "tsne", "umap")[1]
+load("~/git/kderm/data/simdata_3d_N2000_01_trueden_k100.rda")
+fxy <- trueden
 label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
-dist2center <- sqrt(r^2 - X_new[,5]^2)
+dist2center <- sqrt(radius^2 - semisphere[,5]^2)
 methods <- c("isomap", "lle", "le", "umap")
 ## scatterplot to compare f_xy for ISOMAP
-f <- tibble(fxy = fxy, fxy_vkde = fisomap$estimate, fxy_hdr = fixden_isomap$estimate)
-f1 <- tibble(fxy = fxy, fxy_vkde = flle$estimate, fxy_hdr = fixden_lle$estimate)
-f2 <- tibble(fxy = fxy, fxy_vkde = fle$estimate, fxy_hdr = fixden_le$estimate)
-f3 <- tibble(fxy = fxy, fxy_vkde = fumap$estimate, fxy_hdr = fixden_umap$estimate)
+f <- tibble(fxy = fxy, fxy_vkde = fisomap$estimate, fxy_hdr = fixden_isomap$estimate) #%>% rank()
+f1 <- tibble(fxy = fxy, fxy_vkde = flle$estimate, fxy_hdr = fixden_lle$estimate) #%>% rank()
+f2 <- tibble(fxy = fxy, fxy_vkde = fle$estimate, fxy_hdr = fixden_le$estimate) #%>% rank()
+f3 <- tibble(fxy = fxy, fxy_vkde = fumap$estimate, fxy_hdr = fixden_umap$estimate) #%>% rank()
 
 summary(f)
 cor(f$fxy_vkde, f$fxy)
@@ -79,12 +84,12 @@ result <- (p/p1/p2/p3) + plot_layout(guides = 'collect') &
 gt <- patchwork::patchworkGrob(result)
 gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
 gt
-ggsave(paste0("paper/figures/", "fived", N, "_density_comparison_4ml_riem", format(riem.scale, decimal.mark = "_"), ".png"), gt, width = 8, height = 10, dpi = 300)
+ggsave(paste0("paper/figures/", "sim4d", N, "_density_comparison_4ml_riem", format(r, decimal.mark = "_"), "k200_rankdensity.png"), gt, width = 8, height = 10, dpi = 300)
 
 
 
 # Table for density correlations
-fxy <- den
+fxy <- trueden
 dencor <- function(x) cor(x$estimate, fxy)
 # dencor(p_lle)
 # dencor(p_hdr_lle)
