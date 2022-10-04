@@ -464,7 +464,7 @@ In \autoref{fig:tpisomapden}, we plot the estimated density against the true den
 fix the local distortions in the manifold learning process like the proposed pointwise variable bandwidth.
 
 ```{r tpisomapvs4ml, fig.align = 'center', out.width = "95%", fig.cap="Comparison of outliers found by ISOMAP and other four manifold learning methods for DC-KDE (on the left panel) and KDE (on the right panel). The four colors and shapes represents the four gaussian kernels in the 2-D meta data. Outliers found by DC-KDE are more consistent regardless of the manifold learning embedding.", echo = FALSE}
-knitr::include_graphics("figures/Twin Peak2000_density_comparison_isomapvs4ml_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_isomapvs4ml_radius8_r0_5_rank.png")
 ```
 
 Finally, \autoref(fig:tpisomapvs4ml) is used to show the robustness of the density estimates using DC-KDE regardless of the embedding method. By plotting the density ranks of LLE, Laplacian Eigenmaps, t-SNE, and UMAP against ISOMAP, we could tell that the rank correlation from DC-KDE is higher that that from KDE, meaning that the rank of DC-KDE are more consistent with the manifold learning methods. Compared with KDE where the density ranks varies with the embedding methods even for the same manifold, DC-KDE is more robust when the distortions are fixed.
