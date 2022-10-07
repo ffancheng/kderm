@@ -812,69 +812,116 @@ pf_hdr <- frank %>%
 # color the points with HDR, add rectangle and highlight points outside
 levels <- c(sort(100-prob) / 100, 1)
 q_rank <- quantile(1:N, levels)
-apply(frank[1:3], 2, function(x) cut(x, 
-                                     breaks = c(0, quantile(1:N, levels)), 
-                                     labels = c(paste(sort(100 - prob)), ">99"))) %>% head
-
-
-
-frank %>% 
-  mutate(col_trueden = )
-frank1 <- frank %>%
-  mutate(col_vkde = factor(p_isomap$p[["plot_env"]][["region"]],
-                           levels = c(paste(sort(100 - prob)), "100")),
-         col_kde = factor(p_hdr_isomap$p[["plot_env"]][["region"]],
-                          levels = c(paste(sort(100 - prob)), "100")),
-         col_truehdr = factor(p_meta$p[["plot_env"]][["region"]],
-                               levels = c(paste(sort(100 - prob)), "100"))
-         )
+# apply(frank[1:3], 2, function(x) cut(x, 
+#                                      breaks = c(0, quantile(1:N, levels)), 
+#                                      labels = c(paste(sort(100 - prob)), ">99"))) %>% head
+xname <- "isomap"
+frank1 <- frank %>% 
+  select(fxy:fxy_hdr) %>% # isomap
+  # rename(fxy_vkde_isomap = fxy_vkde, 
+  #        fxy_hdr_isomap = fxy_hdr) %>%
+  select(fxy, contains(paste0("_", xname))) %>% 
+  mutate(across(everything(), 
+                function(x) cut(x, 
+                                breaks = c(0, quantile(1:N, levels)), 
+                                labels = c(paste(sort(100 - prob)), ">99")))
+         ) %>% 
+  `colnames<-`(gsub("fxy_", "col_", colnames(.))) %>% 
+  # `colnames<-`(gsub(paste0("_", xname), "", colnames(.))) %>% 
+  bind_cols(frank[,1:3]) %>% 
+  mutate(dckde_false = (col_fxy == col_vkde),
+         kde_false = (col_fxy == col_hdr) )
+# frank1 <- frank %>%
+#   select(fxy:fxy_hdr) %>% 
+#   mutate(col_vkde = factor(p_isomap$p[["plot_env"]][["region"]],
+#                            levels = c(paste(sort(100 - prob)), "100")),
+#          col_hdr = factor(p_hdr_isomap$p[["plot_env"]][["region"]],
+#                           levels = c(paste(sort(100 - prob)), "100")),
+#          col_truehdr = factor(p_meta$p[["plot_env"]][["region"]],
+#                                levels = c(paste(sort(100 - prob)), "100"))
+#          )
 rec <- quantile(1:N, c(sort(100-prob), 100)/100) %>% log10()
 greys <- scales::grey_pal()(10)[-(1:4)]
-plogrec_isomap_kde <- frank1 %>%
-  ggplot(aes(x = fxy, y = fxy_hdr)) + 
+# rec_data <- tibble(xmin = 0, xmax = rev(rec), ymin = 0, ymax = rev(rec), fill = rev(greys), col = rev(greys), alpha = 0.5)
+
+plogrec_isomap_vkde <-
+  frank1 %>%
+  ggplot(aes(x = fxy, y = fxy_vkde)) +
+  # geom_rect(data = rec_data, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = rev(greys), col = col))
+  # geom_rect(fill=scales::grey_pal()(length(levels(frank1$col_truehdr))+5)[as.numeric(frank1$col_truehdr)+5],xmin = 0, xmax = quantile(1:N, c(sort(100-prob), 100)/100), ymin = -Inf,ymax = Inf, alpha = .1) 
+  geom_rect(xmin = 0, xmax = rec[6], ymin = -Inf, ymax = rec[6], fill = greys[6], col = greys[6]) +
+  geom_rect(xmin = 0, xmax = rec[5], ymin = -Inf, ymax = rec[5], fill = greys[5], col = greys[5]) +
+  geom_rect(xmin = 0, xmax = rec[4], ymin = -Inf, ymax = rec[4], fill = greys[4], col = greys[4]) +
+  geom_rect(xmin = 0, xmax = rec[3], ymin = -Inf, ymax = rec[3], fill = greys[3], col = greys[3]) +
+  # geom_rect(xmin = 0, xmax = rec[2], ymin = -Inf, ymax = rec[2], fill = greys[2], col = greys[2]) +
+  # geom_rect(xmin = 0, xmax = rec[1], ymin = -Inf, ymax = rec[1], fill = greys[1], col = greys[1]) +
+  geom_point()+ # if not color HDRs
+  # geom_point(aes(col = col_vkde), alpha = 1) + # if color HDRs
+  # ggplot2::scale_colour_manual(
+  #   name = "HDRs",
+  #   breaks = levels(frank1$col_fxy), # paste0(c(paste(sort(100 - prob)), ">99"), "%"),
+  #   values = rev(c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")),
+  #   labels = paste0(rev(c(paste(sort(100 - prob)), ">99")), "%")
+  # ) + 
+  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 10, 100, 1000, 2000), guide = guide_axis(n.dodge = 1)) + 
+  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 10, 100, 1000, 2000)) + 
+  geom_point(data = frank1[!frank1$dckde_false,], aes(x = fxy, y = fxy_vkde), pch=21, fill=NA, size=2, color=blues9[8], stroke=1.5) +
+  coord_fixed() +
+  labs(x = "", y = "") + 
+  theme_bw()
+plogrec_isomap_kde <-
+  frank1 %>%
+  ggplot(aes(x = fxy, y = fxy_hdr)) +
+  # geom_rect(data = rec_data, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = rev(greys), col = col))
   geom_rect(xmin = 0, xmax = rec[6], ymin = -Inf, ymax = rec[6], fill = greys[6], col = greys[6]) +
   geom_rect(xmin = 0, xmax = rec[5], ymin = -Inf, ymax = rec[5], fill = greys[5], col = greys[5]) +
   geom_rect(xmin = 0, xmax = rec[4], ymin = -Inf, ymax = rec[4], fill = greys[4], col = greys[4]) +
   geom_rect(xmin = 0, xmax = rec[3], ymin = -Inf, ymax = rec[3], fill = greys[3], col = greys[3]) +
   geom_rect(xmin = 0, xmax = rec[2], ymin = -Inf, ymax = rec[2], fill = greys[2], col = greys[2]) +
   geom_rect(xmin = 0, xmax = rec[1], ymin = -Inf, ymax = rec[1], fill = greys[1], col = greys[1]) +
-  geom_point(aes(col = col_kde)) +
-  # geom_rect(fill=scales::grey_pal()(length(levels(frank1$col_truehdr))+5)[as.numeric(frank1$col_truehdr)+5],xmin = 0, xmax = quantile(1:N, c(sort(100-prob), 100)/100), ymin = -Inf,ymax = Inf, alpha = .1) +
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), guide = guide_axis(n.dodge = 2)) + 
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), label = ) + 
-  ggplot2::scale_colour_manual(
-    name = "HDRs",
-    breaks = c(paste(sort(100 - prob)), "100"),
-    values = c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")
-  ) + 
+  geom_point()+ # if not color HDRs
+  # geom_point(aes(col = col_vkde), alpha = 1) + # if color HDRs
+  # ggplot2::scale_colour_manual(
+  #   name = "HDRs",
+  #   breaks = levels(frank1$col_fxy), # paste0(c(paste(sort(100 - prob)), ">99"), "%"),
+  #   values = rev(c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")),
+  #   labels = paste0(rev(c(paste(sort(100 - prob)), ">99")), "%")
+  # ) + 
+  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 10, 100, 1000, 2000), guide = guide_axis(n.dodge = 1)) + 
+  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 10, 100, 1000, 2000)) + 
+  geom_point(data = frank1[!frank1$kde_false,], aes(x = fxy, y = fxy_hdr), pch=21, fill=NA, size=2, color=blues9[8], stroke=1.5) +
   coord_fixed() +
-  labs(x = "", y = "")
-plogrec_isomap_vkde <- frank1 %>%
-  ggplot(aes(x = fxy, y = fxy_vkde)) + 
-  geom_rect(xmin = 0, xmax = rec[6], ymin = -Inf, ymax = rec[6], fill = greys[6], col = greys[6]) +
-  geom_rect(xmin = 0, xmax = rec[5], ymin = -Inf, ymax = rec[5], fill = greys[5], col = greys[5]) +
-  geom_rect(xmin = 0, xmax = rec[4], ymin = -Inf, ymax = rec[4], fill = greys[4], col = greys[4]) +
-  geom_rect(xmin = 0, xmax = rec[3], ymin = -Inf, ymax = rec[3], fill = greys[3], col = greys[3]) +
-  geom_rect(xmin = 0, xmax = rec[2], ymin = -Inf, ymax = rec[2], fill = greys[2], col = greys[2]) +
-  geom_rect(xmin = 0, xmax = rec[1], ymin = -Inf, ymax = rec[1], fill = greys[1], col = greys[1]) +
-  geom_point(aes(col = col_vkde)) +
-  # geom_rect(fill=scales::grey_pal()(length(levels(frank1$col_truehdr))+5)[as.numeric(frank1$col_truehdr)+5],xmin = 0, xmax = quantile(1:N, c(sort(100-prob), 100)/100), ymin = -Inf,ymax = Inf, alpha = .1) +
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), guide = guide_axis(n.dodge = 2)) + 
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), label = ) + 
-  ggplot2::scale_colour_manual(
-    name = "HDRs",
-    breaks = c(paste(sort(100 - prob)), "100"),
-    values = c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")
-  ) + 
-  coord_fixed() +
-  labs(x = "", y = "")
+  labs(x = "", y = "") + 
+  theme_bw()
+
+# Not run
+# plogrec_isomap_vkde <- frank1 %>%
+#   ggplot(aes(x = fxy, y = fxy_vkde)) + 
+#   geom_rect(xmin = 0, xmax = rec[6], ymin = -Inf, ymax = rec[6], fill = greys[6], col = greys[6]) +
+#   geom_rect(xmin = 0, xmax = rec[5], ymin = -Inf, ymax = rec[5], fill = greys[5], col = greys[5]) +
+#   geom_rect(xmin = 0, xmax = rec[4], ymin = -Inf, ymax = rec[4], fill = greys[4], col = greys[4]) +
+#   geom_rect(xmin = 0, xmax = rec[3], ymin = -Inf, ymax = rec[3], fill = greys[3], col = greys[3]) +
+#   geom_rect(xmin = 0, xmax = rec[2], ymin = -Inf, ymax = rec[2], fill = greys[2], col = greys[2]) +
+#   geom_rect(xmin = 0, xmax = rec[1], ymin = -Inf, ymax = rec[1], fill = greys[1], col = greys[1]) +
+#   geom_point(aes(col = col_vkde)) +
+#   # geom_rect(fill=scales::grey_pal()(length(levels(frank1$col_truehdr))+5)[as.numeric(frank1$col_truehdr)+5],xmin = 0, xmax = quantile(1:N, c(sort(100-prob), 100)/100), ymin = -Inf,ymax = Inf, alpha = .1) +
+#   scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), guide = guide_axis(n.dodge = 2)) + 
+#   scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), label = ) + 
+#   ggplot2::scale_colour_manual(
+#     name = "HDRs",
+#     breaks = c(paste(sort(100 - prob)), "100"),
+#     values = c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")
+#   ) + 
+#   coord_fixed() +
+#   labs(x = "", y = "")
 
 plotrec <- ((plogrec_isomap_vkde + labs(y = "Estimated density quantiles") + plogrec_isomap_kde) + 
   plot_layout(guides = 'collect')) %>%
   add_global_label(Xlab = "True density quantiles")
-# pr <- patchwork::patchworkGrob(plotrec)
-# pr <- gridExtra::grid.arrange(pr, bottom = "True density quantiles")
-# ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_isomap_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_rec_colprob.png"), pr, width = 12, height = 5, dpi = 300)
+plotrec
+## pr <- patchwork::patchworkGrob(plotrec)
+## pr <- gridExtra::grid.arrange(pr, bottom = "True density quantiles")
+# ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_isomap_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_rec_colprob_circlefalse.png"), plotrec, width = 12, height = 5, dpi = 300)
 
 
 
@@ -885,6 +932,44 @@ plotrec <- ((plogrec_isomap_vkde + labs(y = "Estimated density quantiles") + plo
 
 ## -----------------------------------------------------------------------------
 # 6.4 Plot of outlier rank to show that the ranks do not change across different ML methods
+# change i to put each ML method on x-axis
+i <- 1
+xname <- c("isomap", "lle", "le", "tsne", "umap")[i]
+mllabel <- c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP")
+p_data <- frank %>% 
+  rename(fxy_vkde_isomap = fxy_vkde, 
+         fxy_hdr_isomap = fxy_hdr) %>%
+  # `colnames<-`(gsub("fxy_", "", colnames(.))) %>%
+  select(-fxy) %>% 
+  pivot_longer(-contains(paste0("_", xname)), names_sep = "_", names_to = c("f", "dckde",
+                                                                            # pivot_longer(everything(), names_sep = "_", names_to = c("dckde",
+                                                                            "kde")) %>% 
+  pivot_longer(contains(xname), names_sep = "_", names_to = c("f_x",
+                                                              "dckde_x", 
+                                                              "kde_x"), 
+               values_to = "x") %>% 
+  filter(dckde == dckde_x)  %>% 
+  pivot_wider(names_from = "kde_x", values_from = "x") %>% 
+  select(kde, any_of(xname), value, dckde) %>% 
+  mutate(dckde = factor(dckde, levels = c("vkde", "hdr"), labels = c("DC-KDE", "KDE")),
+         kde = factor(kde, labels = mllabel[-i])) 
+cor_data <- p_data %>%
+  group_by(kde, dckde) %>% 
+  summarise(cor = cor(value, !!sym(xname), method = "spearman"), 
+            # x = quantile(!!sym(xname), 0.9), 
+            # y = quantile(!!sym(xname), 0.2),
+            .groups = "drop")
+
+ggplot(p_data, aes(x = !!sym(xname), y = value)) +
+  geom_point() +
+  # geom_label(data = cor_data, aes(x=x, y = y, label = paste("cor: ", format(cor, digits = 2)))) +
+  facet_grid(kde ~ dckde) + 
+  labs(x = mllabel[i], y = "")
+# ggsave(paste0("paper/figures/", mapping, N,"_density_compare_", xname, "vs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), width = 8, height = 10, dpi = 300)
+
+
+
+# Not run
 # frank
 # prank_dckde_isolle <- frank %>% 
 #   ggplot(aes(x = fxy_vkde, y = fxy_vkde_lle)) +  # , col = factor(preswissroll$label), shape = factor(preswissroll$label)
@@ -940,43 +1025,9 @@ plotrec <- ((plogrec_isomap_vkde + labs(y = "Estimated density quantiles") + plo
 # # ggsave(paste0("paper/figures/", mapping, N,"_density_compare_isomapvs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), prank_isomap, width = 8, height = 10, dpi = 300)
 
 
-# change i to put each ML method on x-axis
-i <- 1
-xname <- c("isomap", "lle", "le", "tsne", "umap")[i]
-mllabel <- c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP")
-p_data <- frank %>% 
-  rename(fxy_vkde_isomap = fxy_vkde, 
-         fxy_hdr_isomap = fxy_hdr) %>%
-  # `colnames<-`(gsub("fxy_", "", colnames(.))) %>%
-  select(-fxy) %>% 
-  pivot_longer(-contains(paste0("_", xname)), names_sep = "_", names_to = c("f", "dckde",
-                                                               # pivot_longer(everything(), names_sep = "_", names_to = c("dckde",
-                                                               "kde")) %>% 
-  pivot_longer(contains(xname), names_sep = "_", names_to = c("f_x",
-                                                              "dckde_x", 
-                                                              "kde_x"), 
-               values_to = "x") %>% 
-  filter(dckde == dckde_x)  %>% 
-  pivot_wider(names_from = "kde_x", values_from = "x") %>% 
-  select(kde, any_of(xname), value, dckde) %>% 
-  mutate(dckde = factor(dckde, levels = c("vkde", "hdr"), labels = c("DC-KDE", "KDE")),
-         kde = factor(kde, labels = mllabel[-i])) 
-cor_data <- p_data %>%
-  group_by(kde, dckde) %>% 
-  summarise(cor = cor(value, !!sym(xname), method = "spearman"), 
-            # x = quantile(!!sym(xname), 0.9), 
-            # y = quantile(!!sym(xname), 0.2),
-            .groups = "drop")
 
-ggplot(p_data, aes(x = !!sym(xname), y = value)) +
-  geom_point() +
-  # geom_label(data = cor_data, aes(x=x, y = y, label = paste("cor: ", format(cor, digits = 2)))) +
-  facet_grid(kde ~ dckde) + 
-  labs(x = mllabel[i], y = "")
-# ggsave(paste0("paper/figures/", mapping, N,"_density_compare_", xname, "vs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), width = 8, height = 10, dpi = 300)
-
-
-# Plot all dc-kde / kde in one plot
+# Not run
+# Plot all combinations of dc-kde / kde in one plot
 # library(GGally)
 # ggpairs(frank[,(1:5)*2],
 #         columnLabels = c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP"),
