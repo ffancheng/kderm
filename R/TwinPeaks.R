@@ -720,12 +720,12 @@ gt
 # RUN this!!!
 ##---------------------------------------------------------------------
 # color the points with HDR, add rectangle and highlight points outside
+xname <- c("isomap", "tsne")[2] # !!! Modify index for different ML methods comparison
 probs <- prob[1:2]
 levels <- c(probs / 100, 1)
 q_rank <- quantile(1:N, levels)
 rec <- log10(q_rank)
-greys <- scales::grey_pal()(10)[c(8,10)]
-xname <- c("isomap", "tsne")[1] # !!! Modify index for different ML methods comparison
+greys <- scales::grey_pal()(10)[c(6, 8, 10)]
 frank1 <- frank %>% 
   # select(fxy:fxy_hdr) %>% # isomap
   rename(fxy_vkde_isomap = fxy_vkde,
@@ -739,7 +739,7 @@ frank1 <- frank1 %>%
                                 labels = c(">99", paste(100 - probs))))
   ) %>% 
   `colnames<-`(gsub("fxy", "col", colnames(.))) %>% 
-  bind_cols(select(frank, fxy, contains(paste0("_", xname)))) %>% 
+  bind_cols(select(frank1, fxy, contains(paste0("_", xname)))) %>% 
   `colnames<-`(gsub(paste0("_", xname), "", colnames(.))) %>% 
   mutate(dckde_false = (col == col_vkde) & (col != last(probs)) & (col_vkde != last(probs)),
          kde_false = (col == col_hdr) & (col != last(probs)) & (col_hdr != last(probs)) ) 
@@ -747,8 +747,10 @@ frank1 <- frank1 %>%
 plogrec_isomap_vkde <-
   frank1 %>%
   ggplot(aes(x = fxy, y = fxy_vkde)) +
-  geom_rect(xmin = 0, xmax = rec[2], ymin = -Inf, ymax = rec[2], fill = greys[2], col = greys[2]) +
-  geom_rect(xmin = 0, xmax = rec[1], ymin = -Inf, ymax = rec[1], fill = greys[1], col = greys[1]) +
+  # geom_rect(xmin = 0, xmax = rec[2], ymin = 0, ymax = rec[2], fill = greys[2], col = greys[2]) +
+  # geom_rect(xmin = rec[2], xmax = rec[3], ymin = rec[2], ymax = rec[3], fill = greys[3], col = greys[3]) + # third blocks
+  geom_rect(xmin = rec[1], xmax = rec[2], ymin = rec[1], ymax = rec[2], fill = greys[2], col = greys[2]) + # small blocks
+  geom_rect(xmin = 0, xmax = rec[1], ymin = 0, ymax = rec[1], fill = greys[1], col = greys[1]) +
   geom_point(aes(col = col_vkde, shape = dckde_false, size = dckde_false, alpha = dckde_false)) + # if color HDRs
   ggplot2::scale_colour_manual(
     name = "HDRs",
@@ -756,8 +758,8 @@ plogrec_isomap_vkde <-
     values = rev(c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000"))[1:length(levels)],
     labels = paste0(levels(frank1$col), "%")
   ) +
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 10, 100, 1000, 2000), guide = guide_axis(n.dodge = 1)) + 
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 10, 100, 1000, 2000)) + 
+  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 20, 200, 1000, 2000), guide = guide_axis(n.dodge = 1)) + 
+  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 20, 200, 1000, 2000)) + 
   coord_fixed() +
   scale_shape_manual(values = c(`TRUE` = 20, `FALSE` = 17 )) +
   scale_size_manual(values = c(`TRUE` = 1, `FALSE` = 2 )) +
@@ -767,8 +769,10 @@ plogrec_isomap_vkde <-
 plogrec_isomap_kde <-
   frank1 %>%
   ggplot(aes(x = fxy, y = fxy_hdr)) +
-  geom_rect(xmin = 0, xmax = rec[2], ymin = -Inf, ymax = rec[2], fill = greys[2], col = greys[2]) +
-  geom_rect(xmin = 0, xmax = rec[1], ymin = -Inf, ymax = rec[1], fill = greys[1], col = greys[1]) +
+  # geom_rect(xmin = 0, xmax = rec[2], ymin = 0, ymax = rec[2], fill = greys[2], col = greys[2]) +
+  # geom_rect(xmin = rec[2], xmax = rec[3], ymin = rec[2], ymax = rec[3], fill = greys[3], col = greys[3]) + # third blocks
+  geom_rect(xmin = rec[1], xmax = rec[2], ymin = rec[1], ymax = rec[2], fill = greys[2], col = greys[2]) + # small blocks
+  geom_rect(xmin = 0, xmax = rec[1], ymin = 0, ymax = rec[1], fill = greys[1], col = greys[1]) +
   # geom_point()+ # if not color HDRs
   geom_point(aes(col = col_hdr, shape = kde_false, size = kde_false, alpha = kde_false)) + # if color HDRs
   ggplot2::scale_colour_manual(
@@ -777,8 +781,8 @@ plogrec_isomap_kde <-
     values = rev(c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000"))[1:length(levels)],
     labels = paste0(levels(frank1$col), "%")
   ) +
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 10, 100, 1000, 2000), guide = guide_axis(n.dodge = 1)) + 
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 10, 100, 1000, 2000)) + 
+  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 20, 200, 1000, 2000), guide = guide_axis(n.dodge = 1)) + 
+  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 20, 200, 1000, 2000)) + 
   coord_fixed() +
   scale_shape_manual(values = c(`TRUE` = 20, `FALSE` = 17 )) +
   scale_size_manual(values = c(`TRUE` = 1, `FALSE` = 2 )) +
@@ -789,7 +793,7 @@ plotrec <- ((plogrec_isomap_vkde + labs(y = "Estimated density rank") + plogrec_
               plot_layout(guides = 'collect')) %>%
   add_global_label(Xlab = "True density rank")
 plotrec
-# ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_", xname, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_rec_colprob_crossfalse.png"), plotrec, width = 12, height = 5, dpi = 300)
+ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_", xname, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_rec_colprob_smallblocks_crossfalse.png"), plotrec, width = 12, height = 5, dpi = 300)
 
 
 # # Not run
@@ -915,12 +919,12 @@ cor_data <- p_data %>%
             # y = quantile(!!sym(xname), 0.2),
             .groups = "drop")
 
-ggplot(p_data, aes(x = !!sym(xname), y = value)) +
+p_isovs4ml <- ggplot(p_data, aes(x = !!sym(xname), y = value)) +
   geom_point() +
   # geom_label(data = cor_data, aes(x=x, y = y, label = paste("cor: ", format(cor, digits = 2)))) +
   facet_grid(kde ~ dckde) + 
   labs(x = mllabel[i], y = "")
-# ggsave(paste0("paper/figures/", mapping, N,"_density_compare_", xname, "vs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), width = 8, height = 10, dpi = 300)
+# ggsave(paste0("paper/figures/", mapping, N,"_density_compare_", xname, "vs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), p_isovs4ml, width = 8, height = 10, dpi = 300)
 
 
 
