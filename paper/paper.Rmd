@@ -248,7 +248,7 @@ The volumes of the parallelepiped spanned by the basis $\{(\partial / \partial\b
 Therefore, given a point $\pmb{q} \in B(\pmb{p},r)$ and a tangent vector $u = \exp^{-1}_{\pmb{p}}(\pmb{q}) \in B(0_{\pmb{p}},r)$, for any chart $(\bar{U}, \bar{\psi})$ of $B(0_{\pmb{p}},r)$ that contains $u$, @Henry2009-om defines the volume density function on the Riemannian manifold $(M,g)$ as
 \begin{equation}
 \label{eq:volumedensityratio}
-\theta_p(q) = \frac{| \det g^{\prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} }{ | \det g^{\prime \prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} } \\ .
+\theta_p(q) = \frac{| \det g^{\prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} }{ | \det g^{\prime \prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} }  .
 \end{equation}
 The volume density function is only defined for points satisfying $d_g(\pmb{p},\pmb{q}) < inj_gM$ so that there exists an open ball $B(\pmb{p},r) \in T_{\pmb{p}}M$. And $\theta_{\pmb{p}}(\pmb{q})=1$ for all $\pmb{p},\pmb{q} \in \mathbb{R}^d$ when the manifold $M$ is $\mathbb{R}^d$ with the canonical metric.
 
@@ -497,9 +497,9 @@ $\pmb{X}_0^\prime \pmb{X}=(\pmb{QX}_0)^\prime(\pmb{QX}_0)$, meaning that the pai
 $\pmb{X}_0^\prime$ is equivalent to that of $(\pmb{QX}_0)^\prime$.
 Therefore, we use matrix $Q$ as the rotation matrix for where the rotated data matrix $\pmb{X} = (\pmb{QX}_0)^\prime$ of dimension $N \times 100$ is now the input data for the manifold learning algorithms. Again, we set the embedding dimension to be equal to the meta data dimension $d=5$.
 
-```{r fivedisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density of different embeddings for KDE with both variable and fixed bandwidth. The point shapes indicates the two Gaussian mixture components and the colors shows the distance to the kernel cores.", echo = FALSE}
-# knitr::include_graphics("figures/fived_density_comparison_4ml_riem20.png")
-knitr::include_graphics("figures/sim4d10000_density_comparison_4ml_riem1k200_rawdensity.png")
+```{r fivedisomapden, fig.align = 'center', out.width = "95%", fig.cap="Rank comparison between the true density and estimated density from both DC-KDE and KDE. Four manifold learning methods are used rowwise. The point shapes indicates whether they are the true outleirs, and the grey shading highlights the top 1\\% rank region. The colors show the distance to the center of the semisphere, with darker points being distant from the center.", echo = FALSE}
+# knitr::include_graphics("figures/sim4d10000_density_comparison_4ml_riem1k200_rawdensity.png")
+knitr::include_graphics("figures/sim4d10000_density_comparison_4ml_radius10_k200_rankdensity_circleoutlier_with1rec.png")
 ```
 
 In \autoref{fig:fivedisomapden}, the estimated densities are compared with the true density on the x-axis for four manifold learning embeddings, ISOMAP, LLE, Laplacian Eigenmaps, and UMAP. Note that we exclude t-SNE algorithm in this section because it is designed mainly for low-dimensional visualization purposes, and it is only applicable to embedding dimensions within three. Similar to \autoref{fig:fivedmeta}, the point shapes show the two mixture component in the meta data, and the colors represent the distance to the kernel means, with distant outliers shown in darker colors. For well-estimated densities, the true
@@ -508,7 +508,7 @@ the relationship is stronger than the fixed bandwidth. This suggests that our pr
 In KDE with fixed bandwidth, the bandwidth is often too large to smooth across all data points, especially when there is severe distortion in the embedding data. By introducing the pointwise variable Riemannian metric in kernel density estimation, it is reasonable to believe that it could fix the distortion introduced by these three manifold learning algorithms.
 
 ```{r fivedcors, echo=FALSE, message=FALSE, eval=T}
-load("figures/CorrelationTable_fived_4ml_riem20.rda")
+load("figures/CorrelationTable_4d_N10000_4ml_radius10_r1.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
 data.frame(cors) %>% 
@@ -699,15 +699,20 @@ Density of $x$: $f(x) = \frac{2}{\pi \sqrt{1-x^2}}$
 
 The CDF of X is given by
 $$
-P(X \leq x) = P(\cos(\theta) \leq x) \\
-= P(\theta \geq \arccos(x)) \\
-= \int_{\arccos(x)}^{\pi/2} f(\theta) d\theta \\
-=  \frac{2}{\pi} (\frac{\pi}{2} - \arccos(x) ) \\
-= 1 - \frac{2}{\pi} \arccos(x).
+\begin{aligned}
+P(X \leq x) =& P(\cos(\theta) \leq x) \\
+=& P(\theta \geq \arccos(x)) \\
+=& \int_{\arccos(x)}^{\pi/2} f(\theta) d\theta \\
+=&  \frac{2}{\pi} (\frac{\pi}{2} - \arccos(x) ) \\
+=& 1 - \frac{2}{\pi} \arccos(x).
+\end{aligned}
 $$
-Then the density of X is the derivative of the CDF w.r.t. $x$ $$
-f(x) = -\frac{2}{\pi} (-\frac{1}{\sqrt{1 - x^2}}) \\
-= \frac{2}{\pi \sqrt{1 - x^2}}.
+Then the density of X is the derivative of the CDF w.r.t. $x$ 
+$$
+\begin{aligned}
+f(x) =& -\frac{2}{\pi} (-\frac{1}{\sqrt{1 - x^2}}) \\
+=& \frac{2}{\pi \sqrt{1 - x^2}}.
+\end{aligned}
 $$
 
 Given $(x, y) \in \mathbb{R}^2$ as sample points from $S^1$, we could
@@ -765,7 +770,7 @@ The coefficients for $v$ and $w$ gives the local coordinates of two tangent vect
 Further, since the riemannian metric is defined as the inner product between two tangent vectors, each component of the riemannian metric could be calculated as $g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))$.
 Therefore, we obtain that the volume density on the sphere is
 $$
-\theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2} \\
+\theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2} 
 = \frac{|\sin(d_g(p,q))|}{d_g(p,g)},
 $$
 for $q \neq p, -p$, and $\theta_p(p) = 1$.

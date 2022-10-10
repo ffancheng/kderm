@@ -237,7 +237,7 @@ frank_long %>%
 #     as_tibble() %>% 
 #     ggplot(aes(x = E1, y = E2)) + 
 #     ggplot2::geom_point(ggplot2::aes_string(col = "Region")) + 
-#     ggplot2::scale_colour_manual(
+#     ggplot2::scale_color_manual(
 #       name = "HDRs",
 #       breaks = c(paste(head(sort(prob), -1)), ">99"),
 #       values = c(RColorBrewer::brewer.pal(length(prob), "YlOrRd")[-1], "#000000")) + 
@@ -630,7 +630,7 @@ frank_long <- frank %>%
   pivot_longer(cols = -c(fxy), names_to = "kde", values_to = "densities") %>% 
   separate(kde, c("KDE", "ML"), sep = "_") %>% 
   mutate(KDE = factor(KDE, levels = c("vkde", "hdr"), labels = c("DC-KDE", "KDE")),
-         ML = factor(ML, labels = c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP"))
+         ML = factor(ML, levels = methods, labels = c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP"))
          )
 gt <- frank_long %>%
   ggplot(aes(fxy, densities)) +
@@ -752,7 +752,7 @@ plogrec_isomap_vkde <-
   geom_rect(xmin = rec[1], xmax = rec[2], ymin = rec[1], ymax = rec[2], fill = greys[2], col = greys[2]) + # small blocks
   geom_rect(xmin = 0, xmax = rec[1], ymin = 0, ymax = rec[1], fill = greys[1], col = greys[1]) +
   geom_point(aes(col = col_vkde, shape = dckde_false, size = dckde_false, alpha = dckde_false)) + # if color HDRs
-  ggplot2::scale_colour_manual(
+  scale_color_manual(
     name = "HDRs",
     breaks = levels(frank1$col),
     values = rev(c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000"))[1:length(levels)],
@@ -775,7 +775,7 @@ plogrec_isomap_kde <-
   geom_rect(xmin = 0, xmax = rec[1], ymin = 0, ymax = rec[1], fill = greys[1], col = greys[1]) +
   # geom_point()+ # if not color HDRs
   geom_point(aes(col = col_hdr, shape = kde_false, size = kde_false, alpha = kde_false)) + # if color HDRs
-  ggplot2::scale_colour_manual(
+  scale_color_manual(
     name = "HDRs",
     breaks = levels(frank1$col), # paste0(c(paste(sort(100 - prob)), ">99"), "%"),
     values = rev(c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000"))[1:length(levels)],
@@ -875,7 +875,7 @@ ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_"
 #   scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100)) + # breaks = c(1, 10, 100, 1000, 2000)) +
 #   # geom_point(aes(y = fxy_hdr, col = fxy_hdr)) +
 #   # scale_color_viridis(option = "A", direction = -1) 
-#   ggplot2::scale_colour_manual(
+#   ggplot2::scale_color_manual(
 #     name = "HDRs",
 #     breaks = c(paste(sort(100 - prob)), "100"),
 #     values = c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")
