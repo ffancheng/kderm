@@ -612,7 +612,6 @@ cors %>%
   kable_styling(latex_options = "scale_down") %>%
   kable_paper(full_width = TRUE) %>%
   row_spec(1, bold = TRUE)
-
 # save(cors, file = paste0("paper/figures/CorrelationTable_", mapping, N,"_5ml_radius", radius, "_r", format(r, decimal.mark = "_"), ".rda"))
 
 
@@ -720,7 +719,7 @@ gt
 # RUN this!!!
 ##---------------------------------------------------------------------
 # color the points with HDR, add rectangle and highlight points outside
-xname <- c("isomap", "tsne")[2] # !!! Modify index for different ML methods comparison
+xname <- c("isomap", "tsne")[1] # !!! Modify index for different ML methods comparison
 probs <- prob[1:2]
 levels <- c(probs / 100, 1)
 q_rank <- quantile(1:N, levels)
@@ -748,7 +747,7 @@ plogrec_isomap_vkde <-
   frank1 %>%
   ggplot(aes(x = fxy, y = fxy_vkde)) +
   # geom_rect(xmin = 0, xmax = rec[2], ymin = 0, ymax = rec[2], fill = greys[2], col = greys[2]) +
-  # geom_rect(xmin = rec[2], xmax = rec[3], ymin = rec[2], ymax = rec[3], fill = greys[3], col = greys[3]) + # third blocks
+  geom_rect(xmin = rec[2], xmax = rec[3], ymin = rec[2], ymax = rec[3], fill = greys[3], col = greys[3]) + # third blocks
   geom_rect(xmin = rec[1], xmax = rec[2], ymin = rec[1], ymax = rec[2], fill = greys[2], col = greys[2]) + # small blocks
   geom_rect(xmin = 0, xmax = rec[1], ymin = 0, ymax = rec[1], fill = greys[1], col = greys[1]) +
   geom_point(aes(col = col_vkde, shape = dckde_false, size = dckde_false, alpha = dckde_false)) + # if color HDRs
@@ -764,13 +763,14 @@ plogrec_isomap_vkde <-
   scale_shape_manual(values = c(`TRUE` = 20, `FALSE` = 17 )) +
   scale_size_manual(values = c(`TRUE` = 1, `FALSE` = 2 )) +
   scale_alpha_manual(values = c(`TRUE` = .5, `FALSE` = 1) ) + 
-  labs(x = "", y = "", shape = "Correct HDRs", size = "Correct HDRs", alpha = "Correct HDRs")
+  labs(x = "", y = "", title = "DC-KDE", shape = "Correct HDRs", size = "Correct HDRs", alpha = "Correct HDRs") +
+  theme(plot.title = element_text(hjust = 0.5))
 # theme_bw()
 plogrec_isomap_kde <-
   frank1 %>%
   ggplot(aes(x = fxy, y = fxy_hdr)) +
   # geom_rect(xmin = 0, xmax = rec[2], ymin = 0, ymax = rec[2], fill = greys[2], col = greys[2]) +
-  # geom_rect(xmin = rec[2], xmax = rec[3], ymin = rec[2], ymax = rec[3], fill = greys[3], col = greys[3]) + # third blocks
+  geom_rect(xmin = rec[2], xmax = rec[3], ymin = rec[2], ymax = rec[3], fill = greys[3], col = greys[3]) + # third blocks
   geom_rect(xmin = rec[1], xmax = rec[2], ymin = rec[1], ymax = rec[2], fill = greys[2], col = greys[2]) + # small blocks
   geom_rect(xmin = 0, xmax = rec[1], ymin = 0, ymax = rec[1], fill = greys[1], col = greys[1]) +
   # geom_point()+ # if not color HDRs
@@ -787,13 +787,14 @@ plogrec_isomap_kde <-
   scale_shape_manual(values = c(`TRUE` = 20, `FALSE` = 17 )) +
   scale_size_manual(values = c(`TRUE` = 1, `FALSE` = 2 )) +
   scale_alpha_manual(values = c(`TRUE` = .5, `FALSE` = 1) ) + 
-  labs(x = "", y = "", shape = "Correct HDRs", size = "Correct HDRs", alpha = "Correct HDRs")
+  labs(x = "", y = "", title = "KDE", shape = "Correct HDRs", size = "Correct HDRs", alpha = "Correct HDRs") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 plotrec <- ((plogrec_isomap_vkde + labs(y = "Estimated density rank") + plogrec_isomap_kde) + 
               plot_layout(guides = 'collect')) %>%
   add_global_label(Xlab = "True density rank")
 plotrec
-ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_", xname, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_rec_colprob_smallblocks_crossfalse.png"), plotrec, width = 12, height = 5, dpi = 300)
+ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_", xname, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_rec_colprob_smallblocks3_crossfalse.png"), plotrec, width = 12, height = 5, dpi = 300)
 
 
 # # Not run
