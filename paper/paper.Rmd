@@ -523,7 +523,7 @@ data.frame(cors) %>%
   column_spec(5, bold = max.match[,4])
 ```
 ```{r fourdhdrtable, echo=FALSE, message=FALSE, eval=T}
-load("figures/HDRTable_4d_N10000_4ml_radius10_r1.rda")
+load("figures/hdrtable_4d_N10000_4ml_radius10_r1.rda")
 hdrtable %>% 
   kableExtra::kbl(caption = "Percentage comparison of correct highest density regions in density estimation of four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE, align = "c",
                   col.names = c(rep(c("DC-KDE", "KDE"), 4))
