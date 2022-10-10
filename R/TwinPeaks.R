@@ -719,7 +719,7 @@ gt
 # RUN this!!!
 ##---------------------------------------------------------------------
 # color the points with HDR, add rectangle and highlight points outside
-xname <- c("isomap", "tsne")[1] # !!! Modify index for different ML methods comparison
+xname <- methods[2] # !!! Modify index for different ML methods comparison
 probs <- prob[1:2]
 levels <- c(probs / 100, 1)
 q_rank <- quantile(1:N, levels)

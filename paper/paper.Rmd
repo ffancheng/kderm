@@ -814,6 +814,35 @@ Similarly, the pullback maps the cotangent vectors $z_{f(p)}$ at $f(p) \in E$ to
 <!-- where the geodesic distance is $d_g(p,q) = \arccos(p) - \arccos(q)$, and $\theta_p(p) = 1$. -->
 
 
+
+# Appendix: Rank comparison plots for twin peaks mapping {#twinpeaksappe}
+
+This appendix contains the comparison plots for the density rank between DC-KDE and KDE using different manifold learning algorithms, similar to \autoref{fig:tpisomapden}, \autoref{fig:tptsneden}, and \autoref{fig:tpisomapvs4ml}. By comparing these plots, it could be concluded that DC-KDE could categorize the density ranks into highest density regions more accurately than KDE. By correcting the distortion in different manifold learning embeddings, DC-KDE is more robust in identifying the lowest density regions, which are usually used to detect anomalies.
+
+```{r tplleden, fig.align = 'center', out.width = "100%", fig.cap="Scatterplot of true density and estimated density ranks of LLE embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_lle_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse.png")
+```
+
+```{r tpleden, fig.align = 'center', out.width = "100%", fig.cap="Scatterplot of true density and estimated density ranks of Laplaxian Eigenmaps embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_le_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse.png")
+```
+
+```{r tpumapden, fig.align = 'center', out.width = "100%", fig.cap="Scatterplot of true density and estimated density ranks of UMAP embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_umap_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse.png")
+```
+
+
+```{r tpllevs4ml, fig.align = 'center', out.width = "95%", fig.cap="Comparison of outliers found by one manifold learning method compared to the other four for DC-KDE (on the left panel) and KDE (on the right panel). The four colors and shapes represents the four gaussian kernels in the 2-D meta data. Outliers found by DC-KDE are more consistent regardless of the manifold learning embedding.", echo = FALSE}
+# knitr::include_graphics("figures/Twin Peak2000_density_compare_isomapvs4ml_radius8_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_llevs4ml_radius8_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_levs4ml_radius8_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_tsnevs4ml_radius8_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_umapvs4ml_radius8_r0_5_rank.png")
+```
+
+
+
+
 <!-- \clearpage -->
 
 # Appendix: Simulation with swiss roll mapping {#swissrollappe}
