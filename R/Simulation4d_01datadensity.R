@@ -46,20 +46,20 @@ semisphere <- cbind(X,
                x5 = sqrt(radius^2 - (x1^2 + x2^2 + x3^2 + x4^2)),
                matrix(0, N, p - 5)
 )
-# head(X_new)
-# X_new %>% as_tibble() %>% summarise(x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
+# head(semisphere)
+# semisphere %>% as_tibble() %>% summarise(x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 
-# # distance to (0,0,0,0,0) is the same, = radius = 7
+# # distance to (0,0,0,0,0) is the same, = radius = 6
 # # calculate distance to (0,0,0,0) and color them
 # label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
-# dist2center <- sqrt(radius^2 - X_new[,5]^2)
+# dist2center <- sqrt(radius^2 - semisphere[,5]^2)
 # ## Plot 5-d semi-sphere, run once
-# library(tourr)
-# colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
-# pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
-# animate_xy(X_new[,1:5], col = colors, pch = pchs, cex = 0.8,
-#            axes = "bottomleft", fps=15
-#            )
+library(tourr)
+colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
+pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
+animate_xy(semisphere[,1:5], col = colors, pch = pchs, cex = 0.8,
+           axes = "bottomleft", fps=15
+           )
 # # "figures/tourr_5d_semisphere.png"
 
 y <- matrix(runif(p*p, 0, 1), p, p)
@@ -100,6 +100,5 @@ Rn <- metric_meta$rmetric
 den_4dmanifold <- den * (apply(Rn, 3, det)) ^ (.5)
 summary(den_4dmanifold)
 trueden <- den_4dmanifold
-# save(trueden, file = paste0("~/Downloads/trueden_N10000_4d_k", k, ".rda")
 
-save(X, train, N, p, den, trueden, file = paste0("data/simdata_100d_4dmanifold_N10000_trueden_k", k, ".rda"))
+save(X, semisphere, train, N, p, den, trueden, k, file = paste0("data/simdata_100d_4dmanifold_N10000_trueden_k", k, ".rda"))

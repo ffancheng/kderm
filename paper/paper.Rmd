@@ -91,27 +91,33 @@ By exploiting the connection between the estimated Riemannian metric and the Rie
 The rest of the paper is organized as follows. In \autoref{kderm}, we present our distortion-corrected kernel density estimator for Riemannian manifolds. We start by introducing the multivariate kernel density estimate with adaptive bandwidth and the kernel density estimator for Riemannian manifolds. Then we provide justification for the use of Riemannian metric to correct the distortions in manifold learning embedding and further apply the proposed estimator for anomaly detection. \autoref{simulation} is composed of two simulations with the proposed anomaly detection algorithm; the first deals with 2-dimensional data from gaussian mixture model mapped into a 3-D twin peaks structure and the second with a 5-D semi-hypersphere data mapped in a 100-D space. Different manifold learning algorithms are applied to the high-dimensional data to get the low-dimensional embedding which are then used to estimate densities and detect anomalies.
 \autoref{application} contains the application to visualize and identify anomalous households in the Irish smart meter dataset. Conclusions and discussions are presented in \autoref{conclusion}. Readers interested in the notions of Riemannian geometry mentioned in this paper could use \autoref{riemgeo} as a reference.
 
-# Kernel density estimate on Riemannian manifolds - Tas {#kdermtas}
+# Distortion Corrected Kernel density estimate on Riemannian manifolds - Tas {#kdermtas}
 
-In this section we introduce our method for kernel density estimation on manifolds that uses an embedding from a dimension reduction algorithm and the Metric Learning algorithm of @Perrault-Joncas2013-pq. We will do so by first introducing kernel density estimation for data in Euclidean space, then illustrating how this generalises to the estimator of @Pelletier2005-vu, when the data lie on some known manifold. Finally, we describe how our own proposed method generalises the estimator of @Pelletier2005-vu to the case where the underlying manifold is unknown. Denoting $\lambda$ as the Lebesgue measure of $\mathbb{R}^d$, letting $||.||$ be the usual Euclidean norm and following @Pelletier2005-vu we make these assumptions about the kernel function $K:\mathbb{R}_+\rightarrow\mathbb{R}$ 
+In this section we introduce our method for kernel density estimation on manifolds that uses an embedding from a dimension reduction algorithm while correcting for the distortion induced by this embedding. Readers familiar with kernel density estimation may not be familiar with some of the nuances of manifolds. Therefore, before introducing our own estimator we first introduce kernel density estimation for data in Euclidean space, then illustrate in Section \@ref(Pellet) how this generalises to the estimator of @Pelletier2005-vu, when the data lie on some known manifold. In Section \@ref(MetLearn) we describe the Metric Learning algorithm of @Perrault-Joncas2013-pq, which augments an embedding derived from a dimension reduction algorithm with an estimate of the Riemannian metric expressed in local coordinates. By combining elements from the work of @Pelletier2005-vu and @Perrault-Joncas2013-pq we derive our own novel distortion corrected kernel density estimate in Section \@ref(DCKDE). This allows for kernel density estimation on unknown manifolds using any popular dimension reduction algorithm. To keep this section as succinct as possible, we do not define concepts such as manifolds, charts, geodesic distance etc., but provide this information for readers less familiar with differential geometry in Appendix \@ref(riemgeo).
+
+In the following we denote as $M$ the $d$-dimensional manifold from which our data are sampled. Points on this manifold are denoted $\pmb{p}$ in general with $\pmb{p}_1,\dots,\pmb{p}_n$ denoting the observed sample. Often $\pmb{p}_i$ will be high-dimensional vectors such that $\pmb{p}_i\in\mathbb{R}^m$ with $m>>d$. However this need not be that case, for instance $\pmb{p}_i$ may be probability distributions on a statistical manifold. The methods we propose for estimating the density at $\pmb{p}_i$ only require that there be available some sense of 'input' distance $d(\pmb{p}_i,\pmb{p}_j)$. We will apply dimension reduction algorithms to obtain an `output' embedding $\pmb{y}_1,\dots,\pmb{y}_n$ where $\pmb{y}_i\in\mathbb{R}^d$. Finally, we denote by $\lambda$ the Lebesgue measure of $\mathbb{R}^d$, letting $||.||$ be the usual Euclidean norm and following @Pelletier2005-vu we make these assumptions about the kernel function $K:\mathbb{R}_+\rightarrow\mathbb{R}$ 
 \begin{align}
 \label{eq:kernelcondition}
-& (i) \int_{\mathbb{R}^{d}} K(\|\pmb{x}\|) \mathrm{d} \lambda(\pmb{x})=1;
-(ii) \int_{\mathbb{R}^{d}} \pmb{x} K(\|\pmb{x}\|) \mathrm{d} \lambda(\pmb{x})=0;
-(iii) \int_{\mathbb{R}^{d}}\|\pmb{x}\|^{2} K(\|\pmb{x}\|) \mathrm{d} \lambda(\pmb{x})<\infty; \\
+& (i) \int_{\mathbb{R}^{d}} K(\|\pmb{y}\|) \mathrm{d} \lambda(\pmb{y})=1;
+(ii) \int_{\mathbb{R}^{d}} \pmb{y} K(\|\pmb{y}\|) \mathrm{d} \lambda(\pmb{y})=0;
+(iii) \int_{\mathbb{R}^{d}}\|\pmb{y}\|^{2} K(\|\pmb{y}\|) \mathrm{d} \lambda(\pmb{y})<\infty; \\
 & (iv) \supp K=[0; 1];
-(v) \sup K(||\pmb{x}||)=K(0).
+(v) \sup K(||\pmb{y}||)=K(0).
 \end{align}
 Note that these conditions are different (and in some cases stricter) that those normally used for kernel density estimation. For instance condition (iv) requires the support of the kernel to be bounded. The reasons for this will become clearer when we discuss the manifold setting in more detail. Also, for illustration purposes, in this section we pay particular attention to the uniform kernel for which $K(z)$ equals one if $0\leq z\leq1$ and zero otherwise. In our empirical section more general kernel functions can be, and are, employed.
 
-Assume the data $\pmb{x}_i\in\mathbb{R}^d$ for $i=1,\dots,N$ and assuming a bandwidth matrix $r\bm{I}$ where $r$ is a global bandwidth, then the usual kernel density estimator at a point $\pmb{x}$ is given by
+For data $\pmb{y}_i\in\mathbb{R}^d$ for $i=1,\dots,N$ and assuming a bandwidth matrix $r\bm{I}$ where $r$ is a global bandwidth, then the usual kernel density estimator at a point $\pmb{y}$ is given by
 
 \begin{equation}
 \label{eq:vkde}
-\hat{f}(\pmb{x})=\frac{1}{N}\sum\limits_{i=1}^N \frac{1}{r^d} K\left(\frac{||\pmb{x}-\pmb{x}_i||}{r}\right).
+\hat{f}(\pmb{y})=\frac{1}{N}\sum\limits_{i=1}^N \frac{1}{r^d} K\left(\frac{||\pmb{y}-\pmb{y}_i||}{r}\right).
 \end{equation}
 
-The intuition behind this estimator is very clear for a uniform kernel. The density at a point $\pmb{x}$ is equal to the proportion of sample points that lie within a ball of radius $r$ centered at $\pmb{x}$, times a term that ensures the density integrates to 1. In general, the bandwidth matrix need not be proportional to the identity matrix. However, the intuition remains the same, only that the ball of radius $r$ centered at $\pmb{x}$ is found with respect to Mahalanobis distance rather than the usual Euclidean distance. For more on kernel density estimation in the Euclidean case see @Scott2015-vl and references therein.
+The intuition behind this estimator is very clear for a uniform kernel. The density at a point $\pmb{y}$ is equal to the proportion of sample points that lie within a ball of radius $r$ centered at $\pmb{y}$, times a term that ensures the density integrates to 1. In general, the bandwidth matrix need not be proportional to the identity matrix. However, the intuition remains the same, only that the ball of radius $r$ centered at $\pmb{y}$ is found with respect to Mahalanobis distance rather than the usual Euclidean distance. For more on kernel density estimation in the Euclidean case see @Scott2015-vl and references therein.
+
+While one could in principle use a standard kernel density on the output from a dimension reduction algorithm, it must be noted that the density of the output vectors $\pmb{y}_i$ is different to the density on the manifold itself. As a non-linear transformation, any dimension reduction algorithm `distorts' the density. Furthermore any analysis based on density estimates of the output embedding will be dependent on the choice of dimension reduction algorithm since each different algorithm will distort the density in a different way.
+
+## Kernel Density estimation on manifolds {#Pellet}
 
 To extend this to the case where data are on a manifold $\pmb{p}_i\in\mathcal{M}$, for $i=1,\dots,N$, @Pelletier2005-vu propose the following estimator,
 
@@ -124,9 +130,57 @@ where $d_g(\pmb{p}, \pmb{p}_i)$ denotes the geodesic distance between two points
 
 The inclusion of the volume density function  $\theta_{\pmb{p}_i}(\pmb{p})$ is perhaps not as immediately clear, therefore before providing formal details we will briefly discuss the intuition behind including this term. We have already highlighted that when using a uniform kernel, the kernel density estimate at a point $\pmb{p}$ directly depends on the proportion of sample points within a ball of radius $r$ around $\pmb{p}$. However the volume of a ball of radius $r$ around $\pmb{p}$ must also be taken into account. In Euclidean space with the usual Lebesgue measure, a radius $r$ ball will always have the same volume regardless of its center. The same does not hold for manifolds and the volume density function ensures that the density estimate integrates to one.
 
-More formally, the volume density function can be explained as follows. Consider the exponential map around $\pmb{p}$, given by $exp_{\pmb{p}}(\pmb{q})$, mapping vectors in the tangent space $\pmb{v}\in T_{\pmb{p}}M$ to points the manifold $\pmb{q}\in M$ . Loosely, $\pmb{v}$ `points' in the direction of the geodesic between $\pmb{p}$ and $\pmb{q}$ and along this geodesic at uniform speed $||\pmb{v}||$ takes place in one unit of time. Now, consider a chart $\varphi$ mapping points in the neighbourhood of $\pmb{p}$, via the inverse of the exponential map, to these $\pmb{v}$ vectors, expressed in some local coordinate system. The volume density function is the square root of the determinant of the Riemannian metric expressed in this coordinate system. For more on the volume density function see @Le_Brigant2019-lj.
+More formally, the volume density function can be explained as follows. Consider the exponential map around $\pmb{p}$, given by $exp_{\pmb{p}}(\pmb{q})$, mapping vectors in the tangent space $\pmb{v}\in T_{\pmb{p}}M$ to points the manifold $\pmb{q}\in M$ . Loosely, $\pmb{v}$ `points' in the direction of the geodesic between $\pmb{p}$ and $\pmb{q}$ and travel along this geodesic at uniform speed $||\pmb{v}||$ takes place in one unit of time. Now, consider a chart $\varphi$ mapping points in the neighbourhood of $\pmb{p}$, via the inverse of the exponential map, to these $\pmb{v}$ vectors, expressed in some local coordinate system. The volume density function is the square root of the determinant of the Riemannian metric expressed in this coordinate system. For more on the volume density function see @Le_Brigant2019-lj.
 
-## Distortion corrected KDE
+## Riemannian metric estimation {#MetLearn}
+
+To be able to apply the estimator of @Pelletier2005-vu to the case there the manifold is not known, but where an output embedding from a dimension reduction algorithm is available requires additional estimates of the Riemannian metric. Formally, the Riemannian metric $g$ is a symmetric and positive definite tensor field which defines an inner product $\langle,\rangle_g$ on the tangent space $T_{\pmb{p}} M$ for every point $\pmb{p} \in M$. The inner product between two tangent vectors $u,v \in T_{\pmb{p}}M$, given by $\langle u,v \rangle_g$[^1], can be used to define geometric quantities for example angles on a manifold are given by $\cos{\theta}=\frac{\langle u,v \rangle_g}{|u| |v|}$, while distances and volumes on manifolds are also defined with reference to the Riemannian metric. While tangent vectors, the Riemannian metric and the geometric quantities they define are invariant to any specific choice of coordinates, they can still be expressed in terms of local coordinates systems. This is precisely the situation when data on a manifold are mapped to $d$-dimensional Euclidean vectors $\pmb{y}_1,\pmb{y}_2\dots,\pmb{y}_n$ via a dimension reduction algorithm. After this mapping, angles, distances and volumes in this Euclidean `output space' are not the same as on the manifold since dimension reduction algorithms introduce distortion. To alleviate this issue @Perrault-Joncas2013-pq propose a method to augment $\pmb{y}_1,\pmb{y}_2\dots,\pmb{y}_n$ with $d\times d$ positive definite matrices $\pmb{H}_1,\pmb{H}_2\dots,\pmb{H}_n$ at each data point.  These matrices estimate the Reimannian metric in local coordinates defined by the dimension reduction algorithm, for example the angle between $\pmb{p}_j$ and $\pmb{p}_k$ at $\pmb{p}_i$ depends on the inner product $(\pmb{y}_j-\pmb{y}_i)'\pmb{H}(\pmb{y}_k-\pmb{y}_i)$ rather than the usual Euclidean inner product $(\pmb{y}_j-\pmb{y}_i)'\pmb{H}(\pmb{y}_k-\pmb{y}_i)$.
+
+Locally isometric embedding to go here...
+
+While full details are provided in @Perrault-Joncas2013-pq , we briefly describe the Learn Metric algorithm here. There are four main steps in the algorithm. First a weighted neighborhood graph is constructed, with edges between $\pmb{p}_i$ and $\pmb{p}_j$ when $\pmb{p}_i$ is a K-nearest neighbor of $\pmb{p}_j$ or vice versa, and edge weights depending on the distance between $\pmb{p}_i$ and $\pmb{p}_j$ on the manifold. Second, the discrete Laplacian on this graph $\hat{\mathcal{L}}_{\varepsilon,n}$ is estimated [@Zhou2011-za], where $\varepsilon$ is the radius parameter for the nearest neighbor graph. Third, a dimension reduction method is applied to obtain the output embedding $\pmb{y}_1,\dots,\pmb{y}_n$. Fourth, the Riemannian metric at each point is estimated by exploiting the connection between the Riemannian metric and the Laplace Beltrami operator (to which the graph Laplacian at step 2 is a discrete estimator). Full details on these four steps are provided in Algorithm \@ref(alg:learnmetric). This algorithm is implemented in a Python library *megaman* [@McQueen2016-xz] although our own results are based on a re-implementation of the algorithm in *R*. 
+
+As pointed out by @Perrault-Joncas2013-pq, if the embedding dimension is larger than the manifold intrinsic dimension $d$, the rank of the embedding metric $\pmb{H}(p)$ is equal to $d$; otherwise, the Riemannian metric will be returned. To ensure that the estimated Riemannian metric is returned as a $d\times d$ matrix, for unknown manifold dimension, we apply the intrinsic dimension (id) selection algorithm called *two-nearest neighbor estimator (TWO-NN estimator)* [@Facco2017-rl; @Denti2021-jl] to derive id estimator from a Poisson point process. @Facco2017-rl point out that of the distances between a point and its second and first neareast neighbors follow a Pareto distribution with scale parameter $1$ and shape parameter $d$, the intrinsic dimension of the manifold [@Facco2017-rl]. By fitting a Pareto distribution to proper transformed data, the intrinsic dimension could be estimated. An *R* library named *intRinsic* [@Denti2021-qc] has implemented this algorithm and we are going to apply it to when $d$ is unknown.
+
+\begin{algorithm}[!htb]
+  \caption{Learn metric algorithm in \cite{Perrault-Joncas2013-pq} }
+  \label{alg:learnmetric}
+  \DontPrintSemicolon
+  \SetAlgoLined
+  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}\SetKwInOut{OptParameter}{optimization parameter}
+  \Input{ high-dimensional data $\pmb{x}_i \in \mathbb{R}^s$ for all $i=1,\ldots,N$ }
+  \Output{ low-dimensional data $\pmb{y}_i \in \mathbb{R}^d$ and its Riemannian metric $\pmb{H}(\pmb{y}_i)$ for all $i=1,\ldots,N$ }
+  \Parameter{ embedding dimension $d$, bandwidth parameter $\sqrt{\varepsilon}$, manifold learning algorithm }
+  \OptParameter{ manifold learning parameters EMBED }
+  \BlankLine
+  \begin{algorithmic}[1]
+
+  \STATE Construct a weighted neighborhood graph $\mathcal{G}_{w,\varepsilon}$ with weight matrix $\pmb{W}$ where $w_{i,j}=\exp(-\frac{1}{\varepsilon}\|\pmb{x}_i-\pmb{x}_j\|^2)$ for data points $\pmb{x}_i,\pmb{x}_j \in \mathbb{R}^s$;
+
+  \STATE Calculate the $N\times N$ geometric graph Laplacian $\widetilde{\mathcal{L}}_{\varepsilon,N}$ by
+  $$
+  \widetilde{\mathcal{L}}_{\varepsilon,N} = 1/(c\varepsilon)(\widetilde{D}^{-1} \widetilde{W} - I_N),
+  $$
+  where $\widetilde{D}=diag{\widetilde{W}\pmb{1}}$, $\widetilde{W} = D^{-1}WD^{-1}$, and $D = diag{W\pmb{1}}$;
+
+  \STATE Embed all data point $\pmb{X}\in \mathbb{R}^s$ to embedding coordinates $\pmb{Y}=(\pmb{y}^1,\dots,\pmb{y}^d)^\prime$ by any existing manifold learning algorithm EMBED;
+
+  \STATE Obtain the matrix $\pmb{\tilde{H}}$ of all data point by applying the graph Laplacian $\widetilde{\mathcal{L}}_{\sqrt{\varepsilon},N}$ to the embedding coordinates matrix $\pmb{Y}$ with each element vector in $\pmb{\tilde{H}}$ being
+  $$
+    \pmb{\tilde{H}}^{i j} = \frac{1}{2} \left[\tilde{\mathcal{L}}_{\varepsilon, N}\left(\pmb{y}^i \cdot \pmb{y}^j\right) - \pmb{y}_i \cdot\left(\tilde{\mathcal{L}}_{\varepsilon, n} \pmb{y}^j\right) - \pmb{y}^j \cdot\left(\tilde{\mathcal{L}}_{\varepsilon, n} \pmb{y}^i\right)\right],
+  $$
+  where $i,j=1,\dots,d$ and the $\cdot$ calculation is the elementwise product between two vectors; 
+
+  \STATE Calculate the Riemannian metric $\pmb{H}$ as the rank $d$ pseudo inverse of $\tilde{\pmb{H}}$ with 
+  $$
+    \pmb{H} = \pmb{U} diag{1/(\Lambda[1:d])} \pmb{U}^\prime,
+  $$
+  where $[\pmb{U}, \Lambda]$ is the eigendecomposition of matrix $\pmb{\tilde{h}}(x)$, and $U$ is the matrix of column eigenvectors ordered by the eigenvalues $\Lambda$ in descending order.
+
+  \end{algorithmic}
+\end{algorithm}
+
+## Distortion corrected KDE {#DCKDE}
 
 To come...
 
@@ -248,7 +302,7 @@ The volumes of the parallelepiped spanned by the basis $\{(\partial / \partial\b
 Therefore, given a point $\pmb{q} \in B(\pmb{p},r)$ and a tangent vector $u = \exp^{-1}_{\pmb{p}}(\pmb{q}) \in B(0_{\pmb{p}},r)$, for any chart $(\bar{U}, \bar{\psi})$ of $B(0_{\pmb{p}},r)$ that contains $u$, @Henry2009-om defines the volume density function on the Riemannian manifold $(M,g)$ as
 \begin{equation}
 \label{eq:volumedensityratio}
-\theta_p(q) = \frac{| \det g^{\prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} }{ | \det g^{\prime \prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} } \\ .
+\theta_p(q) = \frac{| \det g^{\prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} }{ | \det g^{\prime \prime}((\partial / \partial\bar{\psi}_i|_u), (\partial / \partial\bar{\psi}_j|_u)) |^{1/2} }  .
 \end{equation}
 The volume density function is only defined for points satisfying $d_g(\pmb{p},\pmb{q}) < inj_gM$ so that there exists an open ball $B(\pmb{p},r) \in T_{\pmb{p}}M$. And $\theta_{\pmb{p}}(\pmb{q})=1$ for all $\pmb{p},\pmb{q} \in \mathbb{R}^d$ when the manifold $M$ is $\mathbb{R}^d$ with the canonical metric.
 
@@ -455,9 +509,14 @@ data.frame(cors) %>%
 
 We can gain further insight by comparing the correlation between ranks of true densities and estimated densities from variable and fixed bandwidth KDE by \autoref{tab:tpcors}. Again the highest correlations appear from embedding with higher quality, including ISOMAP, Laplacian Eigenmaps, and UMAP. The rank correlations between variable and fixed bandwidth are equivalent to the third decimal place in Laplacian Eigemaps and UMAP. As for t-SNE, the four clusters in the embedding are less separated than in UMAP and our proposed method has misidentified the kernel cores, leading to a lower rank correlation in variable bandwidth. Since the embeddings from twin peak data generally capture the rectangular structure in the meta data than those from the swiss roll data, the rank correlations are much higher in \autoref{tab:tpcors} than in \autoref{tab:srcors}, with the lowest correlation being `r round(min(cors), 3)`. This again suggests that the accuracy of outlier detection is highly related to the quality of manifold learning embedding.
 
-```{r tpisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density ranks of ISOMAP embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
-# knitr::include_graphics("figures/Twin Peak2000_density_isomap_r0_5_rank_nocolor.png")
-knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_isomap_radius8_r0_5_logrank_rec_colprob.png")
+```{r tpisomapden, fig.align = 'center', out.width = "100%", fig.cap="Scatterplot of true density and estimated density ranks of ISOMAP embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
+# knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_isomap_radius8_r0_5_logrank_rec_colprob_crossfalse.png")
+# knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_isomap_radius8_r0_5_logrank_rec_colprob_smallblocks_crossfalse.png")
+knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_isomap_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse.png")
+```
+
+```{r tptsneden, fig.align = 'center', out.width = "100%", fig.cap="Scatterplot of true density and estimated density ranks of t-SNE embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_tsne_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse.png")
 ```
 
 In \autoref{fig:tpisomapden}, we plot the estimated density against the true density of the ISOMAP embedding for KDE with variable and fixed bandwidth, with colors and shapes showing the four kernels in the meta data. The linear positive relationship between the true densities and variable KDEs on the left handside is stronger than that of the fixed bandwidth KDEs. Combined with the top-right subplot in \autoref{fig:tpoutliers}, we could tell that most points are underestimated near the true kernel cores, which also suggests that the fixed bandwidth tries to smooth across all the data points and fails to
@@ -465,6 +524,10 @@ fix the local distortions in the manifold learning process like the proposed poi
 
 ```{r tpisomapvs4ml, fig.align = 'center', out.width = "95%", fig.cap="Comparison of outliers found by ISOMAP and other four manifold learning methods for DC-KDE (on the left panel) and KDE (on the right panel). The four colors and shapes represents the four gaussian kernels in the 2-D meta data. Outliers found by DC-KDE are more consistent regardless of the manifold learning embedding.", echo = FALSE}
 knitr::include_graphics("figures/Twin Peak2000_density_compare_isomapvs4ml_radius8_r0_5_rank.png")
+# knitr::include_graphics("figures/Twin Peak2000_density_compare_llevs4ml_radius8_r0_5_rank.png")
+# knitr::include_graphics("figures/Twin Peak2000_density_compare_levs4ml_radius8_r0_5_rank.png")
+# knitr::include_graphics("figures/Twin Peak2000_density_compare_tsnevs4ml_radius8_r0_5_rank.png")
+# knitr::include_graphics("figures/Twin Peak2000_density_compare_umapvs4ml_radius8_r0_5_rank.png")
 ```
 
 Finally, \autoref(fig:tpisomapvs4ml) is used to show the robustness of the density estimates using DC-KDE regardless of the embedding method. By plotting the density ranks of LLE, Laplacian Eigenmaps, t-SNE, and UMAP against ISOMAP, we could tell that the rank correlation from DC-KDE is higher that that from KDE, meaning that the rank of DC-KDE are more consistent with the manifold learning methods. Compared with KDE where the density ranks varies with the embedding methods even for the same manifold, DC-KDE is more robust when the distortions are fixed.
@@ -488,9 +551,9 @@ $\pmb{X}_0^\prime \pmb{X}=(\pmb{QX}_0)^\prime(\pmb{QX}_0)$, meaning that the pai
 $\pmb{X}_0^\prime$ is equivalent to that of $(\pmb{QX}_0)^\prime$.
 Therefore, we use matrix $Q$ as the rotation matrix for where the rotated data matrix $\pmb{X} = (\pmb{QX}_0)^\prime$ of dimension $N \times 100$ is now the input data for the manifold learning algorithms. Again, we set the embedding dimension to be equal to the meta data dimension $d=5$.
 
-```{r fivedisomapden, fig.align = 'center', out.width = "95%", fig.cap="Scatterplot of true density and estimated density of different embeddings for KDE with both variable and fixed bandwidth. The point shapes indicates the two Gaussian mixture components and the colors shows the distance to the kernel cores.", echo = FALSE}
-# knitr::include_graphics("figures/fived_density_comparison_4ml_riem20.png")
-knitr::include_graphics("figures/sim4d10000_density_comparison_4ml_riem1k200_rawdensity.png")
+```{r fivedisomapden, fig.align = 'center', out.width = "95%", fig.cap="Rank comparison between the true density and estimated density from both DC-KDE and KDE. Four manifold learning methods are used rowwise. The point shapes indicates whether they are the true outleirs, and the grey shading highlights the top 1\\% rank region. The colors show the distance to the center of the semisphere, with darker points being distant from the center.", echo = FALSE}
+# knitr::include_graphics("figures/sim4d10000_density_comparison_4ml_riem1k200_rawdensity.png")
+knitr::include_graphics("figures/sim4d10000_density_comparison_4ml_radius10_k200_rankdensity_circleoutlier_with1rec.png")
 ```
 
 In \autoref{fig:fivedisomapden}, the estimated densities are compared with the true density on the x-axis for four manifold learning embeddings, ISOMAP, LLE, Laplacian Eigenmaps, and UMAP. Note that we exclude t-SNE algorithm in this section because it is designed mainly for low-dimensional visualization purposes, and it is only applicable to embedding dimensions within three. Similar to \autoref{fig:fivedmeta}, the point shapes show the two mixture component in the meta data, and the colors represent the distance to the kernel means, with distant outliers shown in darker colors. For well-estimated densities, the true
@@ -499,7 +562,7 @@ the relationship is stronger than the fixed bandwidth. This suggests that our pr
 In KDE with fixed bandwidth, the bandwidth is often too large to smooth across all data points, especially when there is severe distortion in the embedding data. By introducing the pointwise variable Riemannian metric in kernel density estimation, it is reasonable to believe that it could fix the distortion introduced by these three manifold learning algorithms.
 
 ```{r fivedcors, echo=FALSE, message=FALSE, eval=T}
-load("figures/CorrelationTable_fived_4ml_riem20.rda")
+load("figures/CorrelationTable_4d_N10000_4ml_radius10_r1.rda")
 col.max <- apply(cors, 2, max)
 max.match <- rep(col.max, each = 2) == cors
 data.frame(cors) %>% 
@@ -512,6 +575,28 @@ data.frame(cors) %>%
   column_spec(3, bold = max.match[,2]) %>%
   column_spec(4, bold = max.match[,3]) %>%
   column_spec(5, bold = max.match[,4])
+```
+
+```{r fourdhdrtable, echo=FALSE, message=FALSE, eval=F}
+load("figures/HDRTable_4d_N10000_4ml_radius10_r1.rda")
+hdrtable %>% 
+  kableExtra::kbl(caption = "Percentage comparison of correct highest density regions in density estimation of four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE, align = "c",
+                  col.names = c(rep(c("DC-KDE", "KDE"), 4))
+                  ) %>%
+  # kable_classic("striped") %>% 
+  kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = FALSE) %>%
+  # add_header_above(c("HDRs" = 1, rep(c("DC-KDE" = 1, "KDE" = 1), 4))) %>%
+  add_header_above(c(" " = 1, "ISOMAP" = 2, "LLE" = 2, "Laplacian Eigenmaps" = 2, "UMAP" = 2)) %>% 
+  # column_spec(1, bold = TRUE) %>% 
+  column_spec(2, bold = hdrmax[,1]) %>% 
+  column_spec(3, bold = hdrmax[,2]) %>% 
+  column_spec(4, bold = hdrmax[,3]) %>% 
+  column_spec(5, bold = hdrmax[,4]) %>% 
+  column_spec(6, bold = hdrmax[,5]) %>% 
+  column_spec(7, bold = hdrmax[,6]) %>% 
+  column_spec(8, bold = hdrmax[,7]) %>% 
+  column_spec(2*(1:4), border_left = T, background = grey(0.9))
 ```
 
 # Application {#application}
@@ -670,112 +755,146 @@ $$
 Similarly, the pullback maps the cotangent vectors $z_{f(p)}$ at $f(p) \in E$ to cotangent vectors at $p \in M$ acting on tangent vectors $u \in T_pM$. The linear map is called the pullback by $\phi$ and is often denoted as $\phi^*$.
 
 
-# Appendix: Simulation of $S^1$ for manifold density estimation {#s1simulation}
+<!-- # Appendix: Simulation of $S^1$ for manifold density estimation {#s1simulation} -->
 
-To start with, we demonstrate the use of the proposed DC-KDE on a $1$-dimensional example. For a $S^1$ curve centered at $O$ with radius $1$, the coordinated of points on the curve could be expressed in polar coordinates $(1, \alpha)$ or Cartesian coordinates $(x, \sqrt{1-x^2})$. 
+<!-- To start with, we demonstrate the use of the proposed DC-KDE on a $1$-dimensional example. For a $S^1$ curve centered at $O$ with radius $1$, the coordinated of points on the curve could be expressed in polar coordinates $(1, \alpha)$ or Cartesian coordinates $(x, \sqrt{1-x^2})$.  -->
 
-The first simulation starts with a $1$-dimensional example. 
+<!-- The first simulation starts with a $1$-dimensional example.  -->
 
-Manifold: $S^1$ with center 0 and radius $r=1$
+<!-- Manifold: $S^1$ with center 0 and radius $r=1$ -->
 
-Polar coordinates: $(r, \theta)$
+<!-- Polar coordinates: $(r, \theta)$ -->
 
-Uniformly distributed angle: $\theta \sim U(0, \pi/2)$ with $f(\theta) = 2 / \pi$ for $\theta \in [0, \pi /2]$.
+<!-- Uniformly distributed angle: $\theta \sim U(0, \pi/2)$ with $f(\theta) = 2 / \pi$ for $\theta \in [0, \pi /2]$. -->
 
-Cartesian coordinates: $(x, y)$ where $x = \cos(\theta) \in [0, 1]$ and $y = \sin(\theta) \in [0, 1]$
+<!-- Cartesian coordinates: $(x, y)$ where $x = \cos(\theta) \in [0, 1]$ and $y = \sin(\theta) \in [0, 1]$ -->
 
-Density of $\theta$: $f(\theta) = 2 / \pi$
+<!-- Density of $\theta$: $f(\theta) = 2 / \pi$ -->
 
-Density of $x$: $f(x) = \frac{2}{\pi \sqrt{1-x^2}}$
+<!-- Density of $x$: $f(x) = \frac{2}{\pi \sqrt{1-x^2}}$ -->
 
-The CDF of X is given by
-$$
-P(X \leq x) = P(\cos(\theta) \leq x) \\
-= P(\theta \geq \arccos(x)) \\
-= \int_{\arccos(x)}^{\pi/2} f(\theta) d\theta \\
-=  \frac{2}{\pi} (\frac{\pi}{2} - \arccos(x) ) \\
-= 1 - \frac{2}{\pi} \arccos(x).
-$$
-Then the density of X is the derivative of the CDF w.r.t. $x$ $$
-f(x) = -\frac{2}{\pi} (-\frac{1}{\sqrt{1 - x^2}}) \\
-= \frac{2}{\pi \sqrt{1 - x^2}}.
-$$
+<!-- The CDF of X is given by -->
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- P(X \leq x) =& P(\cos(\theta) \leq x) \\ -->
+<!-- =& P(\theta \geq \arccos(x)) \\ -->
+<!-- =& \int_{\arccos(x)}^{\pi/2} f(\theta) d\theta \\ -->
+<!-- =&  \frac{2}{\pi} (\frac{\pi}{2} - \arccos(x) ) \\ -->
+<!-- =& 1 - \frac{2}{\pi} \arccos(x). -->
+<!-- \end{aligned} -->
+<!-- $$ -->
+<!-- Then the density of X is the derivative of the CDF w.r.t. $x$  -->
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- f(x) =& -\frac{2}{\pi} (-\frac{1}{\sqrt{1 - x^2}}) \\ -->
+<!-- =& \frac{2}{\pi \sqrt{1 - x^2}}. -->
+<!-- \end{aligned} -->
+<!-- $$ -->
 
-Given $(x, y) \in \mathbb{R}^2$ as sample points from $S^1$, we could
-estimate the density of each sample point $X_i \in S^1, i = 1, \dots, N$
-and compare it with its true density $f(x)$.
-We use the density estimator in @Pelletier2005-vu. For point $p \in S^1$, the density at $p$ is estimated by
-$$
-f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{X_i}(p)} K(\frac{d_g(p, X_i)}{r}),
-$$
-where $d=1$, $r$ is the bandwidth, $\theta_{X_i}(p)$ is the volume density function at sample point $X_i$, and $d_g(p, X_i)$ is the geodesic distance between $p$ and $X_i$ along the manifold $S^1$.
+<!-- Given $(x, y) \in \mathbb{R}^2$ as sample points from $S^1$, we could -->
+<!-- estimate the density of each sample point $X_i \in S^1, i = 1, \dots, N$ -->
+<!-- and compare it with its true density $f(x)$. -->
+<!-- We use the density estimator in @Pelletier2005-vu. For point $p \in S^1$, the density at $p$ is estimated by -->
+<!-- $$ -->
+<!-- f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{X_i}(p)} K(\frac{d_g(p, X_i)}{r}), -->
+<!-- $$ -->
+<!-- where $d=1$, $r$ is the bandwidth, $\theta_{X_i}(p)$ is the volume density function at sample point $X_i$, and $d_g(p, X_i)$ is the geodesic distance between $p$ and $X_i$ along the manifold $S^1$. -->
 
 
-Since the manifold is known ($S^1$), we know the geodesic distance is the arc length between two points on the manifold, which is given by $L(\gamma) = r(\beta - \alpha)$ with $r=1$. Therefore, the geodesic distance is
-$$
-d_g(p, X_i) = \arccos(p) - \arccos(X_i)
-$$
-As stated in @Pelletier2005-vu, in terms of *geodesic normal coordinates* at $X_i$, the volume density function $\theta_{X_i}(p)$ equals the determinant of the metric $g$ expressed in these coordinates at the logarithm map $\exp_{X_i}^{-1}(p)$, i.e. $|g(\exp_p^{-1}(x_i))|$.
+<!-- Since the manifold is known ($S^1$), we know the geodesic distance is the arc length between two points on the manifold, which is given by $L(\gamma) = r(\beta - \alpha)$ with $r=1$. Therefore, the geodesic distance is -->
+<!-- $$ -->
+<!-- d_g(p, X_i) = \arccos(p) - \arccos(X_i) -->
+<!-- $$ -->
+<!-- As stated in @Pelletier2005-vu, in terms of *geodesic normal coordinates* at $X_i$, the volume density function $\theta_{X_i}(p)$ equals the determinant of the metric $g$ expressed in these coordinates at the logarithm map $\exp_{X_i}^{-1}(p)$, i.e. $|g(\exp_p^{-1}(x_i))|$. -->
 
-[When using normal coordinates(orthogonal basis) for tangent vector in $T_{X_i}S^1$, the exponential map has *geodesic normal coordinates*.]
+<!-- [When using normal coordinates(orthogonal basis) for tangent vector in $T_{X_i}S^1$, the exponential map has *geodesic normal coordinates*.] -->
 
-The Riemannian metric $g$ for $S^1$ is given by the inner products on the tangent spaces of $S^1$. For each $X_i \in M$,
-$$
-g_{X_i}: T_{X_i}M \times T_{X_i}M \rightarrow \pmb{R},
-$$
-is smooth in a local neighborhood $U$ of $M$.
+<!-- The Riemannian metric $g$ for $S^1$ is given by the inner products on the tangent spaces of $S^1$. For each $X_i \in M$, -->
+<!-- $$ -->
+<!-- g_{X_i}: T_{X_i}M \times T_{X_i}M \rightarrow \pmb{R}, -->
+<!-- $$ -->
+<!-- is smooth in a local neighborhood $U$ of $M$. -->
 
-Then the volume density function $\theta_{X_i}(p)$ is the inner product of the tangent vectors produced by the logarithm map from $X_i$ to $p$, which is given by
-$$
-\theta_{X_i}(p) = \sqrt{|\cos(d_g(p,q))|} = \sqrt{|\cos(\arccos(p) - \arccos(X_i))|}.
-$$
-Therefore, the estimator for $p \in S^1$ is given by
-$$
-f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r \sqrt{|\cos(\arccos(p) - \arccos(X_i))|}} K\bigg(\frac{\|\arccos(p) - \arccos(X_i))\|}{r}\bigg),
-$$
-where the bandwidth $r$ is selected with the plug-in bandwidth selector implemented by the R package *ks*.
+<!-- Then the volume density function $\theta_{X_i}(p)$ is the inner product of the tangent vectors produced by the logarithm map from $X_i$ to $p$, which is given by -->
+<!-- $$ -->
+<!-- \theta_{X_i}(p) = \sqrt{|\cos(d_g(p,q))|} = \sqrt{|\cos(\arccos(p) - \arccos(X_i))|}. -->
+<!-- $$ -->
+<!-- Therefore, the estimator for $p \in S^1$ is given by -->
+<!-- $$ -->
+<!-- f_N(p) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r \sqrt{|\cos(\arccos(p) - \arccos(X_i))|}} K\bigg(\frac{\|\arccos(p) - \arccos(X_i))\|}{r}\bigg), -->
+<!-- $$ -->
+<!-- where the bandwidth $r$ is selected with the plug-in bandwidth selector implemented by the R package *ks*. -->
 
-### How to derive volume density function $\theta_{X_i}(p)$
+<!-- ### How to derive volume density function $\theta_{X_i}(p)$ -->
 
-#### Example of $S^2$ in @Henry2009-om.
+<!-- #### Example of $S^2$ in @Henry2009-om. -->
 
-Let $S^2$ be the two-dimensional sphere of radius 1 and $p \in S^2$. Let $v$ and $w$ be vectors such that $\|v\| = \|w\| = 1$ and $\{v, w, p\}$ is the orthonormal basis of $\mathbb{R}^3$. Consider the exponential chart $(U, \Psi)$ induced by the parametrisation $\Psi^{-1}: B_\pi(0) \rightarrow S^2 \backslash \{-p\}$ given by
-$$
-\Psi^{-1}(s,t) = \cos(r)p + \frac{\sin(r)}{r}(sv+tw),
-$$
-if $(s,t) \neq (0,0)$ and $\Psi^{-1}(0,0)=p$ where $r=\sqrt{s^2 + t^2}$.
-Note that $r=d_g(p,q)$ if $q = \exp_p(sv+tw)$.
-Then we take the partial derivatives of $\Psi^{-1}(s,t)$ with respect to the basis of the tangent space, $s$ and $t$, and have that
-$$
-A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}s}{r}p + \frac{\cos(r)rs^2+t^2\sin(r)}{r^3}v + \frac{(\cos(r)r-\sin(r))st}{r^3}w,
-$$
-$$
-B(s,t) = \frac{\partial}{\partial \Psi_2} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}t}{r}p + \frac{(\cos(r)r-\sin(r))st}{r^3}v + \frac{\cos(r)rt^2+\sin(r)s^2}{r^3}w.
-$$
-The coefficients for $v$ and $w$ gives the local coordinates of two tangent vectors.
-Further, since the riemannian metric is defined as the inner product between two tangent vectors, each component of the riemannian metric could be calculated as $g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))$.
-Therefore, we obtain that the volume density on the sphere is
-$$
-\theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2} \\
-= \frac{|\sin(d_g(p,q))|}{d_g(p,g)},
-$$
-for $q \neq p, -p$, and $\theta_p(p) = 1$.
+<!-- Let $S^2$ be the two-dimensional sphere of radius 1 and $p \in S^2$. Let $v$ and $w$ be vectors such that $\|v\| = \|w\| = 1$ and $\{v, w, p\}$ is the orthonormal basis of $\mathbb{R}^3$. Consider the exponential chart $(U, \Psi)$ induced by the parametrisation $\Psi^{-1}: B_\pi(0) \rightarrow S^2 \backslash \{-p\}$ given by -->
+<!-- $$ -->
+<!-- \Psi^{-1}(s,t) = \cos(r)p + \frac{\sin(r)}{r}(sv+tw), -->
+<!-- $$ -->
+<!-- if $(s,t) \neq (0,0)$ and $\Psi^{-1}(0,0)=p$ where $r=\sqrt{s^2 + t^2}$. -->
+<!-- Note that $r=d_g(p,q)$ if $q = \exp_p(sv+tw)$. -->
+<!-- Then we take the partial derivatives of $\Psi^{-1}(s,t)$ with respect to the basis of the tangent space, $s$ and $t$, and have that -->
+<!-- $$ -->
+<!-- A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}s}{r}p + \frac{\cos(r)rs^2+t^2\sin(r)}{r^3}v + \frac{(\cos(r)r-\sin(r))st}{r^3}w, -->
+<!-- $$ -->
+<!-- $$ -->
+<!-- B(s,t) = \frac{\partial}{\partial \Psi_2} \bigg|_{\Psi^{-1}(s,t)} = \frac{-\sin{(r)}t}{r}p + \frac{(\cos(r)r-\sin(r))st}{r^3}v + \frac{\cos(r)rt^2+\sin(r)s^2}{r^3}w. -->
+<!-- $$ -->
+<!-- The coefficients for $v$ and $w$ gives the local coordinates of two tangent vectors. -->
+<!-- Further, since the riemannian metric is defined as the inner product between two tangent vectors, each component of the riemannian metric could be calculated as $g(A(s,t), A(s,t)), g(A(s,t), B(s,t)), g(B(s,t), B(s,t))$. -->
+<!-- Therefore, we obtain that the volume density on the sphere is -->
+<!-- $$ -->
+<!-- \theta_p(q) = \bigg| \det g_q\bigg( \frac{\partial}{\partial \Psi_i}\bigg|_q, \frac{\partial}{\partial \Psi_j}\bigg|_q \bigg) \bigg|^{1/2}  -->
+<!-- = \frac{|\sin(d_g(p,q))|}{d_g(p,g)}, -->
+<!-- $$ -->
+<!-- for $q \neq p, -p$, and $\theta_p(p) = 1$. -->
 
-#### $S^1$
+<!-- #### $S^1$ -->
 
-Similarly in $S^1$, we could let $\{v, p\}$ be the orthonormal basis of $\mathbb{R}^2$. Then the exponential chart is induced by the parametrization
-$$
-\Psi^{-1}(s) = \cos(r)p + \frac{\sin(r)}{r}sv,
-$$
-and $\Psi^{-1}(0) = p$ where $r = s$. Again $r = d_g(p,q)$ if $q = \exp_p(sv)$. Then we have
-$$
-A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = - \sin(r)p + \cos(r)v.
-$$
-So the riemannian metric is $g_q = \cos(r)$ and further,
-$$
-\theta_p(q) = \sqrt{|\cos(r)|} = \sqrt{|\cos(d_g(p,q))|},
-$$
-where the geodesic distance is $d_g(p,q) = \arccos(p) - \arccos(q)$, and $\theta_p(p) = 1$.
+<!-- Similarly in $S^1$, we could let $\{v, p\}$ be the orthonormal basis of $\mathbb{R}^2$. Then the exponential chart is induced by the parametrization -->
+<!-- $$ -->
+<!-- \Psi^{-1}(s) = \cos(r)p + \frac{\sin(r)}{r}sv, -->
+<!-- $$ -->
+<!-- and $\Psi^{-1}(0) = p$ where $r = s$. Again $r = d_g(p,q)$ if $q = \exp_p(sv)$. Then we have -->
+<!-- $$ -->
+<!-- A(s,t) = \frac{\partial}{\partial \Psi_1} \bigg|_{\Psi^{-1}(s,t)} = - \sin(r)p + \cos(r)v. -->
+<!-- $$ -->
+<!-- So the riemannian metric is $g_q = \cos(r)$ and further, -->
+<!-- $$ -->
+<!-- \theta_p(q) = \sqrt{|\cos(r)|} = \sqrt{|\cos(d_g(p,q))|}, -->
+<!-- $$ -->
+<!-- where the geodesic distance is $d_g(p,q) = \arccos(p) - \arccos(q)$, and $\theta_p(p) = 1$. -->
+
+
+
+# Appendix: Rank comparison plots for twin peaks mapping {#twinpeaksappe}
+
+This appendix contains the comparison plots for the density rank between DC-KDE and KDE using different manifold learning algorithms, similar to \autoref{fig:tpisomapden}, \autoref{fig:tptsneden}, and \autoref{fig:tpisomapvs4ml}. By comparing these plots, it could be concluded that DC-KDE could categorize the density ranks into highest density regions more accurately than KDE. By correcting the distortion in different manifold learning embeddings, DC-KDE is more robust in identifying the lowest density regions, which are usually used to detect anomalies.
+
+```{r tplleden, fig.align = 'center', out.width = "100%", fig.cap="Scatterplot of true density and estimated density ranks of LLE embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_lle_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse.png")
+```
+
+```{r tpleden, fig.align = 'center', out.width = "100%", fig.cap="Scatterplot of true density and estimated density ranks of Laplaxian Eigenmaps embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_le_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse.png")
+```
+
+```{r tpumapden, fig.align = 'center', out.width = "100%", fig.cap="Scatterplot of true density and estimated density ranks of UMAP embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.", echo = FALSE}
+knitr::include_graphics("figures/Twin Peak2000_densityrank_comparison_umap_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse.png")
+```
+
+
+```{r tpllevs4ml, fig.align = 'center', out.width = "95%", fig.cap="Comparison of outliers found by one manifold learning method compared to the other four for DC-KDE (on the left panel) and KDE (on the right panel). The four colors and shapes represents the four gaussian kernels in the 2-D meta data. Outliers found by DC-KDE are more consistent regardless of the manifold learning embedding.", echo = FALSE}
+# knitr::include_graphics("figures/Twin Peak2000_density_compare_isomapvs4ml_radius8_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_llevs4ml_radius8_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_levs4ml_radius8_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_tsnevs4ml_radius8_r0_5_rank.png")
+knitr::include_graphics("figures/Twin Peak2000_density_compare_umapvs4ml_radius8_r0_5_rank.png")
+```
+
+
 
 
 <!-- \clearpage -->
