@@ -16,9 +16,9 @@ Jmisc::sourceAll(here::here("R/sources"))
 N <- 2000
 p <- 2
 
-###--------------------------------------------------------
+##----Data Generation-------------------------------------
 ## 1. Generate 2-D manifold and 3-D twin peaks
-###--------------------------------------------------------
+##--------------------------------------------------------
 set.seed(1234)
 mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[3] # only run [1] and [3]
 sr <- mldata(N = N, meta = "gaussian", mapping = mapping)
@@ -237,7 +237,7 @@ frank_long %>%
 #     as_tibble() %>% 
 #     ggplot(aes(x = E1, y = E2)) + 
 #     ggplot2::geom_point(ggplot2::aes_string(col = "Region")) + 
-#     ggplot2::scale_colour_manual(
+#     ggplot2::scale_color_manual(
 #       name = "HDRs",
 #       breaks = c(paste(head(sort(prob), -1)), ">99"),
 #       values = c(RColorBrewer::brewer.pal(length(prob), "YlOrRd")[-1], "#000000")) + 
@@ -324,7 +324,7 @@ E1 <- fn[,1]; E2 <- fn[,2]
 # opt.method <- c("AMISE", "MEAN", "SCALED")[2]
 # riem.scale <- .1
 flle <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
-## ---- echo = F------------------------------------------------------------------
+## ----------------------------------------------------------------------
 p_lle <- plot_outlier(x = metric_lle, gridsize = gridsize, prob = prob, noutliers = noutliers, opt.method = opt.method, riem.scale = riem.scale, f = flle, ell.size = 0)
 p_hdr_lle <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers, levels = prob)
 # p_hdr_lle_p <- p_hdr_lle + 
@@ -373,7 +373,7 @@ E1 <- fn[,1]; E2 <- fn[,2]
 # opt.method <- c("AMISE", "MEAN", "SCALED")[3]
 # riem.scale <- 1
 fle <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
-## ---- echo = F------------------------------------------------------------------
+## ---------------------------------------------------------------------
 p_le <- plot_outlier(x = metric_le, gridsize = gridsize, prob = prob, noutliers = noutliers, opt.method = opt.method, riem.scale = riem.scale, f = fle, ell.size = 0)
 p_hdr_le <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers, levels = prob)
 # p_hdr_le_p <- p_hdr_le + 
@@ -441,7 +441,7 @@ fumap <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.
 # plot_ellipse(metric_umap, ell.no = 50)
 # plot_contour(metric_umap, gridsize = gridsize, riem.scale = 1/20)
 
-## ---- echo = F------------------------------------------------------------------
+## ----------------------------------------------------------------------
 p_umap <- plot_outlier(x = metric_umap, gridsize = gridsize, prob = prob, noutliers = noutliers, opt.method = opt.method, riem.scale = riem.scale, ell.size = 0, f = fumap)
 p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutliers, levels = prob)
 # p_hdr_umap_p <- p_hdr_umap +
@@ -462,8 +462,7 @@ p_hdr_umap <- hdrscatterplot_new(E1, E2, kde.package = "ks", noutliers = noutlie
 #      )
 
 
-
-## -----------------------------------------------------------------------------
+## ---- Plotting----------------------------------------------------------------
 ## 5. Embedding plots colored with density levels 
 ## -----------------------------------------------------------------------------
 # trueden <- den_2dmanifold  # NOT preswissroll$den
@@ -613,100 +612,101 @@ cors %>%
   kable_styling(latex_options = "scale_down") %>%
   kable_paper(full_width = TRUE) %>%
   row_spec(1, bold = TRUE)
-
 # save(cors, file = paste0("paper/figures/CorrelationTable_", mapping, N,"_5ml_radius", radius, "_r", format(r, decimal.mark = "_"), ".rda"))
 
 
 
 ## -----------------------------------------------------------------------------
-# 6.2 Rank comparison plots
-# frank_long <- frank %>% 
-#   # mutate(outlier = case_when((fxy <= noutliers) ~ "True outliers",
-#   #                            (fxy_dckde <= noutliers) ~ "DC-KDE outliers",
-#   #                            (fxy_kde <= noutliers) ~ "KDE outliers",
-#   #                            TRUE ~ "Not outliers")) %>% 
-#   pivot_longer(cols = -c(fxy), names_to = "kde", values_to = "densities")
-# frank_long %>% 
-#   ggplot(aes(fxy, densities)) + 
+# 6.2 Rank comparison plots, dckde vs kde
+frank_long <- frank %>%
+  # mutate(outlier = case_when((fxy <= noutliers) ~ "True outliers",
+  #                            (fxy_dckde <= noutliers) ~ "DC-KDE outliers",
+  #                            (fxy_kde <= noutliers) ~ "KDE outliers",
+  #                            TRUE ~ "Not outliers")) %>%
+  rename(fxy_vkde_isomap = fxy_vkde,
+         fxy_hdr_isomap = fxy_hdr) %>%
+  `colnames<-`(gsub("fxy_", "", colnames(.))) %>% 
+  pivot_longer(cols = -c(fxy), names_to = "kde", values_to = "densities") %>% 
+  separate(kde, c("KDE", "ML"), sep = "_") %>% 
+  mutate(KDE = factor(KDE, levels = c("vkde", "hdr"), labels = c("DC-KDE", "KDE")),
+         ML = factor(ML, levels = methods, labels = c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP"))
+         )
+gt <- frank_long %>%
+  ggplot(aes(fxy, densities)) +
+  geom_point() +
+  facet_grid(ML ~ KDE) +
+  # scale_x_log10() +
+  # scale_y_log10() +
+  labs(x = "True density rank", y = "Estimated density rank")
+gt
+# ggsave(paste0("paper/figures/", mapping, N,"_density_comparison_5ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank_nocor.png"), gt, width = 8, height = 10, dpi = 300)
+
+
+# Not run
+# pf_vkde <- frank %>% 
+#   ggplot(aes(x = fxy, y = fxy_vkde)) +  # , col = factor(preswissroll$label)
+#   geom_point() + 
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_y_continuous(n.breaks = 6)
+# pf_hdr <- frank %>% 
+#   ggplot(aes(x = fxy, y = fxy_hdr)) + 
+#   geom_point() + 
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr, f$fxy, method = "spearman"), digits = 3))) +
+#   scale_y_continuous(n.breaks = 5)
+# pf_vkde_lle <- frank %>%
+#   ggplot(aes(x = fxy, y = fxy_vkde_lle)) +
 #   geom_point() +
-#   facet_wrap(~ kde, 
-#              labeller = as_labeller(c(
-#                `fxy_dckde` = paste("DC-KDE correlation:", format(rankcompare_meta[1], digits = 3)),
-#                `fxy_kde` = paste("KDE correlation:", format(rankcompare_meta[2], digits = 3))))
-#   ) + 
-#   scale_x_log10() + 
-#   scale_y_log10() +
-#   labs(x = "True density rank", y = "Estimated density rank")
-
-pf_vkde <- frank %>% 
-  ggplot(aes(x = fxy, y = fxy_vkde)) +  # , col = factor(preswissroll$label)
-  geom_point() + 
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_y_continuous(n.breaks = 6)
-pf_hdr <- frank %>% 
-  ggplot(aes(x = fxy, y = fxy_hdr)) + 
-  geom_point() + 
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr, f$fxy, method = "spearman"), digits = 3))) +
-  scale_y_continuous(n.breaks = 5)
-
-pf_vkde_lle <- frank %>%
-  ggplot(aes(x = fxy, y = fxy_vkde_lle)) +
-  geom_point() +
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde_lle, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_y_continuous(n.breaks = 6)
-pf_hdr_lle <- frank %>%
-  ggplot(aes(x = fxy, y = fxy_hdr_lle)) +
-  geom_point() +
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr_lle, f$fxy, method = "spearman"), digits = 3, nsmall = 3)) ) +
-  scale_y_continuous(n.breaks = 7)
-
-pf_vkde_le <- frank %>%
-  ggplot(aes(x = fxy, y = fxy_vkde_le)) +
-  geom_point() +
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde_le, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_y_continuous(n.breaks = 6)
-pf_hdr_le <- frank %>%
-  ggplot(aes(x = fxy, y = fxy_hdr_le)) +
-  geom_point() +
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr_le, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_y_continuous(n.breaks = 7)
-
-pf_vkde_tsne <- frank %>%
-  ggplot(aes(x = fxy, y = fxy_vkde_tsne)) +
-  geom_point() +
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde_tsne, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_y_continuous(n.breaks = 6)
-pf_hdr_tsne <- frank %>%
-  ggplot(aes(x = fxy, y = fxy_hdr_tsne)) +
-  geom_point() +
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr_tsne, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_y_continuous(n.breaks = 7)
-
-pf_vkde_umap <- frank %>%
-  ggplot(aes(x = fxy, y = fxy_vkde_umap)) +
-  geom_point() +
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde_umap, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_y_continuous(n.breaks = 6)
-pf_hdr_umap <- frank %>%
-  ggplot(aes(x = fxy, y = fxy_hdr_umap)) +
-  geom_point() +
-  labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr_umap, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_y_continuous(n.breaks = 7)
-
-
-result <- 
-  ( (pf_vkde + labs(y = "ISOMAP", title = "DC-KDE") + (pf_hdr + labs(title = "KDE") + theme(axis.text.y = element_blank())))/ 
-      (pf_vkde_lle + labs(y = "LLE") + (pf_hdr_lle + theme(axis.text.y = element_blank()))) / 
-      (pf_vkde_le + ylab("Laplacian Eigenmaps") + (pf_hdr_le + theme(axis.text.y = element_blank()))) / 
-      (pf_vkde_tsne + ylab("t-SNE") + (pf_hdr_tsne + theme(axis.text.y = element_blank()))) / 
-      (pf_vkde_umap + ylab("UMAP") + (pf_hdr_umap + theme(axis.text.y = element_blank()))) 
-  ) +
-  plot_layout(guides = 'collect') & 
-  theme(plot.title = element_text(hjust = 0.5, face = "bold")) &  # legend.position = 'bottom'
-  geom_point(color = "black", size = .5) & 
-  guides(color = "none")
-gt <- patchwork::patchworkGrob(result)
-gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde_lle, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_y_continuous(n.breaks = 6)
+# pf_hdr_lle <- frank %>%
+#   ggplot(aes(x = fxy, y = fxy_hdr_lle)) +
+#   geom_point() +
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr_lle, f$fxy, method = "spearman"), digits = 3, nsmall = 3)) ) +
+#   scale_y_continuous(n.breaks = 7)
+# pf_vkde_le <- frank %>%
+#   ggplot(aes(x = fxy, y = fxy_vkde_le)) +
+#   geom_point() +
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde_le, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_y_continuous(n.breaks = 6)
+# pf_hdr_le <- frank %>%
+#   ggplot(aes(x = fxy, y = fxy_hdr_le)) +
+#   geom_point() +
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr_le, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_y_continuous(n.breaks = 7)
+# pf_vkde_tsne <- frank %>%
+#   ggplot(aes(x = fxy, y = fxy_vkde_tsne)) +
+#   geom_point() +
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde_tsne, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_y_continuous(n.breaks = 6)
+# pf_hdr_tsne <- frank %>%
+#   ggplot(aes(x = fxy, y = fxy_hdr_tsne)) +
+#   geom_point() +
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr_tsne, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_y_continuous(n.breaks = 7)
+# pf_vkde_umap <- frank %>%
+#   ggplot(aes(x = fxy, y = fxy_vkde_umap)) +
+#   geom_point() +
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_vkde_umap, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_y_continuous(n.breaks = 6)
+# pf_hdr_umap <- frank %>%
+#   ggplot(aes(x = fxy, y = fxy_hdr_umap)) +
+#   geom_point() +
+#   labs(x = "", y = "", color = "Kernels", subtitle = paste("Rank correlation =", format(cor(f$fxy_hdr_umap, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_y_continuous(n.breaks = 7)
+#
+# result <- 
+#   ( (pf_vkde + labs(y = "ISOMAP", title = "DC-KDE") + (pf_hdr + labs(title = "KDE") + theme(axis.text.y = element_blank())))/ 
+#       (pf_vkde_lle + labs(y = "LLE") + (pf_hdr_lle + theme(axis.text.y = element_blank()))) / 
+#       (pf_vkde_le + ylab("Laplacian Eigenmaps") + (pf_hdr_le + theme(axis.text.y = element_blank()))) / 
+#       (pf_vkde_tsne + ylab("t-SNE") + (pf_hdr_tsne + theme(axis.text.y = element_blank()))) / 
+#       (pf_vkde_umap + ylab("UMAP") + (pf_hdr_umap + theme(axis.text.y = element_blank()))) 
+#   ) +
+#   plot_layout(guides = 'collect') & 
+#   theme(plot.title = element_text(hjust = 0.5, face = "bold")) &  # legend.position = 'bottom'
+#   geom_point(color = "black", size = .5) & 
+#   guides(color = "none")
+# gt <- patchwork::patchworkGrob(result)
+# gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True density")
 # ggsave(paste0("paper/figures/", mapping, N,"_density_comparison_5ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), gt, width = 8, height = 10, dpi = 300)
 
 
@@ -716,55 +716,134 @@ gt <- gridExtra::grid.arrange(gt, left = "Estimated density", bottom = "True den
 
 ## -----------------------------------------------------------------------------
 ## 6.3 Only isomap for the paper (Figure `tpisomapden`)
-
-# Not run
+# RUN this!!!
 ##---------------------------------------------------------------------
-# color the points with distance to y=x (Improvement: rotate 45 degrees for better comparison)
-# log scale of x and y axis, with colors indicating the absolute rank error weighted by the sum of true and estimated ranks
-p_isomap_logrank_distcol <- frank %>% 
-  select(fxy, fxy_vkde, fxy_hdr) %>%
-  # mutate(outlier = case_when((fxy <= noutliers) ~ "True outliers",
-  #                            (fxy_dckde <= noutliers) ~ "DC-KDE outliers",
-  #                            (fxy_kde <= noutliers) ~ "KDE outliers",
-  #                            TRUE ~ "Not outliers")) %>% 
-  pivot_longer(cols = -c(fxy), names_to = "kde", values_to = "densities") %>%
-  mutate(fcol = abs((fxy - densities) / (fxy + densities) ) ) %>% # colors for weighted rank error
-  ggplot(aes(fxy, densities)) + # , col = densities
-  geom_point(aes(col = fcol)) + 
-  facet_grid(~ factor(kde, levels = c("fxy_vkde", "fxy_hdr")),
-             labeller = as_labeller(c(
-               `fxy_vkde` = paste("DC-KDE correlation =", format(cor(frank$fxy, frank$fxy_vkde), digits = 3)),
-               `fxy_hdr` = paste("KDE correlation =", format(cor(frank$fxy, frank$fxy_hdr), digits = 3))))
-  ) + 
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000)) +
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000)) +
-  labs(x = "True density rank", y = "Estimated density rank") + 
-  scale_color_viridis(option = "D", direction = -1) +
-  guides(color = "none")
-# ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_isomap_radius", radius, "_r", format(r, decimal.mark = "_"), "_rankdistcol.png"), p_isomap_logrank_distcol, width = 12, height = 6, dpi = 300)
+# color the points with HDR, add rectangle and highlight points outside
+xname <- methods[2] # !!! Modify index for different ML methods comparison
+probs <- prob[1:2]
+levels <- c(probs / 100, 1)
+q_rank <- quantile(1:N, levels)
+rec <- log10(q_rank)
+greys <- scales::grey_pal()(10)[c(6, 8, 10)]
+frank1 <- frank %>% 
+  # select(fxy:fxy_hdr) %>% # isomap
+  rename(fxy_vkde_isomap = fxy_vkde,
+         
+         fxy_hdr_isomap = fxy_hdr) 
+frank1 <- frank1 %>%
+  select(fxy, contains(paste0("_", xname))) %>% 
+  mutate(across(everything(), 
+                function(x) cut(x, 
+                                breaks = c(0, q_rank), 
+                                labels = c(">99", paste(100 - probs))))
+  ) %>% 
+  `colnames<-`(gsub("fxy", "col", colnames(.))) %>% 
+  bind_cols(select(frank1, fxy, contains(paste0("_", xname)))) %>% 
+  `colnames<-`(gsub(paste0("_", xname), "", colnames(.))) %>% 
+  mutate(dckde_false = (col == col_vkde) & (col != last(probs)) & (col_vkde != last(probs)),
+         kde_false = (col == col_hdr) & (col != last(probs)) & (col_hdr != last(probs)) ) 
+
+plogrec_isomap_vkde <-
+  frank1 %>%
+  ggplot(aes(x = fxy, y = fxy_vkde)) +
+  # geom_rect(xmin = 0, xmax = rec[2], ymin = 0, ymax = rec[2], fill = greys[2], col = greys[2]) +
+  geom_rect(xmin = rec[2], xmax = rec[3], ymin = rec[2], ymax = rec[3], fill = greys[3], col = greys[3]) + # third blocks
+  geom_rect(xmin = rec[1], xmax = rec[2], ymin = rec[1], ymax = rec[2], fill = greys[2], col = greys[2]) + # small blocks
+  geom_rect(xmin = 0, xmax = rec[1], ymin = 0, ymax = rec[1], fill = greys[1], col = greys[1]) +
+  geom_point(aes(col = col_vkde, shape = dckde_false, size = dckde_false, alpha = dckde_false)) + # if color HDRs
+  scale_color_manual(
+    name = "HDRs",
+    breaks = levels(frank1$col),
+    values = rev(c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000"))[1:length(levels)],
+    labels = paste0(levels(frank1$col), "%")
+  ) +
+  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 20, 200, 1000, 2000), guide = guide_axis(n.dodge = 1)) + 
+  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 20, 200, 1000, 2000)) + 
+  coord_fixed() +
+  scale_shape_manual(values = c(`TRUE` = 20, `FALSE` = 17 )) +
+  scale_size_manual(values = c(`TRUE` = 1, `FALSE` = 2 )) +
+  scale_alpha_manual(values = c(`TRUE` = .5, `FALSE` = 1) ) + 
+  labs(x = "", y = "", title = "DC-KDE", shape = "Correct HDRs", size = "Correct HDRs", alpha = "Correct HDRs") +
+  theme(plot.title = element_text(hjust = 0.5))
+# theme_bw()
+plogrec_isomap_kde <-
+  frank1 %>%
+  ggplot(aes(x = fxy, y = fxy_hdr)) +
+  # geom_rect(xmin = 0, xmax = rec[2], ymin = 0, ymax = rec[2], fill = greys[2], col = greys[2]) +
+  geom_rect(xmin = rec[2], xmax = rec[3], ymin = rec[2], ymax = rec[3], fill = greys[3], col = greys[3]) + # third blocks
+  geom_rect(xmin = rec[1], xmax = rec[2], ymin = rec[1], ymax = rec[2], fill = greys[2], col = greys[2]) + # small blocks
+  geom_rect(xmin = 0, xmax = rec[1], ymin = 0, ymax = rec[1], fill = greys[1], col = greys[1]) +
+  # geom_point()+ # if not color HDRs
+  geom_point(aes(col = col_hdr, shape = kde_false, size = kde_false, alpha = kde_false)) + # if color HDRs
+  scale_color_manual(
+    name = "HDRs",
+    breaks = levels(frank1$col), # paste0(c(paste(sort(100 - prob)), ">99"), "%"),
+    values = rev(c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000"))[1:length(levels)],
+    labels = paste0(levels(frank1$col), "%")
+  ) +
+  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 20, 200, 1000, 2000), guide = guide_axis(n.dodge = 1)) + 
+  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(0, 20, 200, 1000, 2000)) + 
+  coord_fixed() +
+  scale_shape_manual(values = c(`TRUE` = 20, `FALSE` = 17 )) +
+  scale_size_manual(values = c(`TRUE` = 1, `FALSE` = 2 )) +
+  scale_alpha_manual(values = c(`TRUE` = .5, `FALSE` = 1) ) + 
+  labs(x = "", y = "", title = "KDE", shape = "Correct HDRs", size = "Correct HDRs", alpha = "Correct HDRs") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+plotrec <- ((plogrec_isomap_vkde + labs(y = "Estimated density rank") + plogrec_isomap_kde) + 
+              plot_layout(guides = 'collect')) %>%
+  add_global_label(Xlab = "True density rank")
+plotrec
+ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_", xname, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_rec_colprob_smallblocks3_crossfalse.png"), plotrec, width = 12, height = 5, dpi = 300)
 
 
-# Not run
-##---------------------------------------------------------------------
-# color the points with 4 kenrels
-pf_vkde <- frank %>% 
-  ggplot(aes(x = fxy, y = fxy_vkde, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
-  geom_point() + 
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("DC-KDE correlation =", format(cor(f$fxy_vkde, f$fxy, method = "spearman"), digits = 3)) ) +
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000)) +
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000))
-pf_hdr <- frank %>% 
-  ggplot(aes(x = fxy, y = fxy_hdr, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
-  geom_point() + 
-  labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("KDE correlation =", format(cor(f$fxy_hdr, f$fxy, method = "spearman"), digits = 3))) +
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000)) +
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000))
-((pf_vkde + labs(x = "True density rank", y = "Estimated density rank")) + (pf_hdr + labs(x = "True density rank"))) + 
-  coord_fixed() + 
-  plot_layout(guides = 'collect') & 
-  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
-# ggsave(paste0("paper/figures/", mapping, N,"_densityrank_comparison_isomap_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_col4kernels.png"), width = 10, height = 6, dpi = 300)
-
+# # Not run
+# ##---------------------------------------------------------------------
+# # color the points with distance to y=x (Improvement: rotate 45 degrees for better comparison)
+# # log scale of x and y axis, with colors indicating the absolute rank error weighted by the sum of true and estimated ranks
+# p_isomap_logrank_distcol <- frank %>% 
+#   select(fxy, fxy_vkde, fxy_hdr) %>%
+#   # mutate(outlier = case_when((fxy <= noutliers) ~ "True outliers",
+#   #                            (fxy_dckde <= noutliers) ~ "DC-KDE outliers",
+#   #                            (fxy_kde <= noutliers) ~ "KDE outliers",
+#   #                            TRUE ~ "Not outliers")) %>% 
+#   pivot_longer(cols = -c(fxy), names_to = "kde", values_to = "densities") %>%
+#   mutate(fcol = abs((fxy - densities) / (fxy + densities) ) ) %>% # colors for weighted rank error
+#   ggplot(aes(fxy, densities)) + # , col = densities
+#   geom_point(aes(col = fcol)) + 
+#   facet_grid(~ factor(kde, levels = c("fxy_vkde", "fxy_hdr")),
+#              labeller = as_labeller(c(
+#                `fxy_vkde` = paste("DC-KDE correlation =", format(cor(frank$fxy, frank$fxy_vkde), digits = 3)),
+#                `fxy_hdr` = paste("KDE correlation =", format(cor(frank$fxy, frank$fxy_hdr), digits = 3))))
+#   ) + 
+#   scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000)) +
+#   scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000)) +
+#   labs(x = "True density rank", y = "Estimated density rank") + 
+#   scale_color_viridis(option = "D", direction = -1) +
+#   guides(color = "none")
+# # ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_isomap_radius", radius, "_r", format(r, decimal.mark = "_"), "_rankdistcol.png"), p_isomap_logrank_distcol, width = 12, height = 6, dpi = 300)
+# 
+# 
+# # Not run
+# ##---------------------------------------------------------------------
+# # color the points with 4 kenrels
+# pf_vkde <- frank %>% 
+#   ggplot(aes(x = fxy, y = fxy_vkde, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
+#   geom_point() + 
+#   labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("DC-KDE correlation =", format(cor(f$fxy_vkde, f$fxy, method = "spearman"), digits = 3)) ) +
+#   scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000)) +
+#   scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000))
+# pf_hdr <- frank %>% 
+#   ggplot(aes(x = fxy, y = fxy_hdr, col = factor(preswissroll$label), shape = factor(preswissroll$label))) + 
+#   geom_point() + 
+#   labs(x = "", y = "", color = "Kernels", shape = "Kernels", title = paste("KDE correlation =", format(cor(f$fxy_hdr, f$fxy, method = "spearman"), digits = 3))) +
+#   scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000)) +
+#   scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = c(1, 10, 100, 1000, 2000))
+# ((pf_vkde + labs(x = "True density rank", y = "Estimated density rank")) + (pf_hdr + labs(x = "True density rank"))) + 
+#   coord_fixed() + 
+#   plot_layout(guides = 'collect') & 
+#   theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold"))
+# # ggsave(paste0("paper/figures/", mapping, N,"_densityrank_comparison_isomap_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_col4kernels.png"), width = 10, height = 6, dpi = 300)
 
 
 # # DC-KDE (NOT RUN)
@@ -797,7 +876,7 @@ pf_hdr <- frank %>%
 #   scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100)) + # breaks = c(1, 10, 100, 1000, 2000)) +
 #   # geom_point(aes(y = fxy_hdr, col = fxy_hdr)) +
 #   # scale_color_viridis(option = "A", direction = -1) 
-#   ggplot2::scale_colour_manual(
+#   ggplot2::scale_color_manual(
 #     name = "HDRs",
 #     breaks = c(paste(sort(100 - prob)), "100"),
 #     values = c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")
@@ -807,84 +886,50 @@ pf_hdr <- frank %>%
 # # theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 
-# RUN this!!!
-##---------------------------------------------------------------------
-# color the points with HDR, add rectangle and highlight points outside
-levels <- c(sort(100-prob) / 100, 1)
-q_rank <- quantile(1:N, levels)
-apply(frank[1:3], 2, function(x) cut(x, 
-                                     breaks = c(0, quantile(1:N, levels)), 
-                                     labels = c(paste(sort(100 - prob)), ">99"))) %>% head
-
-
-
-frank %>% 
-  mutate(col_trueden = )
-frank1 <- frank %>%
-  mutate(col_vkde = factor(p_isomap$p[["plot_env"]][["region"]],
-                           levels = c(paste(sort(100 - prob)), "100")),
-         col_kde = factor(p_hdr_isomap$p[["plot_env"]][["region"]],
-                          levels = c(paste(sort(100 - prob)), "100")),
-         col_truehdr = factor(p_meta$p[["plot_env"]][["region"]],
-                               levels = c(paste(sort(100 - prob)), "100"))
-         )
-rec <- quantile(1:N, c(sort(100-prob), 100)/100) %>% log10()
-greys <- scales::grey_pal()(10)[-(1:4)]
-plogrec_isomap_kde <- frank1 %>%
-  ggplot(aes(x = fxy, y = fxy_hdr)) + 
-  geom_rect(xmin = 0, xmax = rec[6], ymin = -Inf, ymax = rec[6], fill = greys[6], col = greys[6]) +
-  geom_rect(xmin = 0, xmax = rec[5], ymin = -Inf, ymax = rec[5], fill = greys[5], col = greys[5]) +
-  geom_rect(xmin = 0, xmax = rec[4], ymin = -Inf, ymax = rec[4], fill = greys[4], col = greys[4]) +
-  geom_rect(xmin = 0, xmax = rec[3], ymin = -Inf, ymax = rec[3], fill = greys[3], col = greys[3]) +
-  geom_rect(xmin = 0, xmax = rec[2], ymin = -Inf, ymax = rec[2], fill = greys[2], col = greys[2]) +
-  geom_rect(xmin = 0, xmax = rec[1], ymin = -Inf, ymax = rec[1], fill = greys[1], col = greys[1]) +
-  geom_point(aes(col = col_kde)) +
-  # geom_rect(fill=scales::grey_pal()(length(levels(frank1$col_truehdr))+5)[as.numeric(frank1$col_truehdr)+5],xmin = 0, xmax = quantile(1:N, c(sort(100-prob), 100)/100), ymin = -Inf,ymax = Inf, alpha = .1) +
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), guide = guide_axis(n.dodge = 2)) + 
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), label = ) + 
-  ggplot2::scale_colour_manual(
-    name = "HDRs",
-    breaks = c(paste(sort(100 - prob)), "100"),
-    values = c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")
-  ) + 
-  coord_fixed() +
-  labs(x = "", y = "")
-plogrec_isomap_vkde <- frank1 %>%
-  ggplot(aes(x = fxy, y = fxy_vkde)) + 
-  geom_rect(xmin = 0, xmax = rec[6], ymin = -Inf, ymax = rec[6], fill = greys[6], col = greys[6]) +
-  geom_rect(xmin = 0, xmax = rec[5], ymin = -Inf, ymax = rec[5], fill = greys[5], col = greys[5]) +
-  geom_rect(xmin = 0, xmax = rec[4], ymin = -Inf, ymax = rec[4], fill = greys[4], col = greys[4]) +
-  geom_rect(xmin = 0, xmax = rec[3], ymin = -Inf, ymax = rec[3], fill = greys[3], col = greys[3]) +
-  geom_rect(xmin = 0, xmax = rec[2], ymin = -Inf, ymax = rec[2], fill = greys[2], col = greys[2]) +
-  geom_rect(xmin = 0, xmax = rec[1], ymin = -Inf, ymax = rec[1], fill = greys[1], col = greys[1]) +
-  geom_point(aes(col = col_vkde)) +
-  # geom_rect(fill=scales::grey_pal()(length(levels(frank1$col_truehdr))+5)[as.numeric(frank1$col_truehdr)+5],xmin = 0, xmax = quantile(1:N, c(sort(100-prob), 100)/100), ymin = -Inf,ymax = Inf, alpha = .1) +
-  scale_x_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), guide = guide_axis(n.dodge = 2)) + 
-  scale_y_continuous(trans = "log10", limits = c(1, 2000), breaks = quantile(1:N, c(sort(100-prob)) / 100), label = ) + 
-  ggplot2::scale_colour_manual(
-    name = "HDRs",
-    breaks = c(paste(sort(100 - prob)), "100"),
-    values = c(RColorBrewer::brewer.pal(length(prob)+1, "YlOrRd")[-1], "#000000")
-  ) + 
-  coord_fixed() +
-  labs(x = "", y = "")
-
-plotrec <- ((plogrec_isomap_vkde + labs(y = "Estimated density quantiles") + plogrec_isomap_kde) + 
-  plot_layout(guides = 'collect')) %>%
-  add_global_label(Xlab = "True density quantiles")
-# pr <- patchwork::patchworkGrob(plotrec)
-# pr <- gridExtra::grid.arrange(pr, bottom = "True density quantiles")
-# ggsave(filename = paste0("paper/figures/", mapping, N,"_densityrank_comparison_isomap_radius", radius, "_r", format(r, decimal.mark = "_"), "_logrank_rec_colprob.png"), pr, width = 12, height = 5, dpi = 300)
-
-
-
-
 
 
 
 
 ## -----------------------------------------------------------------------------
 # 6.4 Plot of outlier rank to show that the ranks do not change across different ML methods
+# change i to put each ML method on x-axis
+i <- 1
+xname <- c("isomap", "lle", "le", "tsne", "umap")[i]
+mllabel <- c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP")
+p_data <- frank %>% 
+  rename(fxy_vkde_isomap = fxy_vkde, 
+         fxy_hdr_isomap = fxy_hdr) %>%
+  # `colnames<-`(gsub("fxy_", "", colnames(.))) %>%
+  select(-fxy) %>% 
+  pivot_longer(-contains(paste0("_", xname)), names_sep = "_", names_to = c("f", "dckde",
+                                                                            # pivot_longer(everything(), names_sep = "_", names_to = c("dckde",
+                                                                            "kde")) %>% 
+  pivot_longer(contains(xname), names_sep = "_", names_to = c("f_x",
+                                                              "dckde_x", 
+                                                              "kde_x"), 
+               values_to = "x") %>% 
+  filter(dckde == dckde_x)  %>% 
+  pivot_wider(names_from = "kde_x", values_from = "x") %>% 
+  select(kde, any_of(xname), value, dckde) %>% 
+  mutate(dckde = factor(dckde, levels = c("vkde", "hdr"), labels = c("DC-KDE", "KDE")),
+         kde = factor(kde, labels = mllabel[-i])) 
+cor_data <- p_data %>%
+  group_by(kde, dckde) %>% 
+  summarise(cor = cor(value, !!sym(xname), method = "spearman"), 
+            # x = quantile(!!sym(xname), 0.9), 
+            # y = quantile(!!sym(xname), 0.2),
+            .groups = "drop")
+
+p_isovs4ml <- ggplot(p_data, aes(x = !!sym(xname), y = value)) +
+  geom_point() +
+  # geom_label(data = cor_data, aes(x=x, y = y, label = paste("cor: ", format(cor, digits = 2)))) +
+  facet_grid(kde ~ dckde) + 
+  labs(x = mllabel[i], y = "")
+# ggsave(paste0("paper/figures/", mapping, N,"_density_compare_", xname, "vs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), p_isovs4ml, width = 8, height = 10, dpi = 300)
+
+
+
+# Not run
 # frank
 # prank_dckde_isolle <- frank %>% 
 #   ggplot(aes(x = fxy_vkde, y = fxy_vkde_lle)) +  # , col = factor(preswissroll$label), shape = factor(preswissroll$label)
@@ -940,43 +985,8 @@ plotrec <- ((plogrec_isomap_vkde + labs(y = "Estimated density quantiles") + plo
 # # ggsave(paste0("paper/figures/", mapping, N,"_density_compare_isomapvs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), prank_isomap, width = 8, height = 10, dpi = 300)
 
 
-# change i to put each ML method on x-axis
-i <- 1
-xname <- c("isomap", "lle", "le", "tsne", "umap")[i]
-mllabel <- c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP")
-p_data <- frank %>% 
-  rename(fxy_vkde_isomap = fxy_vkde, 
-         fxy_hdr_isomap = fxy_hdr) %>%
-  # `colnames<-`(gsub("fxy_", "", colnames(.))) %>%
-  select(-fxy) %>% 
-  pivot_longer(-contains(paste0("_", xname)), names_sep = "_", names_to = c("f", "dckde",
-                                                               # pivot_longer(everything(), names_sep = "_", names_to = c("dckde",
-                                                               "kde")) %>% 
-  pivot_longer(contains(xname), names_sep = "_", names_to = c("f_x",
-                                                              "dckde_x", 
-                                                              "kde_x"), 
-               values_to = "x") %>% 
-  filter(dckde == dckde_x)  %>% 
-  pivot_wider(names_from = "kde_x", values_from = "x") %>% 
-  select(kde, any_of(xname), value, dckde) %>% 
-  mutate(dckde = factor(dckde, levels = c("vkde", "hdr"), labels = c("DC-KDE", "KDE")),
-         kde = factor(kde, labels = mllabel[-i])) 
-cor_data <- p_data %>%
-  group_by(kde, dckde) %>% 
-  summarise(cor = cor(value, !!sym(xname), method = "spearman"), 
-            # x = quantile(!!sym(xname), 0.9), 
-            # y = quantile(!!sym(xname), 0.2),
-            .groups = "drop")
-
-ggplot(p_data, aes(x = !!sym(xname), y = value)) +
-  geom_point() +
-  # geom_label(data = cor_data, aes(x=x, y = y, label = paste("cor: ", format(cor, digits = 2)))) +
-  facet_grid(kde ~ dckde) + 
-  labs(x = mllabel[i], y = "")
-# ggsave(paste0("paper/figures/", mapping, N,"_density_compare_", xname, "vs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), "_rank.png"), width = 8, height = 10, dpi = 300)
-
-
-# Plot all dc-kde / kde in one plot
+# Not run
+# Plot all combinations of dc-kde / kde in one plot
 # library(GGally)
 # ggpairs(frank[,(1:5)*2],
 #         columnLabels = c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP"),
