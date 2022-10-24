@@ -129,9 +129,6 @@ fmeta <- vkde(x = fn, h = h_hdr_meta, vh = Rn, r = r, gridsize = gridsize, eval.
 p_meta <- plot_outlier(x = metric_meta, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fmeta, ell.size = 0)
 p_meta$densities %>% summary()
 
-## TODO: save computed results, beautify plots, remove same y axis, scale_x_log to show low density area, edit legend to one line, change color in rank plot to categorized HDR colors
-
-
 # Rank correlation
 f <- tibble(fxy = trueden, # true densities
             fxy_dckde = p_meta$densities, 
