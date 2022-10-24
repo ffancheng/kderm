@@ -6,6 +6,7 @@ annHLLE <- setClass(
                    eps = 0, 
                    ndim = 2,
                    get_geod = FALSE,
+                   annmethod = "kdtree", 
                    radius = 1,
                    nt = 50, 
                    nlinks = 16, 
