@@ -54,12 +54,12 @@ semisphere <- cbind(X,
 # label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
 # dist2center <- sqrt(radius^2 - semisphere[,5]^2)
 # ## Plot 5-d semi-sphere, run once
-library(tourr)
-colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
-pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
-animate_xy(semisphere[,1:5], col = colors, pch = pchs, cex = 0.8,
-           axes = "bottomleft", fps=15
-           )
+# library(tourr)
+# colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
+# pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
+# animate_xy(semisphere[,1:5], col = colors, pch = pchs, cex = 0.8,
+#            axes = "bottomleft", fps=15
+#            )
 # # "figures/tourr_5d_semisphere.png"
 
 y <- matrix(runif(p*p, 0, 1), p, p)
@@ -78,7 +78,7 @@ x <- train
 y <- X # given known embedding with known density
 # y <- NULL
 s <- 2
-k <- N / 20
+k <- 100 # N / 20
 method <- "Isomap" # not used because y is given
 annmethod <- "kdtree"
 distance <- "euclidean"
