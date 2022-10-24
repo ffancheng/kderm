@@ -107,7 +107,7 @@ hdrtable %>%
 ## 3. Rank comparison plot, highlight outliers
 ###--------------------------------------------------------
 frank <- f %>% 
-  summarise_all(.fun = list(~ rank(x = ., ties.method = "random"))) %>% # random tie method for better visualization (not verticle lines in >99% region)
+  summarise_all(.fun = list(~ rank(x = ., ties.method = "average"))) %>% # random tie method for better visualization (not verticle lines in >99% region)
   mutate(outliers = factor(label, levels = c("TRUE", "FALSE")),
          dist2center = dist2center)
 
@@ -133,6 +133,7 @@ p_rank <- frank_long %>%
   scale_x_log10() + 
   scale_y_log10() + 
   theme(legend.position = "bottom")
+p_rank
 # ggsave(paste0("paper/figures/", "sim4d", N, "_density_comparison_4ml_radius", 10, "_k200_rankdensity_circleoutlier_with1rec.png"), p_rank, width = 8, height = 10, dpi = 300)
 
 

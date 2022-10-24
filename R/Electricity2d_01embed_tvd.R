@@ -12,15 +12,31 @@ library(igraph)
 library(matrixcalc)
 library(intRinsic)
 Jmisc::sourceAll("R/sources")
+scen <- 1
 # scen <- as.numeric(commandArgs()[[6]])
 r <- 1
 
-load("data/spdemand_3639id336tow.rda")
-# nid <- 1
+load("data/half_count_ratio_3639id336tow.rda")
 nid <- 3639
 ntow <- 336
-train <- readRDS(paste0("data/spdemand_", nid, "id", ntow, "tow_train.rds"))
-# intRinsic::twonn(train, method = c("mle", "linfit", "bayes")[scen])
+if(nid == 1) {
+  train <- spdemand %>%
+    lazy_dt() %>%
+    filter(tow <= ntow,
+           # id <= sort(unique(spdemand[,id]))[nid]
+           id == 1003
+    ) %>%
+    dplyr::select(-id, -tow) %>%
+    as.data.table()
+} else if(nid == 3639) {
+  train <- spdemand %>%
+    lazy_dt() %>%
+    # mutate(id_tow = paste0(id, "_", tow)) %>%
+    as.data.table() %>%
+    column_to_rownames("id")
+}
+dim(train)
+rm(spdemand)
 
 paste("Start at:", Sys.time())
 # ----parameters----------------------------------------------------------------
@@ -29,9 +45,9 @@ y <- NULL # without pre-computed embedding
 N <- nrow(x)
 s <- 2 # embedded in 2-D for visualization purpose
 k <- 100 # N / 50
-method <- "annIsomap"
+method <- c("annIsomap", "annLLE", "annLaplacianEigenmaps", "anntSNE", "annUMAP")[scen]
 annmethod <- "kdtree"
-distance <- c("euclidean", "manhattan")[2]
+distance <- c("euclidean", "manhattan")[2] # "manhattan" for all households
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
 radius <- 10 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
@@ -54,8 +70,8 @@ Rn <- metric_isomap$rmetric
 adj_matrix <- metric_isomap$adj_matrix
 E1 <- fn[,1]; E2 <- fn[,2]
 
-print("True density summary statistics")
-summary(trueden)
+# print("True density summary statistics")
+# summary(trueden)
 
 ## ----Fixed bandwidth KDE with ks::kde-----------------------------------------
 tictoc::tic()
@@ -77,38 +93,39 @@ summary(fisomap$estimate)
 
 
 # ----Compare with true density-------------------------------------------------
-cormethod <- "spearman"
-(cors <- c(
-  cor(trueden, fisomap$estimate, method = cormethod),
-  cor(trueden, fixden_isomap$estimate, method = cormethod)
-))
-mean(sqrt((trueden - fisomap$estimate)^2)) # smaller MSE
-mean(sqrt((trueden - fixden_isomap$estimate)^2))
+# cormethod <- "spearman"
+# (cors <- c(
+#   cor(trueden, fisomap$estimate, method = cormethod),
+#   cor(trueden, fixden_isomap$estimate, method = cormethod)
+# ))
+# mean(sqrt((trueden - fisomap$estimate)^2)) # smaller MSE
+# mean(sqrt((trueden - fixden_isomap$estimate)^2))
+# 
+# noutliers <- 100
+# sum(head(order(fisomap$estimate), noutliers) %in% head(order(trueden), noutliers))
+# sum(head(order(fixden_isomap$estimate), noutliers) %in% head(order(trueden), noutliers))
+# 
+# f <- tibble(fxy = trueden, # true densities
+#             fxy_dckde = fisomap$estimate, fxy_hdr = fixden_isomap$estimate
+# ) %>% summarise_all(rank) # Comment this part if plotting the density estimates instead of ranks
+# f
+# # Plot ranks instead of densities
+# p <- f %>% 
+#   pivot_longer(cols = -1, names_to = "kde", values_to = "densities") %>% 
+#   ggplot(aes(x = fxy, y = densities)) + 
+#   geom_point() + 
+#   facet_grid(~ kde, labelle = as_labeller(c("fxy_dckde" = paste("DC-KDE correlation", round(cor(f$fxy_dckde, f$fxy, method = "spearman"), 3)), 
+#                                             "fxy_hdr" = paste("KDE correlation", round(cor(f$fxy_hdr, f$fxy, method = "spearman"), 3))))
+#   ) + 
+#   labs(x = "True density rank", y = "Estimated density rank") +
+#   scale_y_continuous(n.breaks = 6)
+# # p
+# ggsave(paste0("figures/compareden_electricity_2d_N", N, "_", method, "_r", format(r, decimal.mark = "_"), ".png"), p, width = 10, height = 6, dpi = 300)
 
-noutliers <- 100
-sum(head(order(fisomap$estimate), noutliers) %in% head(order(trueden), noutliers))
-sum(head(order(fixden_isomap$estimate), noutliers) %in% head(order(trueden), noutliers))
 
-f <- tibble(fxy = trueden, # true densities
-            fxy_dckde = fisomap$estimate, fxy_hdr = fixden_isomap$estimate
-) %>% summarise_all(rank) # Comment this part if plotting the density estimates instead of ranks
-f
-# Plot ranks instead of densities
-p <- f %>% 
-  pivot_longer(cols = -1, names_to = "kde", values_to = "densities") %>% 
-  ggplot(aes(x = fxy, y = densities)) + 
-  geom_point() + 
-  facet_grid(~ kde, labelle = as_labeller(c("fxy_dckde" = paste("DC-KDE correlation", round(cor(f$fxy_dckde, f$fxy, method = "spearman"), 3)), 
-                                            "fxy_hdr" = paste("KDE correlation", round(cor(f$fxy_hdr, f$fxy, method = "spearman"), 3))))
-  ) + 
-  labs(x = "True density rank", y = "Estimated density rank") +
-  scale_y_continuous(n.breaks = 6)
-# p
-ggsave(paste0("figures/compareden_electricity_N", N, "_", method, "_r", format(r, decimal.mark = "_"), ".png"), p, width = 10, height = 6, dpi = 300)
-
-
-save(method, fixden_isomap, fisomap, train, trueden, cors,
-     file = paste0("data/compareden_4d_N", N, "_", method, "_radius", radius, "_r", format(r, decimal.mark = "_"), "_annIsomap.rda"))
-if(!file.exists(paste0("data/metric_isomap_4d_N10000_radius", radius, ".rda"))) save(metric_isomap, file = paste0("data/metric_isomap_4d_N10000_radius", radius, ".rda"))
+save(method, fixden_isomap, fisomap, train, 
+     # trueden, cors,
+     file = paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_r", format(r, decimal.mark = "_"), ".rda"))
+if(!file.exists(paste0("data/metric_", method, "_electricity_2d_radius", radius, ".rda"))) save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, ".rda"))
 
 paste("End at:", Sys.time())

@@ -1,49 +1,65 @@
+rm(list = ls())
 library(tidyverse)
 library(dimRed)
 library(dtplyr)
+library(data.table)
 library(reticulate)
 library(viridis)
 # library(ks)
 library(hdrcde)
 library(igraph)
-library(seurat)
+# library(seurat)
 library(matrixcalc)
+library(intRinsic)
 Jmisc::sourceAll("R/sources")
+scen <- as.numeric(commandArgs()[[6]])
 
-load("data/spdemand_3639id336tow.rda")
-nid <- 1
+# load("data/spdemand_3639id336tow.rda")
+# nid <- 1
+nid <- 3639
 ntow <- 336
+train <- readRDS(paste0("data/spdemand_", nid, "id", ntow, "tow_train.rds"))
 
-train <- spdemand %>%
-  lazy_dt() %>%
-  filter(tow <= ntow,
-         # id <= sort(unique(spdemand[,id]))[nid],
-         id == 1003) %>%
-  dplyr::select(-id, -tow) %>%
-  data.table::as.data.table()
-
-# saveRDS(train, file = "data/spdemand_1id336tow_train.rds")
+# if(nid == 1) {
+#   train <- spdemand %>%
+#     lazy_dt() %>%
+#     filter(tow <= ntow,
+#            # id <= sort(unique(spdemand[,id]))[nid]
+#            id == 1003
+#     ) %>%
+#     dplyr::select(-id, -tow) %>%
+#     data.table::as.data.table()
+# } else if(nid == 3639) {
+#   train <- spdemand %>% 
+#     lazy_dt() %>%
+#     mutate(id_tow = paste0(id, "_", tow)) %>% 
+#     as.data.table() %>%
+#     column_to_rownames("id_tow") %>% 
+#     select(-c(id, tow))
+# }
+# # saveRDS(train, file = paste0("data/spdemand_", nid, "id", ntow, "tow_train.rds"))
 
 N <- nrow(train)
+# intRinsic::twonn(train, method = c("mle", "linfit", "bayes")[scen]) # 6 for 1ID
 
 # Parameters fixed
 x <- train
 s <- 2
-k <- 20
+k <- 100
 method <- "annIsomap"
 annmethod <- "kdtree"
-distance <- "euclidean"
+distance <- c("euclidean", "manhattan")[2]
 treetype = "kd"
 searchtype = "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- .4
+radius <- 1
 metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype) 
 
 # Comparison of Isomap embedding plot
 par(mfrow = c(1, 2))
 plot(metric_isomap$embedding, col = viridis::viridis(24)) # metricML
 # plot(e@data@data, col = viridis::viridis(24)) # embedding from dimRed, same as metricML()
-emb_isomap <-
-  feather::read_feather("data/embedding_isomap_1id336tow.feather")
+# emb_isomap <-
+#   feather::read_feather("data/embedding_isomap_1id336tow.feather")
 plot(-emb_isomap$`0`, emb_isomap$`1`, col = viridis::viridis(24)) # embedding from megaman, radius = 0.4
 
 # Use adjacency matrix as input for metricML and dimRed, then the embedding should be close, as well as the Riemannian metric
