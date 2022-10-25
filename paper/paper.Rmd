@@ -200,45 +200,34 @@ knitr::include_graphics("figures/DC-KDE.png")
 
 # Simulations {#simulation}
 
-In this section, we examine two scenarios for both low and high dimensions to test our proposed algorithm. For visualization purposes, \autoref{twodgaussian} presents a 2-D meta data example. We first simulate the data of size $N=2,000$ from a mixture of four Gaussian kernels with the same covariance but different means, each consisting of $500$ points. Different mapping functions are then applied to the 2-D meta data to be mapped in a 3-D feature space, which gives the higher-dimensional input for different manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. The embedded dimension is set as $d=2$, the same as the meta data dimension.
+In this section, we examine two scenarios for both low and high dimensions to test our proposed algorithm. For visualization purposes, \autoref{twodgaussian} presents an example of a two-dimensional manifold embedded in 3-dimensional Euclidean space. General stuff here...
+
+
+We first simulate the data of size $N=2,000$ from a mixture of four Gaussian kernels with the same covariance but different means, each consisting of $500$ points. Different mapping functions are then applied to the 2-D meta data to be mapped in a 3-D feature space, which gives the higher-dimensional input for different manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. The embedded dimension is set as $d=2$, the same as the meta data dimension.
 This enables us to compare the manifold learning embedding with the true meta data. We could now apply Algorithm \@ref(alg:kdeanomaly) to get the density estimates of all data points and further detect anomalies. As a high-dimensional example, the second simulation in \autoref{fivedgaussian} is based on a 5-D meta data of size $N=2,000$ embedded in a 100-D space and the corresponding embedding dimension is $d=5$.
 
-## 3-D mapping from a 2-D Gaussian Mixture Model {#twodgaussian}
+## Twin peaks example {#twodgaussian}
 
-We first generate a 2-dimensional data of size $N=2000$ from a Gaussian mixture model with four components with different means
+The simulation setup for the twin peaks example is to first generate vector $\pmb{v}_1,\dots,\pmb{v}_N$ for $N=2000$ from a 2-dimensional Gaussian mixture model. The mixture has four components with different means
 $\pmb{\mu_1}=(0.25, 0.25)^\prime, \pmb{\mu_2}=(0.25, 0.75)^\prime, \pmb{\mu_3}=(0.75, 0.25)^\prime, \pmb{\mu_4}=(0.75, 0.75)^\prime$ and the same variance-covariance matrix $\pmb{\Sigma}_i=diag(0.016, 0.016), i=1,2,3,4$. The mixture proportions
-are equally set as $\pi_i=0.25, i=1,2,3,4$.
-<!-- $\big(\begin{smallmatrix} 0.02&0\\ 0&0.02 \end{smallmatrix}\big)$. -->
-Then the mixture Gaussian mixture density function is a weighted linear combination of the four component Gaussian densities as 
-\begin{equation}
-\label{eq:gmm}
-P(\pmb{X}=\pmb{x}) = \sum_{i=1}^{4}\pi_i \frac{1}{(2\pi)^{d/2}|\pmb{\Sigma}_i|^{-1/2}} \exp{\{-\frac{1}{2} (\pmb{x}-\pmb{\mu_i})^\prime \pmb{\Sigma}_i^{-1} (\pmb{x}-\pmb{\mu_i}) \}}.
-\end{equation} 
+are equally set as $\pi_i=0.25, i=1,2,3,4$. The two dimensional data in \autoref{fig:metadensity} is mapped to a 'twin peaks' surface via the mapping given by 
 
-```{r mappings, fig.align = 'center', out.width = "80%", fig.cap="3-D Mappings of the meta data with colors and shapes indicating the four kernels. Left: swiss roll mapping. Right: twin peak mapping.", echo = FALSE}
-knitr::include_graphics("figures/mappings_sr_tp.png")
-```
-
-Given the 2-D meta data, multiple mapping functions could be applied to embed the data in a 3-D space. We use the same 2-D meta data in \autoref{fig:metadensity} with a different mapping function, twin peaks
-mapping in Equation \@ref(eq:twinpeak), with the corresponding 3-D structure shown in the right plot of \autoref{fig:mappings}. For simplicity, the simulation results for the swiss roll mapping in te left plot is shown in the Appendix \autoref{swissrollappe}.
 \begin{equation}
 \label{eq:twinpeak}
-\left\{ 
 \begin{array}{lcl}
-X = X_1, \\
-Y = X_2, \\
-Z = \sin(\pi X_1) \tanh (3 X_2).
+x_1 = v_1, \\
+x_2 = v_2, \\
+x_3 = \sin(\pi v_1) \tanh (3 v_2).
 \end{array}
-\right.
 \end{equation}
+
+This is shown on the right panel of \autoref{fig:mappings}. We also considered the 'Swiss Roll' mapping shown on the left panel of \autoref{fig:mappings}, the results for this manifold are summarised in Appendix \autoref{swissrollappe}.
 
 ```{r metadensity, fig.align = 'center', out.width = "80%", fig.cap="True density of the Gaussian mixture model of four kenels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.016, 0.016)$. The colors indicate the density of the data and lower density points in darker colors are scattered both in the outer and center areas. The shapes indicate the four kernels.", echo = FALSE}
 knitr::include_graphics("figures/truedensity_twinpeaks_dc.png")
 ```
 
-We use the multivariate KDE with a fixed plug-in bandwidth in \autoref{mvkde} as the optimal density estimates of the manifold to test the proposed DC-KDE. To compare both density estimation methods, it is essential to know the *true density* of the 2-D manifold. The Gaussian mixture distribution is known from \@ref(eq:gmm), however, it is not the density of the manifold because of the mapping function in \autoref{eq:twinpeak} distorts the distribution and the manifold of the density is no longer the Gaussian mixture density. Therefore, we apply DC-KDE to the 3-D twin peaks data and set the embedding as the 2-D meta data (true manifold) to first calculate the true density of the manifold. We use this technique to obtain the true density of the manifold throughout the simulation process.
-
-\autoref{fig:metadensity} shows the 2-dimensional meta data and the colors indicate the true density of all data points calculated from \@ref(eq:gmm), with brighter colors showing higher densities and darker colors showing lower densities. We then define outliers as points with lowest densities shown in black and typical points with highest densities shown in yellow. Based on the true density plot, the outliers are scattered in the middle and the outer area of the whole structure, while typical points are near the means of four kernels. These are *true outliers* to be compared with outliers from the kernel density estimates.
+It is important to note that the *true density* on the manifold is not simply a Gaussian mixture, since the mapping in \autoref{eq:twinpeak} distorts the distribution. To recover the true distribution requires the correct change of variables from $\pmb{v}$ to the twin peaks manifold. By treating the $\pmb{z}$ as an 'output' embedding from input points $\pmb{x}$ that lie on the true manifold and applying the learn metric algorithm, the true density on the manifold can be obtained as $p(\pmb{p}_i)=f(\pmb{v}_i)|\Gamma_i|^{1/2}$, where $f(\pmb{v}_i)$ is a the density of a four component mixture of normals and $|\Gamma_i|^{1/2}$ are the outputs of using the learn metric algorithm on $\pmb{v}$. Knowledge of $\pmb{v}$ and $|\Gamma_i|^{1/2}$ will not be used when estimting the density, only to compare the estimated densities to the true densities. \autoref{fig:metadensity} shows the simulated $\pmb{v}$ with the colors indicating the true density of data on the manifold. Anomalies are defined as points with lowest densities shown in black and 'typical' points are defined as points with the highest densities shown in yellow. Based on the true density plot, the anomalies are found around the edges of the plot, but also in the region between the means of the four mixture components. The objective is to determine whether we can correctly identify these anomalies without any knowledge of the true density or the $\pmb{v}$. 
 
 
 ```{r tpoutliers, fig.align = 'center', out.width = "95%", fig.cap="Highest density region plots of five manifold learning embeddings of the twin peaks data in each row. The top 20 outliers, hightlighted in black and indexed in blue text, are found by the true manifold density (left panel), DC-KDE (middle panel) and KDE (right panel). DC-KDE finds more true outliers than KDE in all five rows.", echo = FALSE}
