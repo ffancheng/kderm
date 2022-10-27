@@ -12,31 +12,32 @@ library(igraph)
 library(matrixcalc)
 library(intRinsic)
 Jmisc::sourceAll("R/sources")
-scen <- 1
-# scen <- as.numeric(commandArgs()[[6]])
+# scen <- 1
+scen <- as.numeric(commandArgs()[[6]])
 r <- 1
 
-load("data/half_count_ratio_3639id336tow.rda")
-nid <- 3639
-ntow <- 336
-if(nid == 1) {
-  train <- spdemand %>%
-    lazy_dt() %>%
-    filter(tow <= ntow,
-           # id <= sort(unique(spdemand[,id]))[nid]
-           id == 1003
-    ) %>%
-    dplyr::select(-id, -tow) %>%
-    as.data.table()
-} else if(nid == 3639) {
-  train <- spdemand %>%
-    lazy_dt() %>%
-    # mutate(id_tow = paste0(id, "_", tow)) %>%
-    as.data.table() %>%
-    column_to_rownames("id")
-}
-dim(train)
-rm(spdemand)
+load("data/half_count_ratio_3639id336tow_train.rda")
+# nid <- 3639
+# ntow <- 336
+# if(nid == 1) {
+#   train <- spdemand %>%
+#     lazy_dt() %>%
+#     filter(tow <= ntow,
+#            # id <= sort(unique(spdemand[,id]))[nid]
+#            id == 1003
+#     ) %>%
+#     dplyr::select(-id, -tow) %>%
+#     as.data.table()
+# } else if(nid == 3639) {
+#   train <- spdemand %>%
+#     lazy_dt() %>%
+#     # mutate(id_tow = paste0(id, "_", tow)) %>%
+#     as.data.table() %>%
+#     column_to_rownames("id")
+# }
+# dim(train)
+# rm(spdemand)
+# save(train, file = "data/half_count_ratio_3639id336tow_train.rda")
 
 paste("Start at:", Sys.time())
 # ----parameters----------------------------------------------------------------
@@ -50,7 +51,7 @@ annmethod <- "kdtree"
 distance <- c("euclidean", "manhattan")[2] # "manhattan" for all households
 treetype <- "kd"
 searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
-radius <- 10 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+radius <- 20 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
 gridsize <- 20
 opt.method <- c("AMISE", "MEAN", "SCALED")[3] # 3 ONLY FOR NOW, no scaling for Rn
@@ -86,7 +87,7 @@ summary(fixden_isomap$estimate)
 # r <- sqrt(mean(apply(Rn, 3, det)))
 # r <- 1 # bandwidth parameter in vkde() # r = 0.1, too small, many true densities are estimated as 0; r = 2, too large, many zero true densities are estimated as non-zeros; r = 0.5 ~ 0.8, 
 tictoc::tic()
-fisomap <- vkde(x = fn, h = NULL, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
+fisomap <- vkde(x = fn, h = NULL, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix) ### TODO: NAN?????
 tictoc::toc()
 print("DC-KDE summary statistics")
 summary(fisomap$estimate)
