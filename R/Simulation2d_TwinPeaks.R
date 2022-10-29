@@ -20,7 +20,7 @@ p <- 2
 ## 1. Generate 2-D manifold and 3-D twin peaks
 ##--------------------------------------------------------
 set.seed(1234)
-mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[3] # only run [1] and [3]
+mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[1] # only run [1] and [3]
 sr <- mldata(N = N, meta = "gaussian", mapping = mapping)
 # sr <- mldata(N = N, meta = "uniform", mapping = mapping)
 swissroll <- sr$data %>% as.data.frame()
@@ -96,12 +96,17 @@ plotmanifold <- preswissroll %>%
              )) +
   geom_point() +
   scale_color_viridis(option = "B") +
-  labs(color = "Density" # , shape = "Kernels"
-       )
+  labs(color = "Density")
 plotmanifold
 # ggsave("paper/figures/truedensity_twinpeaks_dc.png", plotmanifold, width = 8, height = 6, dpi = 300)
 plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = den_2dmanifold, # colored with 3d density
         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
+graphics.off()
+png("paper/figures/scatterplot3d_swissroll.png", width = 8, height = 6, units = "in", res = 300)
+# par(mfrow = c(1, 2))
+# scatterplot3d::scatterplot3d(swissroll_tp, color = ggplot_build(plotmanifold_tp)$data[1][[1]][,1], pch = 20, xlab = "X1", ylab = "X2", zlab = "X3")
+scatterplot3d::scatterplot3d(swissroll, color = ggplot_build(plotmanifold)$data[1][[1]][,1], pch = 20, xlab = "X1", ylab = "X2", zlab = "X3")
+dev.off()
 trueden <- den_2dmanifold # sr$den
 trueoutliers <- head(order(trueden), noutliers)
 # save(sr, train, trueden, den_twinpeaks, noutliers, trueoutliers, file = paste0("data/simdata_3d_N", N, "_01_trueden_k", k, ".rda"))
