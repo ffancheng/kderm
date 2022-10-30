@@ -20,7 +20,7 @@ p <- 2
 ## 1. Generate 2-D manifold and 3-D twin peaks
 ##--------------------------------------------------------
 set.seed(1234)
-mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[1] # only run [1] and [3]
+mapping <- c("Swiss Roll", "semi-sphere", "Twin Peak", "S Curve")[3] # only run [1] and [3]
 sr <- mldata(N = N, meta = "gaussian", mapping = mapping)
 # sr <- mldata(N = N, meta = "uniform", mapping = mapping)
 swissroll <- sr$data %>% as.data.frame()
@@ -96,9 +96,10 @@ plotmanifold <- preswissroll %>%
              )) +
   geom_point() +
   scale_color_viridis(option = "B") +
-  labs(color = "Density")
+  labs(color = "Density",
+       x = "V1", y = "V2")
 plotmanifold
-# ggsave("paper/figures/truedensity_twinpeaks_dc.png", plotmanifold, width = 8, height = 6, dpi = 300)
+# ggsave("paper/figures/truedensity_twinpeaks_dc_labv.png", plotmanifold, width = 8, height = 6, dpi = 300)
 plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = den_2dmanifold, # colored with 3d density
         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
 graphics.off()
