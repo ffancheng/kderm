@@ -39,7 +39,7 @@ den <- apply(X, 1, gmmdensity)
 
 # semi-sphere radius
 radius <- ceiling(max(sqrt(x1^2 + x2^2 + x3^2 + x4^2)))
-radius # radius = 15 for sigma=5
+radius # radius = 8
 range(X)
 
 semisphere <- cbind(X,
@@ -49,19 +49,37 @@ semisphere <- cbind(X,
 # head(semisphere)
 # semisphere %>% as_tibble() %>% summarise(x1^2 + x2^2 + x3^2 + x4^2 + x5^2)
 
-# # distance to (0,0,0,0,0) is the same, = radius = 6
+# # distance to (0,0,0,0,0) is the same, = radius = 8
 # # calculate distance to (0,0,0,0) and color them
-# label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
-# dist2center <- sqrt(radius^2 - semisphere[,5]^2)
-# ## Plot 5-d semi-sphere, run once
+label <- as.factor(c(rep(1, 0.99*N), rep(2, 0.01*N)))
+dist2center <- sqrt(radius^2 - semisphere[,5]^2)
+## Run once
+# ## Plot 5-d semi-sphere
 # library(tourr)
 # colors <- colourvalues::colour_values(- dist2center, palette = "magma") # generate colors for locations
 # pchs <- c(rep(16, 0.99*N), rep(17, 0.01*N)) # point shapes for kernels
-# animate_xy(semisphere[,1:5], col = colors, pch = pchs, cex = 0.8,
-#            axes = "bottomleft", fps=15
+# animate_xy(semisphere[,1:5], col = colors, pch = pchs, cex = 0.8#,
+#            # axes = "bottomleft", fps = 15
 #            )
 # # "figures/tourr_5d_semisphere.png"
+# ## Render frames as png files in a folder and convert to gif with ImageMagick
+# gifpath <- "paper/figures/tourr_render/"
+# tourr::render(semisphere[,1:5], grand_tour(), display_xy(col = colors, pch = pchs, cex = 0.8), "png",
+#               frames = 200,
+#               file.path(gifpath, "tourr_5d_semisphere-%20d.png")
+#               )
+## Save gif file as online supplementary file
+# system("convert -delay 10 paper/figures/tourr_render/*.png paper/figures/tourr_5d_animation.gif")
+## Not run
+# library(gifski) # installation failed
+# gif_file <- file.path('paper/figures/tourr_5d_semisphere.gif')
+# save_gif(
+#   makeplot(),
+#          # animate_xy(semisphere[,1:5], col = colors, pch = pchs, cex = 0.8),
+#          gif_file, 1280, 720, res = 144)
+# utils::browseURL(gif_file)
 
+# QR decomposition
 y <- matrix(runif(p*p, 0, 1), p, p)
 QR <- qr(y)
 QR$rank
