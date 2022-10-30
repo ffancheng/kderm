@@ -2,11 +2,10 @@
 ## 1. Gather and plot the results from 4 scenarios in HPC results
 ###--------------------------------------------------------
 rm(list = ls())
-# first load all .rda files
 library(tidyverse)
 library(viridis)
 N <- 10000
-radius <- 10
+radius <- 8
 r <- 1
 # method <- c("isomap", "lle", "le", "tsne", "umap")[1]
 load("data/simdata_100d_4dmanifold_N10000_trueden_k100.rda")
@@ -17,12 +16,17 @@ methods <- c("isomap", "lle", "le", "umap")
 # load HPC results for four methods
 files <- list.files(path = "data/truedenk100", pattern = "*.rda", full.names = TRUE)
 lapply(files, load, .GlobalEnv)
+
+# getOption("digits")
+# options(digits = 7)
 f <- tibble(fxy = fxy,
             fxy_vkde_isomap = fisomap$estimate, fxy_hdr_isomap = fixden_isomap$estimate,
             fxy_vkde_lle = flle$estimate, fxy_hdr_lle = fixden_lle$estimate,
             fxy_vkde_le = fle$estimate, fxy_hdr_le = fixden_le$estimate,
             fxy_vkde_umap = fumap$estimate, fxy_hdr_umap = fixden_umap$estimate
 )
+# f[which(rank(f$fxy_vkde_isomap) == 33.5),]$fxy_hdr_isomap # There are ties in dc-kde results, leading to rank=33.5 for the top 67 anomalies
+# f[which(rank(f$fxy_vkde_isomap) == 33.5),]$fxy # Their true densities are not exactly the same, but are all below 1e-07, so basically 0
 
 ###--------------------------------------------------------
 ## 2. Table for density correlations
@@ -80,6 +84,8 @@ hdrmax <- (as.matrix(hdrtable[, 1:4]) - as.matrix(hdrtable[, 5:8])) >= 0
 hdrmax <- cbind(hdrmax, !hdrmax)[, c(1, 5, 2, 6, 3, 7, 4, 8)] %>% `rownames<-` (NULL)
 hdrtable <- hdrtable[, c(1, 5, 2, 6, 3, 7, 4, 8)]
 hdrtable %>% 
+  head(n = 2) %>% 
+  `rownames<-` (c(">99\\% HDR", "99\\% HDR")) %>% 
   kableExtra::kbl(caption = "Percentage comparison of correct highest density regions in density estimation of four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE, align = "c",
                   # col.names = c(rep(c("DC-KDE", "KDE"), 4))
                   ) %>%
@@ -98,8 +104,7 @@ hdrtable %>%
   column_spec(7, bold = hdrmax[,6]) %>% 
   column_spec(8, bold = hdrmax[,7]) %>% 
   column_spec(2*(1:4), border_left = T, background = grey(0.9))
-  
-  
+
 # save(frankhdr, hdrtable, hdrmax, file = paste0("paper/figures/hdrtable_", "4d_N", N, "_4ml_radius", 10, "_r", 1, ".rda"))
 
 
@@ -107,7 +112,7 @@ hdrtable %>%
 ## 3. Rank comparison plot, highlight outliers
 ###--------------------------------------------------------
 frank <- f %>% 
-  summarise_all(.fun = list(~ rank(x = ., ties.method = "average"))) %>% # random tie method for better visualization (not verticle lines in >99% region)
+  summarise_all(.fun = list(~ rank(x = ., ties.method = "average"))) %>% # random tie method for better visualization (not horizontal lines in >99% region)
   mutate(outliers = factor(label, levels = c("TRUE", "FALSE")),
          dist2center = dist2center)
 
@@ -125,11 +130,11 @@ p_rank <- frank_long %>%
   geom_rect(xmin = 0, xmax = log10(N / 100), ymin = 0, ymax = log10(N / 100), fill = "#B7B7B7", col = "#B7B7B7") +
   geom_point(aes(shape = outliers, size = outliers, alpha = outliers)) +
   facet_grid(ML ~ KDE) +
-  scale_size_manual(values = c(`TRUE` = 2, `FALSE` = 1)) +
-  scale_shape_manual(values = c(`TRUE` = 17, `FALSE` = 20)) +
-  scale_alpha_manual(values = c(`TRUE` = 1, `FALSE` = .2) ) + 
+  scale_size_manual(values = c(`TRUE` = 2, `FALSE` = 1), labels = c(2,1)) +
+  scale_shape_manual(values = c(`TRUE` = 17, `FALSE` = 20), labels = c(2,1)) +
+  scale_alpha_manual(values = c(`TRUE` = 1, `FALSE` = .2), labels = c(2,1) ) +
   scale_color_viridis(option = "inferno", direction = -1) +
-  labs(x = "True density rank", y = "Estimated density rank", col = "Distance", size = "Outliers", shape = "Outliers", alpha = "Outliers") +
+  labs(x = "True density rank", y = "Estimated density rank", col = "Distance", size = "Mixture components", shape = "Mixture components", alpha = "Mixture components") +
   scale_x_log10() + 
   scale_y_log10() + 
   theme(legend.position = "bottom")
