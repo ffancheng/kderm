@@ -8,15 +8,15 @@ library(viridis)
 # library(ks)
 library(hdrcde)
 library(igraph)
-# library(seurat)
 library(matrixcalc)
-library(intRinsic)
+library(ggforce)
 Jmisc::sourceAll("R/sources")
 # scen <- 1
 scen <- as.numeric(commandArgs()[[6]])
 r <- 1
 
 load("data/half_count_ratio_3639id336tow_train.rda")
+load("data/ids.rda")
 # nid <- 3639
 # ntow <- 336
 # if(nid == 1) {
@@ -50,47 +50,89 @@ method <- c("annIsomap", "annLLE", "annLaplacianEigenmaps", "anntSNE", "annUMAP"
 annmethod <- "kdtree"
 distance <- c("euclidean", "manhattan")[2] # "manhattan" for all households
 treetype <- "kd"
-searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
+searchtype <- "priority" # "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
 radius <- 20 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
 
 gridsize <- 20
 opt.method <- c("AMISE", "MEAN", "SCALED")[3] # 3 ONLY FOR NOW, no scaling for Rn
 riem.scale <- 1 # tune parameter
+prob <- c(1, 10, 50, 95, 99)
+noutliers <- 20
 
-## ----isomap-------------------------------------------------------------------
+## ----embedding----------------------------------------------------------------
+paste("Embedding began at:", Sys.time())
+pars <- list(knn = k,
+             radius = radius,
+             eps = 0, # for true NN 
+             ndim = s,
+             get_geod = FALSE,
+             annmethod = "kdtree", 
+             nt = 50, 
+             search.k = 50,
+             nlinks = 16, 
+             ef.construction = 500, 
+             distance = distance,
+             treetype = treetype,
+             searchtype = searchtype)
+isomapnn <- embed(train, .method = method, knn = pars$k, radius = pars$radius,
+      annmethod = pars$annmethod,
+      eps = pars$eps,
+      nt = pars$nt,
+      nlinks = pars$nlinks, ef.construction = pars$ef.construction,
+      distance = pars$distance,
+      treetype = pars$treetype,
+      searchtype = pars$searchtype,
+      ndim = pars$ndim,
+      .mute = c("output"))
+# ann_table_isomapnn <- calc_ann_table(e = isomapnn, nn.idx = truenn)
+# dr_quality(X=e@org.data, Y=e@data@data, K=e@pars$knn, nn.idx = nn.idx)$quality
+fn <- isomapnn@data@data
+
+# # Use existing results for embedding
+# load(paste0("data/metric_", method, "_electricity_2d_radius20.rda"))
+# fn <- metric_isomap$embedding
+
+
+## ---learnmetric---------------------------------------------------------------
+paste("Learn metric began at:", Sys.time())
 # if(file.exists("data/metric_isomap_4d_N10000_radius10.rda")){
 #   load("data/metric_isomap_4d_N10000_radius10.rda")
 # } else {
-  metric_isomap <- metricML(x, fn = y, s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
+  metric_isomap <- metricML(x, fn = fn, 
+                            s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
                             annmethod = annmethod, distance = distance, treetype = treetype,
                             searchtype = searchtype
   )
 # }
-fn <- metric_isomap$embedding
+# fn <- metric_isomap$embedding
 Rn <- metric_isomap$rmetric
 adj_matrix <- metric_isomap$adj_matrix
 E1 <- fn[,1]; E2 <- fn[,2]
-
-# print("True density summary statistics")
-# summary(trueden)
+head(Rn)
 
 ## ----Fixed bandwidth KDE with ks::kde-----------------------------------------
+paste("KDE began at:", Sys.time())
 tictoc::tic()
 fixden_isomap <- vkde(x = fn, h = NULL, vh = NULL, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
 tictoc::toc()
-(H <- fixden_isomap$H)
-print("KDE summary statistics")
+# (H <- fixden_isomap$H)
 summary(fixden_isomap$estimate)
 
+# Y_isomap <- fn %>% as.data.frame()
+tictoc::tic()
+p_hdr_isomap <- hdrscatterplot_new(fn[,1], fn[,2], kde.package = "ks", levels = prob, noutliers = noutliers, label = ids)
+tictoc::toc()
+print("KDE summary statistics")
+summary(p_hdr_isomap$densities)
 
 ## ----DCKDE--------------------------------------------------------------------
-# r <- sqrt(mean(apply(Rn, 3, det)))
-# r <- 1 # bandwidth parameter in vkde() # r = 0.1, too small, many true densities are estimated as 0; r = 2, too large, many zero true densities are estimated as non-zeros; r = 0.5 ~ 0.8, 
+paste("DC-KDE began at:", Sys.time())
 tictoc::tic()
 fisomap <- vkde(x = fn, h = NULL, vh = Rn, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix) ### TODO: NAN?????
 tictoc::toc()
 print("DC-KDE summary statistics")
 summary(fisomap$estimate)
+p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
 
 
 # ----Compare with true density-------------------------------------------------
@@ -124,9 +166,9 @@ summary(fisomap$estimate)
 # ggsave(paste0("figures/compareden_electricity_2d_N", N, "_", method, "_r", format(r, decimal.mark = "_"), ".png"), p, width = 10, height = 6, dpi = 300)
 
 
-save(method, fixden_isomap, fisomap, train, 
+save(method, fixden_isomap, fisomap, p_hdr_isomap, p_isomap,
      # trueden, cors,
-     file = paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_r", format(r, decimal.mark = "_"), ".rda"))
-if(!file.exists(paste0("data/metric_", method, "_electricity_2d_radius", radius, ".rda"))) save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, ".rda"))
+     file = paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_k", k, "_searchtype", searchtype, "_r", format(r, decimal.mark = "_"), ".rda"))
+if(!file.exists(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))) save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
 
 paste("End at:", Sys.time())
