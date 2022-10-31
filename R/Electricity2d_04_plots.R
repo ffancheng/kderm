@@ -1,8 +1,6 @@
 # Same as mlann, to be modified
 ## Most Up-to-date script to use!
 # This script contains the code for plotting for smart meter data
-# To generate the loaded data `data/spdemand_3639id336tow.rda`, please run `source("data/electricity_02_quantiles_case1id1003.R")`
-# To generate the loaded data `data/spdemand_3639id_336tow_201length.rda`, please run `source("data/electricity_02_quantiles_case3alladd.R")`
 rm(list=ls())
 library(data.table)
 library(dtplyr)
@@ -18,67 +16,98 @@ library(pryr)
 library(colorspace)
 library(caret)
 library(tictoc)
+library(ggforce)
 Jmisc::sourceAll(here::here("R/sources")) 
 set.seed(1)
 eps <- 20
 nt <- 50
 annmethod <- "kdtree" # for ANN
 ntimes <- 10
-
-
-
-###------------------------------------------------------
-# For electricity_02_quantiles_case1id1003.R for single household ID 1003, run the following section
-nid <- 1
-ntow <- 336
-len <- 100 #201
-filename <- paste0(nid, "id_", ntow, "tow_", len, "quantile")
-# load(paste0('data/spdemand_3639id336tow.rda')) # (3639*336)*203
-load(paste0('data/sqrt_count_ratio_', nid, 'id', ntow, 'tow.rda'))
-train <- spdemand %>%
-  lazy_dt() %>%
-  # filter(id <= sort(unique(spdemand[,id]))[nid],
-  #        tow <= ntow) %>%
-  filter(id == 1003, tow <= ntow) %>%
-  dplyr::select(-c(id, tow)) %>%
-  as.data.table()
-# mem_change(rm(spdemand))
-N <- nrow(train)
-ids <- spdemand %>% dtplyr::lazy_dt() %>% pull(id) %>% unique() %>% sort()
-folder <- "data/1id_countratio/"
-distance <- c("euclidean", "manhattan")[1]
-###------------------------------------------------------
-
-
-# ###------------------------------------------------------
-# # For electricity_02_quantiles_case2allnotow.R for all 3639 households, run this section
-# nid <- 3639
-# ntow <- 336
-# len <- 201
-# filename <- paste0(nid, "id_notow_", len, "length")
-# load(paste0('data/spdemand_', filename, '.rda')) # 3639*(336*201+1)
-# train <- spdemand[, !"id"]
-# N <- nrow(train)
-# ids <- spdemand %>% dtplyr::lazy_dt() %>% pull(id) %>% unique() %>% sort()
-# # folder <- "data/allids/"
-# folder <- "data/allids_countratio_nosmooth/"
-# ###------------------------------------------------------
+r <- 1
 
 
 ###------------------------------------------------------
-# For electricity_02_quantiles_case3alladd.R for all 3639 households, run this section
 nid <- 3639
 ntow <- 336
 len <- 100
 filename <- paste0(nid, "id_", ntow, "tow_", len, "length")
 load(paste0('data/half_count_ratio_3639id336tow.rda')) # 3639*(336*201+1)
-train <- spdemand[, !"id"]#[1:100,]
+train <- spdemand[, !"id"]
+ids <- spdemand$id
 N <- nrow(train)
-# ids <- spdemand %>% dtplyr::lazy_dt() %>% pull(id) %>% unique() %>% sort()
-load("data/ids.rda")
-folder <- "data/allids_count_ratio/"
+ids <- spdemand$id
+folder <- "data/"
 distance <- c("euclidean", "manhattan")[2]
 ###------------------------------------------------------
+search.k <- nt
+pars <- list(knn = 100,
+             eps = 0, # for true NN 
+             ndim = 2,
+             get_geod = FALSE,
+             annmethod = "annoy", 
+             nt = nt, 
+             search.k = search.k,
+             nlinks = 16, 
+             ef.construction = 200, 
+             distance = distance,
+             treetype = "kd",
+             searchtype = "radius")
+load("data/truenn_3639id_tvd.rda")
+
+
+
+###-------------------------------------------------
+### Load Ml results
+###-------------------------------------------------
+annmethod <- "kdtree"
+par <- 0
+riem.scale <- 1
+prob <- c(1, 10, 50, 95, 99)
+noutliers <- 20
+ml <- c("annIsomap", "annLLE", "annLaplacianEigenmaps", "anntSNE", "annUMAP")
+
+method <- ml[1]
+load("data/compareden_electricity_2d_N3639_annIsomap_radius20_r1.rda")
+fisomap <- fisomap
+fxy_hdr_isomap <- fixden_isomap
+load("data/metric_annIsomap_electricity_2d_radius20.rda")
+metric_isomap <- metric_isomap
+Y_isomap <- metric_isomap$embedding %>% as.data.frame()
+
+# p_hdr_isomap <- hdrscatterplot_new(Y_isomap[,1], Y_isomap[,2], kde.package = "ks", levels = prob, noutliers = noutliers, label = ids)
+# p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
+
+method <- ml[2]
+llenn <- readRDS(paste0(folder, "embedding_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+Y_lle <- llenn[[1]]@data@data %>% as.data.frame()
+ann_table_lle <- readRDS(paste0(folder, "anntable_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+# ann_table_lle
+
+method <- ml[3]
+lenn <- readRDS(paste0(folder, "embedding_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+Y_le <- lenn[[1]]@data@data %>% as.data.frame()
+ann_table_le <- readRDS(paste0(folder, "anntable_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+# ann_table_le
+
+method <- ml[4]
+hllenn <- readRDS(paste0(folder, "embedding_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+Y_hlle <- hllenn[[1]]@data@data %>% as.data.frame()
+ann_table_hlle <- readRDS(paste0(folder, "anntable_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+# ann_table_hlle
+
+method <- ml[5]
+tsnenn <- readRDS(paste0(folder, "embedding_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+Y_tsne <- tsnenn[[1]]@data@data %>% as.data.frame()
+ann_table_tsne <- readRDS(paste0(folder, "anntable_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+# ann_table_tsne
+
+method <- ml[6]
+umapnn <- readRDS(paste0(folder, "embedding_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+Y_umap <- umapnn[[1]]@data@data %>% as.data.frame()
+ann_table_umap <- readRDS(paste0(folder, "anntable_", method, "_", annmethod, "_", par, "_electricity_", filename, ".rds"))
+# ann_table_umap
+
+
 
 
 # ###-------------------------------------------------
@@ -100,165 +129,6 @@ distance <- c("euclidean", "manhattan")[2]
 # ggsave(folder, "smartmeter.png", p, width = 8, height = 6)
 # plotly::ggplotly(p, width = 600, height = 400)
 
-
-
-###-------------------------------------------------
-### KNN graph
-###-------------------------------------------------
-# Parameters fixed
-# D <- 2
-# K <- 20 
-# eps <- 2 # 5, 10
-pars <- list(knn = 20,
-             eps = 0, 
-             ndim = 2,
-             get_geod = FALSE,
-             annmethod = "kdtree", 
-             nt = nt, 
-             search.k = 500, 
-             nlinks = 16, 
-             ef.construction = 200, 
-             distance = distance) # "euclidean" for 1 ID, "manhattan" for all ids
-
-## brute-force exact nearest neighbors
-bnng0 <- makeKNNgraph(x = train, k = pars$knn, eps = pars$eps, 
-                      annmethod = "brute-force", 
-                      nt = pars$nt, nlinks = pars$nlinks, 
-                      ef.construction = pars$ef.construction,
-                      distance = pars$distance)#$g
-bnng <- bnng0$g
-igraph::is.connected(bnng)
-
-# exact NN with kdtree
-knng0 <- makeKNNgraph(x = train, k = pars$knn, eps = pars$eps, 
-                      annmethod = "kdtree", 
-                      nt = pars$nt, nlinks = pars$nlinks, 
-                      ef.construction = pars$ef.construction,
-                      distance = pars$distance)#$g
-knng <- knng0$g
-igraph::is.connected(knng)
-# plot(knng)
-all.equal(knng, bnng)
-
-# k-d trees with eps=1
-anng0 <- makeKNNgraph(x = train, k = pars$knn, eps = eps, 
-                      annmethod = "kdtree", 
-                      nt = pars$nt, nlinks = pars$nlinks, 
-                      ef.construction = pars$ef.construction,
-                      distance = pars$distance)#$g
-anng <- anng0$g
-igraph::is.connected(anng)
-# plot(anng)
-all.equal(knng, anng)
-
-# Annoy with nt
-# nt <- 50
-search.k <- nt
-pars <- list(knn = 20,
-             eps = 0, 
-             ndim = 2,
-             get_geod = FALSE,
-             annmethod = "annoy", 
-             nt = nt, 
-             search.k = search.k,
-             nlinks = 16, 
-             ef.construction = 200, 
-             distance = c("euclidean", "manhattan")[1])
-anng_annoy0 <- makeKNNgraph(x = train, k = pars$knn, eps = pars$eps, 
-                            annmethod = pars$annmethod, 
-                            nt = pars$nt, search.k = pars$search.k, nlinks = pars$nlinks, 
-                            ef.construction = pars$ef.construction,
-                            distance = pars$distance)#$g
-anng_annoy <- anng_annoy0$g
-igraph::is.connected(anng_annoy)
-# plot(anng_annoy)
-all.equal(knng, anng_annoy)
-
-# neighborhood graph NN vs ANN
-# igraph
-pbnn <- ggraph(bnng) +
-  geom_edge_link(colour = 'grey60') +
-  geom_node_point() +
-  geom_node_text(aes(label = V(bnng)), colour = blues9[7],
-                 hjust = -.4, check_overlap = FALSE) 
-
-pknn <- ggraph(knng) +
-  geom_edge_link(colour = 'grey60') +
-  geom_node_point() +
-  geom_node_text(aes(label = V(knng)), colour = blues9[7],
-                 hjust = -.4, check_overlap = FALSE) 
-# + 
-#   theme(legend.position = "none")
-# +
-#   labs(title = "Exact NN graph")
-pann <- ggraph(anng) +
-  geom_edge_link(colour = 'grey60') +
-  geom_node_point() +
-  geom_node_text(aes(label = V(anng)), colour = blues9[7],
-                 hjust = -.4, check_overlap = FALSE) +
-  scale_y_reverse()
-pannannoy <- ggraph(anng_annoy) +
-  geom_edge_link(colour = 'grey60') +
-  geom_node_point() +
-  geom_node_text(aes(label = V(anng_annoy)), colour = blues9[7],
-                 hjust = -.4, check_overlap = FALSE)# +
-# scale_y_reverse()
-
-pnn0 <- (pbnn + pknn + pann + pannannoy) &
-  theme(plot.title=element_text(hjust=0.5))
-# knng20_3639id336tow.png
-# ggsave(paste0(folder, "knng20_", filename, "_bruteforce.png"), pnn0, width=12, height=8, dpi=500)
-
-pnn <- (pknn + pann + pannannoy) &
-  theme(plot.title=element_text(hjust=0.5))
-# knng20_3639id336tow.png
-# ggsave(paste0(folder, "knng20_", filename, ".png"), pnn, width=18, height=6, dpi=500)
-
-
-# recall_brute <- NULL
-# for(i in 1:N){
-#   recall_brute[i] <- cal_recall(x = knng0$nn2res$nn.idx[,-1][i,], y = bnng0$nn2res$nn.idx[,-1][i,])
-# }
-# recall_brute %>% mean()  
-# # recall is 1 for exact NN
-
-recall_kd <- NULL
-for(i in 1:N){
-  recall_kd[i] <- cal_recall(x = knng0$nn2res$nn.idx[,-1][i,], y = anng0$nn2res$nn.idx[,-1][i,])
-}
-recall_kd %>% mean() 
-# 0.9769345 for Euclidean distance, ID1003
-# 0.9965925 for Manhattan distance, eps=1
-recall_annoy <- NULL
-for(i in 1:N){
-  recall_annoy[i] <- cal_recall(x = knng0$nn2res$nn.idx[,-1][i,], y = anng_annoy0$nn2res$nn.idx[,-1][i,])
-}
-recall_annoy %>% mean() 
-# 0.9922619 for Euclidean distance, ID1003
-# 0.973042 for Manhattan distance, nt=50
-
-
-###-------------------------------------------------
-### True NN for calculating qualities
-###-------------------------------------------------
-# eps <- 1
-# nt <- 50
-search.k <- nt
-pars <- list(knn = 20,
-             eps = 0, # for true NN 
-             ndim = 2,
-             get_geod = FALSE,
-             annmethod = "annoy", 
-             nt = nt, 
-             search.k = search.k,
-             nlinks = 16, 
-             ef.construction = 200, 
-             distance = distance)
-
-switch(distance,
-       "euclidean" = {truenn <- RANN::nn2(train, query = train, k = pars$knn+1, treetype = "kd", searchtype = "standard", eps = 0)$nn.idx[, -1]},
-       "manhattan" = {truenn <- RANN.L1::nn2(train, query = train, k = pars$knn+1, treetype = "kd", searchtype = "standard", eps = 0)$nn.idx[, -1]}
-)
 
 ###-------------------------------------------------
 ### Isomap
