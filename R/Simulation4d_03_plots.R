@@ -51,7 +51,7 @@ cors %>%
 
 
 ###--------------------------------------------------------
-## 2.2 Table for correctlly identified outliers percentage
+## 2.2 Table for correctly identified outliers percentage
 ###--------------------------------------------------------
 prob <- c(1, 10, 50, 95, 99)
 hdrbreaks <- c(0, quantile(1:N, c(sort(100 - prob) / 100)), N)
