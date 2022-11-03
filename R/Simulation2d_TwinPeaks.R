@@ -102,12 +102,13 @@ plotmanifold
 # ggsave("paper/figures/truedensity_twinpeaks_dc_labv.png", plotmanifold, width = 8, height = 6, dpi = 300)
 plot_ly(data = swissroll, x = ~ x, y = ~ y, z = ~ z, color = den_2dmanifold, # colored with 3d density
         type = "scatter3d", mode = "markers", size = 1, text = paste("density:", preswissroll$den))
-graphics.off()
-png("paper/figures/scatterplot3d_swissroll.png", width = 8, height = 6, units = "in", res = 300)
-# par(mfrow = c(1, 2))
-# scatterplot3d::scatterplot3d(swissroll_tp, color = ggplot_build(plotmanifold_tp)$data[1][[1]][,1], pch = 20, xlab = "X1", ylab = "X2", zlab = "X3")
-scatterplot3d::scatterplot3d(swissroll, color = ggplot_build(plotmanifold)$data[1][[1]][,1], pch = 20, xlab = "X1", ylab = "X2", zlab = "X3")
-dev.off()
+## Run once
+# graphics.off()
+# png("paper/figures/scatterplot3d_swissroll.png", width = 8, height = 6, units = "in", res = 300)
+# # par(mfrow = c(1, 2))
+# # scatterplot3d::scatterplot3d(swissroll_tp, color = ggplot_build(plotmanifold_tp)$data[1][[1]][,1], pch = 20, xlab = "X1", ylab = "X2", zlab = "X3")
+# scatterplot3d::scatterplot3d(swissroll, color = ggplot_build(plotmanifold)$data[1][[1]][,1], pch = 20, xlab = "X1", ylab = "X2", zlab = "X3")
+# dev.off()
 trueden <- den_2dmanifold # sr$den
 trueoutliers <- head(order(trueden), noutliers)
 # save(sr, train, trueden, den_twinpeaks, noutliers, trueoutliers, file = paste0("data/simdata_3d_N", N, "_01_trueden_k", k, ".rda"))

@@ -134,6 +134,7 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
       if(k < (N-1)){
         nn2res$nn.idx <- cbind(nn2res$nn.idx, matrix(0, nrow = N, ncol = N - k))
         nn2res$nn.dists <- cbind(nn2res$nn.dists, matrix(1.340781e+154, nrow = N, ncol = N - k))
+      }
     }
     
     W <- matrix(0, N, N)
@@ -147,7 +148,7 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
     Kn[Kn == 1e+05] <- 0
     # g <- igraph::graph_from_adjacency_matrix(Kn)
     
-  }
+  }  
       
     
   ###--------------------------
