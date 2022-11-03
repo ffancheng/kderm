@@ -15,36 +15,17 @@ Jmisc::sourceAll("R/sources")
 scen <- as.numeric(commandArgs()[[6]])
 r <- 1
 
-load("data/half_count_ratio_3639id336tow_train.rda")
-load("data/ids.rda")
-# nid <- 3639
-# ntow <- 336
-# if(nid == 1) {
-#   train <- spdemand %>%
-#     lazy_dt() %>%
-#     filter(tow <= ntow,
-#            # id <= sort(unique(spdemand[,id]))[nid]
-#            id == 1003
-#     ) %>%
-#     dplyr::select(-id, -tow) %>%
-#     as.data.table()
-# } else if(nid == 3639) {
-#   train <- spdemand %>%
-#     lazy_dt() %>%
-#     # mutate(id_tow = paste0(id, "_", tow)) %>%
-#     as.data.table() %>%
-#     column_to_rownames("id")
-# }
-# dim(train)
-# rm(spdemand)
-# save(train, file = "data/half_count_ratio_3639id336tow_train.rda")
+load("data/half_count_ratio_3639id336tow.rda")
+ids <- spdemand$id
+train <- spdemand[, !"id"]
+rm(spdemand)
 
 paste("Start at:", Sys.time())
 # ----parameters----------------------------------------------------------------
-x <- train
+# x <- train
 y <- NULL # without pre-computed embedding
-N <- nrow(x)
-s <- 2 # embedded in 2-D for visualization purpose
+N <- nrow(train)
+s <- 2 # embedded in 2-D for visualization purpose, 6-D for estimated intrinsic dimension
 k <- 100 # N / 50
 method <- c("annIsomap", "annLLE", "annLaplacianEigenmaps", "anntSNE", "annUMAP")[scen]
 annmethod <- "kdtree"
@@ -98,7 +79,7 @@ paste("Learn metric began at:", Sys.time())
 # if(file.exists("data/metric_isomap_4d_N10000_radius10.rda")){
 #   load("data/metric_isomap_4d_N10000_radius10.rda")
 # } else {
-  metric_isomap <- metricML(x, fn = fn, 
+  metric_isomap <- metricML(x = train, fn = fn, 
                             s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
                             annmethod = annmethod, distance = distance, treetype = treetype,
                             searchtype = searchtype
@@ -109,6 +90,8 @@ Rn <- metric_isomap$rmetric
 adj_matrix <- metric_isomap$adj_matrix
 E1 <- fn[,1]; E2 <- fn[,2]
 head(Rn)
+paste("nn2res dimension", str(metric_isomap$nn2res))
+head(metric_isomap$nn2res$nn.idx)
 
 ## ----Fixed bandwidth KDE with ks::kde-----------------------------------------
 paste("KDE began at:", Sys.time())
@@ -169,6 +152,7 @@ p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, ri
 save(method, fixden_isomap, fisomap, p_hdr_isomap, p_isomap,
      # trueden, cors,
      file = paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_k", k, "_searchtype", searchtype, "_r", format(r, decimal.mark = "_"), ".rda"))
-if(!file.exists(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))) save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
+if(!file.exists(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))) 
+  save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
 
 paste("End at:", Sys.time())

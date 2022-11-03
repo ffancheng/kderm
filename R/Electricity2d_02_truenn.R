@@ -1,9 +1,11 @@
+# Use "priority" search with K=100
+# Setting radius from 10 to 50 gives `truenn` as zero matrix
 rm(list=ls())
 library(data.table)
 library(dtplyr)
 library(tidyverse)
-library(ggplot2)
-library(dimRed)
+# library(ggplot2)
+# library(dimRed)
 library(pryr)
 # Jmisc::sourceAll("~/git/kderm/R/sources")
 set.seed(1)
@@ -23,7 +25,7 @@ N <- nrow(train)
 distance <- c("euclidean", "manhattan")[2]
 print(paste("Distance measure:", distance))
 ## Parameters
-# D <- 7
+# D <- 6
 K <- 100
 radius <- as.numeric(commandArgs()[[6]])# 20
 treetype <- "kd"
