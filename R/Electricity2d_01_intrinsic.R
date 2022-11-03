@@ -32,5 +32,5 @@ dim(train)
 # # saveRDS(train, file = paste0("data/spdemand_", nid, "id", ntow, "tow_train.rds"))
 
 N <- nrow(train)
-d <- intRinsic::twonn(train, method = method) # 6 for 1ID, 7 for all spdemand with 3639*336 rows, 91 for 3639 rows
+d <- intRinsic::twonn(train, method = method) # 6 for 1ID, 6.* for all spdemand with 3639*336 rows, 91 for 3639 rows
 print(d)

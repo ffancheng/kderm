@@ -101,23 +101,40 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
     colnames(fn) <- paste0("E", 1:s) 
     
     N <- nrow(x)
-    if (searchtype == "radius") {  
-      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges; in nn2(), k is the maximum number of NNs to output, so k is set as N even if radius is large
-    }
     
     ###--------------------------
     ## Step1: similarity matrix, symmetric
     ###--------------------------
-    nn2res <- dplyr::case_when(distance=="euclidean" ~ 
-                                 RANN::nn2(data = x, query = x, k = k + 1, 
-                                           treetype = treetype, searchtype = searchtype, eps = eps,
-                                           radius = radius),
-                               distance=="manhattan" ~ 
-                                 RANN.L1::nn2(data = x, query = x, k = k + 1, 
-                                              treetype = treetype, searchtype = searchtype, eps = eps,
-                                              radius = radius),
-    )
-    names(nn2res) <- c("nn.idx", "nn.dists")
+    # For RANN::nn2(), k is the maximum number of NNs to output, so k is set as N for "radius" search to get the correct dimension of distance matrix;
+    # For "standard" or "priority" search, `k` is the also the number of nearest neighbors. So we need to fill in the other `N-k` columns with 0 for $nn.idx and 1.340781e+154 for $nn.dists
+    
+    if (searchtype == "radius") {  
+      k <- N - 1 # for printing full distance matrix, but will cause error in makeKNNgraph() when building weighted graph edges; in nn2(), k is the maximum number of NNs to output, so k is set as N even if radius is large
+      nn2res <- dplyr::case_when(distance=="euclidean" ~ 
+                                   RANN::nn2(data = x, query = x, k = k + 1, 
+                                             treetype = treetype, searchtype = searchtype, eps = eps,
+                                             radius = radius),
+                                 distance=="manhattan" ~ 
+                                   RANN.L1::nn2(data = x, query = x, k = k + 1, 
+                                                treetype = treetype, searchtype = searchtype, eps = eps,
+                                                radius = radius),
+      )
+      names(nn2res) <- c("nn.idx", "nn.dists")
+    } else { # "standard" or "priority" search
+      nn2res <- dplyr::case_when(distance=="euclidean" ~ 
+                                   RANN::nn2(data = x, query = x, k = k + 1, 
+                                             treetype = treetype, searchtype = searchtype, eps = eps,
+                                             radius = radius),
+                                 distance=="manhattan" ~ 
+                                   RANN.L1::nn2(data = x, query = x, k = k + 1, 
+                                                treetype = treetype, searchtype = searchtype, eps = eps,
+                                                radius = radius),
+      )
+      names(nn2res) <- c("nn.idx", "nn.dists")
+      if(k < (N-1)){
+        nn2res$nn.idx <- cbind(nn2res$nn.idx, matrix(0, nrow = N, ncol = N - k))
+        nn2res$nn.dists <- cbind(nn2res$nn.dists, matrix(1.340781e+154, nrow = N, ncol = N - k))
+    }
     
     W <- matrix(0, N, N)
     for(i in 1:N) {
@@ -125,7 +142,7 @@ metricML <- function(x, s = 2, k = min(10, nrow(x)), radius = 0,
     }
 
     # get pairwise distance matrix
-    Kn <- nn2dist(nn2res, N = N) # TODO: check the weight matrix
+    Kn <- nn2dist(nn2res, N = N) # check the weight matrix
     # W <- exp(- Kn / (bandwidth ^ 2)) # heat kernel for weighted graph
     Kn[Kn == 1e+05] <- 0
     # g <- igraph::graph_from_adjacency_matrix(Kn)

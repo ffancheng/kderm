@@ -27,6 +27,7 @@ f <- tibble(fxy = fxy,
 )
 # f[which(rank(f$fxy_vkde_isomap) == 33.5),]$fxy_hdr_isomap # There are ties in dc-kde results, leading to rank=33.5 for the top 67 anomalies
 # f[which(rank(f$fxy_vkde_isomap) == 33.5),]$fxy # Their true densities are not exactly the same, but are all below 1e-07, so basically 0
+# label[which(rank(f$fxy_vkde_isomap) == 33.5)] # lowest density points are from both mixture components
 
 ###--------------------------------------------------------
 ## 2. Table for density correlations
