@@ -13,7 +13,10 @@ library(ggforce)
 Jmisc::sourceAll("R/sources")
 # scen <- 1
 scen <- as.numeric(commandArgs()[[6]])
-r <- 1
+r <- 180 #1 
+# quantile(nn2res$nn.dists)
+# 0%      25%      50%      75%     100% 
+# 0.0000 179.6016 187.3877 194.8748 277.0549 
 
 load("data/half_count_ratio_3639id336tow.rda")
 ids <- spdemand$id
@@ -79,13 +82,14 @@ paste("Learn metric began at:", Sys.time())
 # if(file.exists("data/metric_isomap_4d_N10000_radius10.rda")){
 #   load("data/metric_isomap_4d_N10000_radius10.rda")
 # } else {
-  metric_isomap <- metricML(x = train, fn = fn, 
+  metric_isomap <- metricML(x = train, fn = fn, bandwidth = 4, #!!!
                             s = s, k = k, radius = radius, method = method, invert.h = TRUE, eps = 0,
                             annmethod = annmethod, distance = distance, treetype = treetype,
                             searchtype = searchtype
   )
 # }
 # fn <- metric_isomap$embedding
+save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype,  "_r", format(r, decimal.mark = "_"), ".rda"))
 Rn <- metric_isomap$rmetric
 adj_matrix <- metric_isomap$adj_matrix
 E1 <- fn[,1]; E2 <- fn[,2]
@@ -98,15 +102,15 @@ paste("KDE began at:", Sys.time())
 tictoc::tic()
 fixden_isomap <- vkde(x = fn, h = NULL, vh = NULL, r = r, gridsize = gridsize, eval.points = fn, opt.method = opt.method, riem.scale = riem.scale, adj_matrix = adj_matrix)
 tictoc::toc()
-# (H <- fixden_isomap$H)
+print("KDE summary statistics with vkde NULL h")
 summary(fixden_isomap$estimate)
-
-# Y_isomap <- fn %>% as.data.frame()
-tictoc::tic()
-p_hdr_isomap <- hdrscatterplot_new(fn[,1], fn[,2], kde.package = "ks", levels = prob, noutliers = noutliers, label = ids)
-tictoc::toc()
-print("KDE summary statistics")
-summary(p_hdr_isomap$densities)
+p_hdr_isomap <- plot_outlier(x = list(embedding = fn, Rn = NULL), gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fixden_isomap, ell.size = 0, label = ids)
+# Or plot using hdrcde
+# tictoc::tic()
+# p_hdr_isomap <- hdrscatterplot_new(fn[,1], fn[,2], kde.package = "ks", levels = prob, noutliers = noutliers, label = ids)
+# tictoc::toc()
+# print("KDE summary statistics with hdrcde")
+# summary(p_hdr_isomap$densities)
 
 ## ----DCKDE--------------------------------------------------------------------
 paste("DC-KDE began at:", Sys.time())
@@ -115,9 +119,19 @@ fisomap <- vkde(x = fn, h = NULL, vh = Rn, r = r, gridsize = gridsize, eval.poin
 tictoc::toc()
 print("DC-KDE summary statistics")
 summary(fisomap$estimate)
-p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
+p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0, label = ids)
 
+p_hdr_isomap$p + p_isomap$p
 
+save(method, fixden_isomap, fisomap, p_hdr_isomap, p_isomap,
+     # trueden, cors,
+     file = paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_k", k, "_searchtype", searchtype, "_r", format(r, decimal.mark = "_"), ".rda"))
+# if(!file.exists(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))) 
+# save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype,  "_r", format(r, decimal.mark = "_"), ".rda"))
+
+paste("End at:", Sys.time())
+
+# Not run (no true density)
 # ----Compare with true density-------------------------------------------------
 # cormethod <- "spearman"
 # (cors <- c(
@@ -147,12 +161,3 @@ p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, ri
 #   scale_y_continuous(n.breaks = 6)
 # # p
 # ggsave(paste0("figures/compareden_electricity_2d_N", N, "_", method, "_r", format(r, decimal.mark = "_"), ".png"), p, width = 10, height = 6, dpi = 300)
-
-
-save(method, fixden_isomap, fisomap, p_hdr_isomap, p_isomap,
-     # trueden, cors,
-     file = paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_k", k, "_searchtype", searchtype, "_r", format(r, decimal.mark = "_"), ".rda"))
-if(!file.exists(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))) 
-  save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
-
-paste("End at:", Sys.time())

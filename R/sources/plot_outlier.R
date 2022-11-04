@@ -29,8 +29,8 @@ plot_outlier <- function(x, gridsize = 20, f = NULL, prob = c(1, 50, 99), noutli
   # plot.hdr2d(hdr2d_info, show.points = T, outside.points = T, pointcol = grey(0.5), xlim = round(range(E1)), ylim = round(range(E2)))
   
   p_hdr <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = noutliers, label = label, den = hdr2d_info)
-  p_outlier_vkde <- p_hdr$p + 
-    plot_ellipse(x, add = T, ell.size = ell.size, ...)
+  p_outlier_vkde <- p_hdr$p #+ 
+    # plot_ellipse(x, add = T, ell.size = ell.size, ...)
                  # color = blues9[5], fill = blues9[5], alpha = 0.2, ...)
   
   return(list(p = p_outlier_vkde, outlier = p_hdr$outlier, densities = fxy, hdr2d_info = hdr2d_info))
