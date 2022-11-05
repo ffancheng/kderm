@@ -1,5 +1,3 @@
-# Same as mlann, to be modified
-## Most Up-to-date script to use!
 # This script contains the code for plotting for smart meter data
 rm(list=ls())
 library(data.table)
@@ -17,6 +15,7 @@ library(colorspace)
 library(caret)
 library(tictoc)
 library(ggforce)
+library(kableExtra)
 Jmisc::sourceAll(here::here("R/sources")) 
 set.seed(1)
 
@@ -32,7 +31,6 @@ load(paste0('data/half_count_ratio_3639id336tow.rda')) # 3639*(336*201+1)
 train <- spdemand[, !"id"]
 ids <- spdemand$id
 N <- nrow(train)
-ids <- spdemand$id
 folder <- "data/"
 distance <- c("euclidean", "manhattan")[2]
 ###------------------------------------------------------
@@ -46,7 +44,7 @@ annmethod <- "kdtree"
 distance <- c("euclidean", "manhattan")[2] # "manhattan" for all households
 treetype <- "kd"
 
-r <- 1
+r <- 180
 gridsize <- 20
 opt.method <- c("AMISE", "MEAN", "SCALED")[3] # 3 ONLY FOR NOW, no scaling for Rn
 riem.scale <- 1 
@@ -77,17 +75,6 @@ pars <- list(knn = k,
 ### Load 5 Ml results
 ###-------------------------------------------------
 ml <- c("annIsomap", "annLLE", "annLaplacianEigenmaps", "anntSNE", "annUMAP")
-method <- ml[1]
-load( paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_k", k, "_searchtype", searchtype, "_r", format(r, decimal.mark = "_"), ".rda"))
-fisomap <- fisomap
-fixden_isomap <- fixden_isomap
-p_hdr_isomap <- p_hdr_isomap
-p_isomap <- p_isomap
-load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
-metric_isomap <- metric_isomap
-# Y_isomap <- metric_isomap$embedding %>% as.data.frame()
-# p_hdr_isomap <- hdrscatterplot_new(Y_isomap[,1], Y_isomap[,2], kde.package = "ks", levels = prob, noutliers = noutliers, label = ids)
-# p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0)
 
 method <- ml[2]
 load( paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_k", k, "_searchtype", searchtype, "_r", format(r, decimal.mark = "_"), ".rda"))
@@ -95,7 +82,7 @@ flle <- fisomap
 fixden_lle <- fixden_isomap
 p_hdr_lle <- p_hdr_isomap
 p_lle <- p_isomap
-load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
+load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype,  "_r", format(r, decimal.mark = "_"), ".rda"))
 metric_lle <- metric_isomap
 
 method <- ml[3]
@@ -104,7 +91,7 @@ fle <- fisomap
 fixden_le <- fixden_isomap
 p_hdr_le <- p_hdr_isomap
 p_le <- p_isomap
-load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
+load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype,  "_r", format(r, decimal.mark = "_"), ".rda"))
 metric_le <- metric_isomap
 
 method <- ml[4]
@@ -113,7 +100,7 @@ ftsne <- fisomap
 fixden_tsne <- fixden_isomap
 p_hdr_tsne <- p_hdr_isomap
 p_tsne <- p_isomap
-load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
+load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype,  "_r", format(r, decimal.mark = "_"), ".rda"))
 metric_tsne <- metric_isomap
 
 method <- ml[5]
@@ -122,461 +109,342 @@ fumap <- fisomap
 fixden_umap <- fixden_isomap
 p_hdr_umap <- p_hdr_isomap
 p_umap <- p_isomap
-load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))
+load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype,  "_r", format(r, decimal.mark = "_"), ".rda"))
 metric_umap <- metric_isomap
+
+method <- ml[1]
+load(paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_k", k, "_searchtype", searchtype, "_r", format(r, decimal.mark = "_"), ".rda"))
+# fisomap <- fisomap
+# fixden_isomap <- fixden_isomap
+# p_hdr_isomap <- p_hdr_isomap
+# p_isomap <- p_isomap
+load(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype,  "_r", format(r, decimal.mark = "_"), ".rda"))
+# metric_isomap <- metric_isomap
 
 cat("Load .rda finished at: "); Sys.time()
 
 
 
 ###-------------------------------------------------
-### Plotting
+### Highest density regions plots
 ###-------------------------------------------------
-
-# embedding plot
+# 2D embedding plot with highest density regions
 nolabs <- labs(x = "", y = "")
-noytext <-  theme(axis.text.y = element_blank())
-p <- (
+noytext <-  theme(axis.text.y = element_blank()) 
+phdr5ml <- (
   ((
-       (p_isomap$p + labs(x = "", y = "ISOMAP", title = "DC-KDE") + noytext) |
+       (p_isomap$p + labs(x = "", y = "ISOMAP", title = "DC-KDE")) |
        (p_hdr_isomap$p + labs(x = "", y = "", title = "KDE") + noytext ) 
-  ) & scale_y_continuous(n.breaks = 4)) /
+  ) & scale_y_continuous(breaks = c(-250, 0, 250))) /
     (( 
-         (p_lle$p + labs(x = "", y = "LLE") + noytext) |
+         (p_lle$p + labs(x = "", y = "LLE")) |
          (p_hdr_lle$p + nolabs + noytext) 
-    ) & scale_y_continuous(breaks = c(-5, 0, 5))) /
+    ) & scale_y_continuous(breaks = c(0, 5, 10)) & scale_x_continuous(n.breaks = 4)) /
     (( 
-         (p_le$p + labs(x = "", y = "Laplacian Eigenmaps") + noytext) |
+         (p_le$p + labs(x = "", y = "Laplacian Eigenmaps")) |
          (p_hdr_le$p + nolabs + noytext) 
     ) & scale_x_continuous(breaks = c(-.025, 0, .025)) & scale_y_continuous(breaks = c(-.05, 0, .05), limits = c(-.05, .05)) ) /
     (( 
-         (p_tsne$p + labs(x = "", y = "t-SNE") + noytext) |
+         (p_tsne$p + labs(x = "", y = "t-SNE")) |
          (p_hdr_tsne$p + nolabs + noytext) 
-    ) & scale_y_continuous(n.breaks = 4)) / 
+    ) & scale_y_continuous(breaks = c(-20, 0, 20)) & scale_x_continuous(n.breaks = 5)) / 
     (( 
-         (p_umap$p + labs(x = "", y = "UMAP") + noytext) |
+         (p_umap$p + labs(x = "", y = "UMAP")) |
          (p_hdr_umap$p + nolabs + noytext) 
     ) & scale_y_continuous(n.breaks = 4))
 ) + 
   plot_layout(guides = 'collect') &
   # guides(HDRs = guide_legend(nrow = 1)) &
-  # scale_y_continuous(n.breaks = 4) &
   theme(legend.direction = "horizontal", legend.position = "bottom", 
         legend.box = "horizontal", axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold"))
-p
-ggsave(paste0("paper/figures/Electricity_2d_5levels_outliers_comparison_5ml_r", format(r, decimal.mark = "_"), ".png"), p, width = 8, height = 10, dpi = 300)
+phdr5ml
+ggsave(paste0("paper/figures/Electricity_2d_5levels_outliers_comparison_5ml_r", format(r, decimal.mark = "_"), ".png"), phdr5ml, width = 9, height = 12, dpi = 300)
+
 
 ###-------------------------------------------------
-### Highest density region plot
+## Table for top 20 outlier IDs
 ###-------------------------------------------------
-p_hdr_isomap
-p_isomap
-
-(
-  p_hdr_isomap$p | p_isomap$p
-) + 
-  plot_layout(guides = "collect") &
-  guides(color=guide_legend(nrow=1,byrow=TRUE)) &
-  theme(legend.position = 'bottom', 
-        axis.title.y = element_text(hjust = 0.5, face = "bold", size = 14),
-        plot.title = element_text(hjust = 0.5)) 
-s
-
-
-st <- (((ph1 + labs(title = "Exact NN", x="", y="ISOMAP")) | 
-          (pha1 + labs(title = "k-d trees", x="", y="")) |
-          (phaa1 + labs(title = "Annoy", x="", y="")))  / 
-         ((ph2 + labs(x="", y="LLE")) | 
-            (pha2 + labs(x="", y="")) |
-            (phaa2 + labs(x="", y=""))) / 
-         ((ph3 + labs(x="", y="Laplacian Eigenmaps")) | 
-            (pha3 + labs(x="", y="")) |
-            (phaa3 + labs(x="", y=""))) / 
-         ((ph4 + labs(x="", y="Hessian LLE")) | 
-            (pha4 + labs(x="", y="")) |
-            (phaa4 + labs(x="", y=""))) /
-         ((ph5 + labs(x="", y="t-SNE")) | 
-            (pha5 + labs(x="", y="")) |
-            (phaa5 + labs(x="", y=""))) /
-         ((ph6 + labs(x="", y="UMAP")) | 
-            (pha6 + labs(x="", y="")) |
-            (phaa6 + labs(x="", y="")))
-) + 
-  plot_layout(guides = "collect") &
-  guides(color = guide_legend(nrow = 1,byrow = TRUE)) &
-  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5, face = "bold")) 
-st
-
-# ((ph1 / pha1 / phaa1) | (ph2 / pha2 / phaa2) | (ph3 / pha3 / phaa3) | (ph4 / pha4 / phaa4) | (ph5 / pha5 / phaa5) | (ph6 / pha6 / phaa6)) +
-#   plot_layout(guides = "collect") &
-#   theme(legend.position = 'bottom') &
-#   labs(x = "", y = "")
-
-## hdrXX_compare_1id336tow.png
-# ggsave(paste0(folder, "hdr10_compare4ml_kdtreeannoy_1id_6methods", filename, ".png"), s, width=10, height=8)
-ggsave(paste0(folder, "hdr10_compare4ml_kdtreeannoy_allids_nt", nt, "_", filename, ".png"), s, width=10, height=6, dpi = 500)
-ggsave(paste0(folder, "hdr10_compare4ml_kdtreeannoy_allids_nt", nt, "_", filename, "_transpose.png"), st, width=8, height=11, dpi = 500)
-
-
-( (ph1 + labs(x="ISO1", y="ISO2")) | (ph2 + labs(x="LLE1", y="LLE2")) )+
-  plot_layout(guides = "collect") &
-  guides(color=guide_legend(nrow=1,byrow=TRUE)) &
-  theme(legend.position = 'bottom') -> hdr_isomap_lle
-hdr_isomap_lle
-ggsave(paste0(folder, "hdr10_compareisomaplle_kdtreeannoy_nt", nt, "_", filename, ".png"), hdr_isomap_lle, width=10, height=6)
-
-ggsave(paste0("~/Desktop/hdr10_isomap_kdtreeannoy_nt", nt, "_", filename, ".png"), width=8, height=6)
+# ids
+# p_isomap$outlier
+# p_hdr_isomap$outlier
+# p_hdr_isomap$densities # unordered
+# Outliers
+f <- tibble(
+  fxy_vkde_isomap = ids[p_isomap$outlier], fxy_hdr_isomap = ids[p_hdr_isomap$outlier],
+  fxy_vkde_lle = ids[p_lle$outlier], fxy_hdr_lle = ids[p_hdr_lle$outlier],
+  fxy_vkde_le = ids[p_le$outlier], fxy_hdr_le = ids[p_hdr_le$outlier],
+  fxy_vkde_tsne = ids[p_tsne$outlier], fxy_hdr_tsne = ids[p_hdr_tsne$outlier],
+  fxy_vkde_umap = ids[p_umap$outlier], fxy_hdr_umap = ids[p_hdr_umap$outlier]
+)
+f
+f20 <- f[,c(1,3,5,7,9, 2,4,6,8,10)] %>% 
+  head(n = 20) %>% 
+  rowid_to_column()
+f20rep <- f20[,-1] %>% unlist() %>% table() %>% as.data.frame() %>% filter(Freq > 3) %>% arrange(desc(Freq))
+freqmax <- apply(f20, 2, function(x) x %in% f20rep$.) # highlight all ids that appears >3 times
+freqmax1 <- apply(f20, 2, function(x) x %in% f20rep$.[f20rep$Freq == 5])
+freqmax2 <- apply(f20, 2, function(x) x %in% f20rep$.[f20rep$Freq == 4])
+f20cols <- freqmax1*2 + freqmax2
+f20cols <- f20cols %>% 
+  as_tibble() %>%
+  mutate_all(as.character) %>% 
+  mutate_all(funs(str_replace(., "1", blues9[5]))) %>% 
+  mutate_all(funs(str_replace(., "2", blues9[9]))) %>% 
+  as.matrix()
+tabletop20 <- f20 %>% 
+  kableExtra::kbl(caption = "Top 20 anomalous household IDs using density estimates of different 2-dimensional embedding. The left five columns are anomalies by DC-KDE, while the right five columns are anomalies using KDE. The blue colored IDs are IDs that are detected over three times, with the darker one indicating five times and the lighter one indicating four times.", booktabs = TRUE, digits = 3, escape = FALSE, col.names = NULL, align=rep('c', 10)) %>%
+  kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = TRUE) %>%
+  add_header_above(c(" " = 1, rep(c("ISOMAP" = 1, "LLE" = 1, "Laplacian Eigenmaps" = 1, "t-SNE" = 1, "UMAP" = 1), 2))) %>% 
+  add_header_above(c(" " = 1, "DC-KDE" = 5, "KDE" = 5)) %>%
+  # row_spec(1, bold = TRUE) %>% 
+  column_spec(1, bold = FALSE) %>% 
+  column_spec(2, bold = freqmax[,2], color = f20cols[,2]) %>% 
+  column_spec(3, bold = freqmax[,3], color = f20cols[,3]) %>% 
+  column_spec(4, bold = freqmax[,4], color = f20cols[,4]) %>% 
+  column_spec(5, bold = freqmax[,5], color = f20cols[,5]) %>% 
+  column_spec(6, bold = freqmax[,6], color = f20cols[,6]) %>% 
+  column_spec(7, bold = freqmax[,7], color = f20cols[,7], border_left = TRUE) %>% 
+  column_spec(8, bold = freqmax[,8], color = f20cols[,8]) %>% # background = grey(0.9)
+  column_spec(9, bold = freqmax[,9], color = f20cols[,9]) %>% 
+  column_spec(10, bold = freqmax[,10], color = f20cols[,10]) %>% 
+  column_spec(11, bold = freqmax[,11], color = f20cols[,11])
+tabletop20
+save(f20, f20cols, freqmax, tabletop20, file = paste0("paper/figures/Electricity_2d_table_outlier_idcompare_5ml_radius", radius, "_r", format(r, decimal.mark = "_"), ".rda"))
 
 
 
 
-# For single household all tows
-###-------------------------------------------------
-## plot typical and anomalous tow
-###-------------------------------------------------
-# The most typical ones are those with Region=="1" in yellow.
-# The most anomalous ones are those with Region==">99" in black. 
-anomaly_nn <- ph1$data %>%  # View()
-  rownames_to_column("tow") %>% 
-  rename(ISO1 = Y_isomap...1., ISO2 = Y_isomap...2.) %>% 
-  mutate(tow = as.numeric(tow), 
-         dow = ceiling(tow/48),
-         tod = (tow - 48*floor(tow/48))/2,
-         method = "nn") %>% 
-  filter(Region %in% c(">99", "1"))
-
-anomaly_kdtree <- pha1$data %>%  # View()
-  rownames_to_column("tow") %>% 
-  rename(ISO1 = Y_annisomap...1., ISO2 = Y_annisomap...2.) %>%
-  mutate(tow = as.numeric(tow), 
-         dow = ceiling(tow/48),
-         tod = (tow - 48*floor(tow/48))/2,
-         method = "kdtree") %>% 
-  filter(Region %in% c(">99", "1"))
-
-anomaly_annoy <- phaa1$data %>%  # View()
-  rownames_to_column("tow") %>% 
-  rename(ISO1 = Y_annisomap_annoy...1., ISO2 = Y_annisomap_annoy...2.) %>%
-  mutate(tow = as.numeric(tow), 
-         dow = ceiling(tow/48),
-         tod = (tow - 48*floor(tow/48))/2,
-         method = "annoy") %>% 
-  filter(Region %in% c(">99", "1"))
-
-bind_rows(anomaly_nn, anomaly_kdtree, anomaly_annoy)
-# tow       ISO1        ISO2  Region dow  tod method
-# 1   24 -0.1695829 0.2909404      1   1 12.0     nn
-# 2   77 -0.1179890 0.3179422      1   2 14.5     nn
-# 3   81 -0.1458833 0.2921770      1   2 16.5     nn
-# 4  310 -0.1476710 0.3262820      1   7 11.0     nn
-# 5   38  0.9525183 0.4212948    >99   1 19.0     nn
-# 6  134  1.0237164 0.3636394    >99   3 19.0     nn
-# 7  182  0.9442243 0.4780956    >99   4 19.0     nn
-# 8  327  1.0776950 0.2679600    >99   7 19.5     nn
-# 9   24 -0.1865536 0.2911935      1   1 12.0 kdtree
-# 10  77 -0.1344318 0.3245840      1   2 14.5 kdtree
-# 11  81 -0.1611130 0.2947367      1   2 16.5 kdtree
-# 12 310 -0.1664895 0.3296634      1   7 11.0 kdtree
-# 13 134  1.0078732 0.3874026    >99   3 19.0 kdtree
-# 14 135  1.1850625 0.1991039    >99   3 19.5 kdtree
-# 15 327  1.0640752 0.3013102    >99   7 19.5 kdtree
-# 16 328  1.1531247 0.1952406    >99   7 20.0 kdtree
-# 17  24 -0.1585714 0.2859572      1   1 12.0  annoy
-# 18  30 -0.1534337 0.2466920      1   1 15.0  annoy
-# 19 222 -0.2069617 0.2873975      1   5 15.0  annoy
-# 20 310 -0.1330758 0.3084639      1   7 11.0  annoy
-# 21 134  1.0927996 0.3916109    >99   3 19.0  annoy
-# 22 182  0.9507067 0.4667087    >99   4 19.0  annoy
-# 23 326  0.9436023 0.4970019    >99   7 19.0  annoy
-# 24 327  1.1539380 0.2926905    >99   7 19.5  annoy
-
-# Typical: Wed 19:00, tow 134, 327
-# Anomalys: Mon 12:00, tow 24, 310
-
-# Plot the electricity demand distribution for two time periods, index 134 and 24
-load("data/DT.rda")
-head(DT)
-DT_1id <- DT[id == "1003",]
-# tows <- c(134, 24, 327, 310) # single household, compare tow
-tows <- c(32, 119, 37, 325) # single household, count_ratio
-DT2tow <- DT_1id[tow %in% tows,][, -"id"]
-DT2tow
-ptow <- DT2tow %>% 
-  as_tibble() %>% 
-  mutate(tow = as.factor(tow),
-         typical = ifelse(tow %in% c(32, 119), TRUE, FALSE)) %>% # c(24, 310)
-  ggplot(aes(x=demand, group=tow, fill=typical)) + 
-  geom_histogram(
-    aes(y=..density..), # Histogram with density instead of count on y-axis
-    # binwidth=.1,
-    bins = 50,
-    colour="grey40", alpha=.5, # position="density"
-  ) + 
-  # geom_density(alpha=.3) +  # Overlay with transparent density plot, removed since fitted using only positive values, not accurate
-  scale_fill_manual(values = c("black", "orange")) +
-  facet_wrap(~tow, nrow = 2,
-             # labeller = as_labeller(c("24"="Monday 12pm", "134"="Wednesday 7pm", "310"="Sunday 11am", "327"="Sunday 11pm"))
-             labeller = as_labeller(c("32"="Monday 4 pm", "37"="Monday 6:30 pm", "119"="Wednesday 11:30 am", "325"="Sunday 6:30 pm"))) +
-  labs(x = "Electricity demand (kWh)", y = "Density", fill = "Time of week") + 
-  theme(legend.position = "None")
-ptow
-ggsave(paste0(folder, "electricity_compare2tow_1id336tow.png"), ptow, width=10, height=6, dpi = 500)
+## -----------------------------------------------------------------------------
+# Plot of outlier rank to show that the ranks do not change across different ML methods
+## -----------------------------------------------------------------------------
+# Densities
+fden <- tibble(
+  fxy_vkde_isomap = p_isomap$densities, fxy_hdr_isomap = p_hdr_isomap$densities,
+  fxy_vkde_lle = p_lle$densities, fxy_hdr_lle = p_hdr_lle$densities,
+  fxy_vkde_le = p_le$densities, fxy_hdr_le = p_hdr_le$densities,
+  fxy_vkde_tsne = p_tsne$densities, fxy_hdr_tsne = p_hdr_tsne$densities,
+  fxy_vkde_umap = p_umap$densities, fxy_hdr_umap = p_hdr_umap$densities
+)
+fden
+frank <- fden %>% summarise_all(rank)
+# frank_long <- frank %>%
+#   # mutate(outlier = case_when((fxy <= noutliers) ~ "True outliers",
+#   #                            (fxy_dckde <= noutliers) ~ "DC-KDE outliers",
+#   #                            (fxy_kde <= noutliers) ~ "KDE outliers",
+#   #                            TRUE ~ "Not outliers")) %>%
+#   `colnames<-`(gsub("fxy_", "", colnames(.))) %>% 
+#   pivot_longer(everything(), names_to = "kde", values_to = "densities") %>% 
+#   separate(kde, c("KDE", "ML"), sep = "_") %>% 
+#   mutate(KDE = factor(KDE, levels = c("vkde", "hdr"), labels = c("DC-KDE", "KDE")),
+#          ML = factor(ML, levels = c("isomap", "lle", "le", "tsne", "umap"), labels = c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP"))
+#   )
+# gt <- frank_long %>%
+#   ggplot(aes(fxy, densities)) +
+#   geom_point() +
+#   facet_grid(ML ~ KDE) +
+#   # scale_x_log10() +
+#   # scale_y_log10() +
+#   labs(x = "True density rank", y = "Estimated density rank")
+# gt
 
 
-# # Plot pmf
-# load("data/spdemand_3639id_336tow_201length.rda")
-# spd2tow <- spdemand[id == "1003" & (tow %in% tows),][, -"id"]
-# spd2tow
-# pdtow <- spd2tow %>%
-#   gather(key = "p", value = "prob", -tow) %>%
-#   mutate(p = as.numeric(str_remove(p, "p"))) %>%
-#   ggplot(aes(x = p, y = prob, group = tow, col = factor(tow))) +
-#   geom_line(aes(linetype = factor(tow))) +
-#   # facet_grid(tow ~ .) +
-#   labs(x = "", y = "Probability", col = "Time of week", linetype = "Time of week")
-# pdtow
-
-
-# ###-------------------------------------------------
-# ### plot typical households (run once)
-# ###-------------------------------------------------
-# # Plot the electricity demand for two sample IDs, 1003 and 1539
-# # load("data/DT.rda")
-# # head(DT)
-# # DT2id <- DT[id == 1003 | id == 1539,]
-# # save(DT2id, file = "data/DT2id.eda")
-# load("data/DT2id.rda")
-# DT2id
-# summary(DT2id)
-# p <- DT2id %>%
-#   ggplot(aes(x = day, y = demand, group = id)) +
-#   geom_line() +
-#   facet_grid(id ~ .) +
-#   labs(x = "Days", y = "Demand (kWh)")
-# ggsave(folder, "smartmeter.png", p, width = 8, height = 6)
-# plotly::ggplotly(p, width = 600, height = 400)
+# change i to put each ML method on x-axis
+# Use UMAP
+i <- 5
+xname <- c("isomap", "lle", "le", "tsne", "umap")[i]
+mllabel <- c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP")
+p_data <- frank %>% 
+  pivot_longer(-contains(paste0("_", xname)), names_sep = "_", names_to = c("f", "dckde",
+                                                                            # pivot_longer(everything(), names_sep = "_", names_to = c("dckde",
+                                                                            "kde")) %>% 
+  pivot_longer(contains(xname), names_sep = "_", names_to = c("f_x",
+                                                              "dckde_x", 
+                                                              "kde_x"), 
+               values_to = "x") %>% 
+  filter(dckde == dckde_x)  %>% 
+  pivot_wider(names_from = "kde_x", values_from = "x") %>% 
+  dplyr::select(kde, any_of(xname), value, dckde) %>% 
+  mutate(dckde = factor(dckde, levels = c("vkde", "hdr"), labels = c("DC-KDE", "KDE")),
+         kde = factor(kde, labels = mllabel[-i])) 
+# cor_data <- p_data %>%
+#   group_by(kde, dckde) %>% 
+#   summarise(cor = cor(value, !!sym(xname), method = "spearman"), 
+#             # x = quantile(!!sym(xname), 0.9), 
+#             # y = quantile(!!sym(xname), 0.2),
+#             .groups = "drop")
+p_isovs4ml <- ggplot(p_data, aes(x = !!sym(xname), y = value)) +
+  geom_rect(xmin = 0, xmax = log10(20), ymin = 0, ymax = log10(20), fill = "#B7B7B7", col = "#B7B7B7") +
+  geom_point() +
+  # geom_label(data = cor_data, aes(x=x, y = y, label = paste("cor: ", format(cor, digits = 2)))) +
+  facet_grid(kde ~ dckde) + 
+  labs(x = mllabel[i], y = "") +
+  scale_x_log10() + 
+  scale_y_log10()
+p_isovs4ml
+ggsave(paste0("paper/figures/Electricity_2d_rankplot_", N,"id_", xname, "vs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), ".png"), p_isovs4ml, width = 8, height = 10, dpi = 300)
 
 
 
-# For all households
-# id index 451 and 2425 to compare
-###-------------------------------------------------
-### plot typical households (run once)
-###-------------------------------------------------
-# Find typical and anomalous households
-# The most typical ones are those with Region=="1" in yellow.
-# The most anomalous ones are those with Region==">99" in black. 
-anomaly_nn <- ph1$data %>%  # View()
-  rownames_to_column("index") %>%
-  rename(ISO1 = Y_isomap...1., ISO2 = Y_isomap...2.) %>% 
-  mutate(
-    index = as.numeric(index),
-    ID = ids[index],
-    method = "nn") %>%
-  filter(Region %in% c(">99", "1"))
+###--------------------------------------------------------
+## Table for correctly identified outliers percentage >99% & 99%
+###--------------------------------------------------------
+prob <- c(1, 10, 50, 95, 99)
+hdrbreaks <- c(0, quantile(1:N, c(sort(100 - prob) / 100)), N)
+hdrlabels <- c(">99", paste0(100 - prob)) #, "%", not working for latex, \\%
+frankhdr <- p_data %>% 
+  `colnames<-` (c("ML", "fxy", "densities", "KDE")) %>% 
+  mutate(truehdr = cut(fxy, 
+                       breaks = hdrbreaks, 
+                       labels = hdrlabels),
+         esthdr = cut(densities, 
+                      breaks = hdrbreaks, 
+                      labels = hdrlabels)
+  ) %>% 
+  mutate(correcthdr = (truehdr == esthdr))
+hdrtable <- frankhdr %>% 
+  group_by(KDE, ML, truehdr) %>% 
+  summarise(numhdr = sum(correcthdr) / n(), .groups = "drop") %>% 
+  pivot_wider(names_from = c(KDE, ML), values_from = numhdr) %>% 
+  column_to_rownames(var = "truehdr") %>%
+  `colnames<-` (NULL)
+hdrmax <- (as.matrix(hdrtable[, 1:4]) - as.matrix(hdrtable[, 5:8])) >= 0
+hdrmax <- cbind(hdrmax, !hdrmax)[, c(1, 5, 2, 6, 3, 7, 4, 8)] %>% `rownames<-` (NULL)
+hdrtable <- hdrtable[, c(1, 5, 2, 6, 3, 7, 4, 8)]
+table_outlierpercent <- 
+hdrtable %>% 
+  head(n = 2) %>% 
+  `rownames<-` (c(">99\\% HDR", "99\\% HDR")) %>% 
+  kableExtra::kbl(caption = "Percentage of the same outliers as UMAP in two highest density regions when estimating densities for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE, align = "c",
+                  # col.names = c(rep(c("DC-KDE", "KDE"), 4))
+  ) %>%
+  kable_classic("striped") %>% 
+  kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = TRUE) %>%
+  add_header_above(c("HDRs" = 1, rep(c("DC-KDE" = 1, "KDE" = 1), 4))) %>%
+  add_header_above(c(" " = 1, "ISOMAP" = 2, "LLE" = 2, "Laplacian Eigenmaps" = 2, "t-SNE" = 2)) %>% 
+  # column_spec(1, bold = TRUE) %>% 
+  # add_indent(1:6) %>% 
+  column_spec(2, bold = hdrmax[,1]) %>% 
+  column_spec(3, bold = hdrmax[,2]) %>% 
+  column_spec(4, bold = hdrmax[,3]) %>% 
+  column_spec(5, bold = hdrmax[,4]) %>% 
+  column_spec(6, bold = hdrmax[,5]) %>% 
+  column_spec(7, bold = hdrmax[,6]) %>% 
+  column_spec(8, bold = hdrmax[,7]) %>% 
+  column_spec(2*(1:4), border_left = T, background = grey(0.9))
+table_outlierpercent
+save(frankhdr, hdrtable, hdrmax, table_outlierpercent, file = paste0("paper/figures/Electricity_2d_hdrtable_umapvs4ml_radius", radius, "_r", format(r, decimal.mark = "_"), ".rda"))
 
-anomaly_kdtree <- pha1$data %>%  # View()
-  rownames_to_column("index") %>%
-  rename(ISO1 = Y_annisomap...1., ISO2 = Y_annisomap...2.) %>% 
-  mutate(
-    index = as.numeric(index),
-    ID = ids[index],
-    method = "nn") %>%
-  filter(Region %in% c(">99", "1"))
 
-anomaly_annoy <- phaa1$data %>%  # View()
-  rownames_to_column("index") %>%
-  rename(ISO1 = Y_annisomap_annoy...1., ISO2 = Y_annisomap_annoy...2.) %>% 
-  mutate(
-    index = as.numeric(index),
-    ID = ids[index],
-    method = "nn") %>%
-  filter(Region %in% c(">99", "1"))
 
-bind_rows(anomaly_nn, anomaly_kdtree, anomaly_annoy)
-ph1[["plot_env"]][["label"]] %>% head(n=10) # set noutliers = 3639
-ph1[["plot_env"]][["label"]] %>% tail(n=10) 
-# 2838, 7324, 5136 are anomalies from Isomap, UMAP
-# pick 6762 as typical from Isomap
-which(ids %in% c(6762, 2838, 7324)) # index of IDs
+###--------------------------------------------------------
+## Plot of three anomalous and 1 typical households
+###--------------------------------------------------------
+f
+f20 <- f[,c(1,3,5,7,9, 2,4,6,8,10)] %>% 
+  head(n = 20) %>% 
+  rowid_to_column()
+f20rep <- f20[,-1] %>% unlist() %>% table() %>% as.data.frame() %>% filter(Freq > 3) %>% arrange(desc(Freq))
+f20rep$.[f20rep$Freq == 5]
 
-# DT2id <- DT[id %in% c(6762, 2838, 7324),] # 1321 typical
-DT2id <- DT[id %in% c(7049, 5136, 1472),]
-save(DT2id, file = "data/electricityplot_DTcompare3id.rda")
+ftail10 <- f[,c(1,3,5,7,9, 2,4,6,8,10)] %>% 
+  tail(n = 20)
+ftail10rep <- ftail10 %>% unlist() %>% table() %>% as.data.frame() %>% filter(Freq >= 2) %>% arrange(desc(Freq))
+ftail10rep$.[ftail10rep$Freq == 4] # 2396 3683 4857 7043
+# Plot 2396 as typical household, found 4 times using DC-KDE except for tsne
 
-# Plot the electricity demand for two sample IDs, index 451 and 2425
-library(tidyverse)
+# Typical: 2396
+ftail10rep$.[ftail10rep$Freq == 4]
+# Anomalous: 3161 4546 7049
+f20rep$.[f20rep$Freq == 5]
+ids4plot <- c(ftail10rep$.[ftail10rep$Freq == 4], f20rep$.[f20rep$Freq == 5])
+
+# # Run once
+# # Plot the electricity demand distribution for four households
 # load("data/DT.rda")
 # head(DT)
-# ids <- DT %>% dtplyr::lazy_dt() %>% pull(id) %>% unique() %>% sort()
-# # DT2id <- DT[id %in% c(ids[c(485, 1280)], 1003),] # 4273 typical
-# id2 <- ids[c(2057, 1280, 169)]
-# DT2id <- DT[id %in% id2,] # 1321 typical
-# save(DT2id, file = "data/electricityplot_DTcompare3id.rda")
+# DT4id <- DT[id %in% ids4plot,]
+# save(DT4id, file = "data/Electricity_2d_plot_DTcompare4id_1typical_3anomalous.rda")
 
-load("data/electricityplot_DTcompare3id.rda")
-DT2id
-summary(DT2id)
-p <- DT2id %>%
+###-------------------------------------------------
+### Plot typical households
+###-------------------------------------------------
+load("data/Electricity_2d_plot_DTcompare4id_1typical_3anomalous.rda")
+DT4id
+summary(DT4id)
+p4id <- DT4id %>%
+  lazy_dt() %>% 
+  mutate(id = factor(id, levels = ids4plot)) %>% 
+  as.data.table() %>% 
   ggplot(aes(x = day, y = demand, group = id)) +
   geom_line() +
-  facet_grid(factor(id, levels = c(1472, 7049, 5136)) ~ .) +
+  facet_grid(id ~ .) +
   labs(x = "Days", y = "Demand (kWh)")
-p
-ggsave(paste0(folder, "electricity_compare3id.png"), p, width = 8, height = 6, dpi = 500)
-save(p, file = "data/electricityplot_compare3id.rda")
+p4id
+ggsave(paste0("paper/figures/Electricity_2d_compare4id_1typical_3anomalous.png"), p4id, width = 8, height = 8, dpi = 500)
+save(p4id, file = "data/Electricityplot_compare4id.rda")
 
-# Plot the electricity demand distribution for two anomalous households, index 481 and 1280,  and 1 typical household, index 169
-# load("data/DT.rda")
-# head(DT)
-# DT_1id <- DT[id == "1003",]
-# tows <- c(134, 24, 327, 310) # single household, compare tow
-# DT2tow <- DT_1id[tow %in% tows,][, -"id"]
-DT2id
-p3ids <- DT2id %>% 
-  as_tibble() %>% 
-  mutate(id = as.factor(id),
-         typical = ifelse(id == unique(DT2id$id)[1], TRUE, FALSE)) %>% 
-  ggplot(aes(x=demand, group=id, fill=typical)) + 
-  geom_histogram(
-    aes(y=..density..), # Histogram with density instead of count on y-axis
-    binwidth=.1,
-    colour="grey40", alpha=.2, # position="density"
-  ) + 
-  geom_density(alpha=.3) +  # Overlay with transparent density plot
-  scale_fill_manual(values = c("black", "orange")) +
-  facet_wrap(~id, ncol = 1, scales = "free_y", strip.position="right") + # ,labeller = as_labeller(c("4669"="ID 4669", "3243"="ID 3243", "1321"="ID 1321"))
-  labs(x = "Demand (kWh)", y = "Density") + 
-  theme(legend.position = "None")
-p3ids
-
-# wrap_plots(p, p3ids)
-pcomp <- cowplot::plot_grid(
-  p, p3ids,
-  align = "h", axis = "tb",
-  nrow = 1, rel_widths = c(2, 1)
-)
-pcomp
-ggsave(paste0(folder, "electricity_compare3id_isomap.png"), pcomp, width = 8, height = 6)
-# plotly::ggplotly(p, width = 600, height = 400)
+# # Not run
+# # Plot the electricity demand distribution
+# DT4id
+# p4ids <- DT4id %>% 
+#   as_tibble() %>% 
+#   mutate(id = as.factor(id),
+#          typical = ifelse(id == unique(DT4id$id)[1], TRUE, FALSE)) %>% 
+#   ggplot(aes(x=demand, group=id, fill=typical)) + 
+#   geom_histogram(
+#     aes(y=..density..), # Histogram with density instead of count on y-axis
+#     binwidth=.1,
+#     colour="grey40", alpha=.2, # position="density"
+#   ) + 
+#   geom_density(alpha=.3) +  # Overlay with transparent density plot
+#   scale_fill_manual(values = c("black", "orange")) +
+#   facet_wrap(~id, ncol = 1, scales = "free_y", strip.position="right") + # ,labeller = as_labeller(c("4669"="ID 4669", "3243"="ID 3243", "1321"="ID 1321"))
+#   labs(x = "Demand (kWh)", y = "Density") + 
+#   theme(legend.position = "None")
+# p4ids
+# # wrap_plots(p, p4ids)
+# pcomp <- cowplot::plot_grid(
+#   p, p4ids,
+#   align = "h", axis = "tb",
+#   nrow = 1, rel_widths = c(2, 1)
+# )
+# pcomp
+# ggsave(paste0("paper/figures/Electricity_2d_compare4id_histogram.png"), pcomp, width = 10, height = 6)
+# # plotly::ggplotly(p, width = 600, height = 400)
 
 
-
-
-
-## KDE and DC-KDE raw time series plot
-load("data/electricityplot_compare3id.rda")
-p_dc <- p
-load("data/electricityplot_DTcompare3id.rda")
-((p_dc + ggtitle("DC-KDE")) +
-    (p + ggtitle("KDE"))) + 
-  plot_layout(guides = "collect") &
-  theme(#legend.position = 'bottom', 
-    plot.title = element_text(hjust = 0.5, face = "bold", size = 12)) 
-ggsave("paper/figures/dckde_2densities_raw_electricity.png")
-
-
-
-###-------------------------------------------------
-### plot 3 typical households distributions
-###-------------------------------------------------
-# # Or: plot the distribution of 336 tows for each household over 1.5 years
-# # cde branch of gghdr github package, +geom_hdr_boxplot(aes(x=tow, y=demand))
-# # remotes::install_github("ropenscilabs/gghdr@cde")
-# remotes::install_github("ffancheng/gghdr") # add nxmargin argument for number of boxplots
-# library(ggplot2)
-# library(gghdr)
-# ggplot(faithful, aes(y = eruptions)) +
-#   geom_hdr_boxplot()
-# ggplot(faithful, aes(x = waiting, y = eruptions)) +
-#   geom_hdr_boxplot(nxmargin=20)
-# ggplot(faithful) +
-#   geom_point(aes(x = eruptions, y = waiting)) + 
-#   geom_hdr_rug(aes(x = eruptions), prob = c(0.99, 0.5), fill = "blue")
-# ggplot(data = faithful, aes(x = waiting, y=eruptions)) +
-#   geom_point(aes(colour = hdr_bin(x = waiting, y = eruptions))) +
-#   scale_colour_viridis_d(direction = -1) 
-# 
-# # hdrcde examples
-# library(hdrcde)
-# hdr.boxplot(faithful$eruptions)
-# faithful.cde <- cde(faithful$waiting, faithful$eruptions,
-#                     x.name="Waiting time", y.name="Duration time")
-# plot(faithful.cde)
-# plot(faithful.cde,xlab="Waiting time",ylab="Duration time",plot.fn="hdr")
-# hdrscatterplot(faithful$waiting, faithful$eruptions)
-# 
-# 
-# # hdrcde for 3 ids
-# library(tidyverse)
-# library(hdrcde)
+# Not run
+# ## KDE and DC-KDE raw time series plot
+# load("data/electricityplot_compare3id.rda")
+# p_dc <- p
 # load("data/electricityplot_DTcompare3id.rda")
-# cde2id <-
-#   DT2id %>%
-#     as_tibble() %>%
-#     mutate(tow = as.integer(tow))
-# 
-# 
-# # id.cde0 <- cde(cde2id$tow, cde2id$demand, x.margin = 1:336,              x.name = "Time of week period", y.name = "Demand")
-# # Or equivalent nxmargin=336
-# id.cde <- cde(cde2id$tow, cde2id$demand, nxmargin = 336,
-#               x.name = "Time of week period", y.name = "Demand")
-# plot(id.cde)
-# plot(id.cde, plot.fn="hdr")
-# 
-# par(mfrow=c(3,1))
-# for (i in 1:3) {
-#   cdeplot <- filter(as_tibble(cde2id), id == unique(cde2id$id)[i])
-#   cde(cdeplot$tow, cdeplot$demand, x.margin = 1:336) %>%
-#     plot(xlab="Time of week period", ylab="Demand", plot.fn="hdr")
-# }
+# ((p_dc + ggtitle("DC-KDE")) +
+#     (p + ggtitle("KDE"))) + 
+#   plot_layout(guides = "collect") &
+#   theme(#legend.position = 'bottom', 
+#     plot.title = element_text(hjust = 0.5, face = "bold", size = 12)) 
+# ggsave("paper/figures/dckde_2densities_raw_electricity.png")
 
 
-# modified gghdr for 3 ids
+
+###-------------------------------------------------
+### Plot 4 households distributions
+###-------------------------------------------------
 # remotes::install_github("ffancheng/gghdr") # add nxmargin argument for number of boxplots
-library(ggplot2)
 library(gghdr)
-load("data/electricityplot_DTcompare3id.rda")
-cde2id <- 
-  DT2id %>% 
+cde4id <- 
+  DT4id %>% 
   as_tibble() %>% 
   mutate(tow = as.integer(tow),
          dow = str_replace_all(dow, c("1"="Monday", "2"="Tuesday", "3" = "Wednesday", "4" = "Thursday", "5" = "Friday", "6" = "Saturday", "7" = "Sunday")), 
          dow = factor(dow, levels =c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")))
-# # cde2id <- cde2id[c(1:100, 25726+(1:100)),]
-# # # plot against 336 time of the week
-# # p_idtow <- cde2id %>%
-# #   ggplot(aes(x=tow, y=demand)) +
-# #   geom_hdr_boxplot(nxmargin=336, fill = "blue") +
-# #   facet_wrap(~id, ncol = 1) +
-# #   theme(legend.position = 'bottom') +
-# #   labs(x = "Time of week", y = "Demand (kWh)", fill = "Probability", colour = "Probability")
-# # ggsave(folder, "electricity_gghdr_3id_336tow.png", width = 8, height = 6)
-# # plot against 48 period of day and facet by 7 day of the week
-# p <- cde2id %>%
-#   ggplot(aes(x=period, y=demand)) +
-#   geom_hdr_boxplot(nxmargin=48, fill = "blue")
-# p_iddow <- p +
-#   scale_x_continuous(breaks = c(0, 12*(1:4))) +
-#   facet_grid(id~dow, 
-#              # labeller = as_labeller(c("1"="Monday", "2"="Tuesday", "3" = "Wednesday", "4" = "Thursday", "5" = "Friday", "6" = "Saturday", "7" = "Sunday"))
-#              ) +
-#   # theme(strip.text.x = element_text(size = 5)) + 
-#   labs(x = "Time of week", y = "Demand (kWh)", fill = "Probability", colour = "Probability") + # Legend title not changing?
-#   # scale_color_grey(name = "Prob") +
-#   # guides(fill=guide_legend(nrow=1,byrow=TRUE)) +
-#   theme(legend.position = 'bottom')
-# p_iddow
-# ggsave(folder, "electricity_gghdr_3id_7dow.png", p_iddow, width = 12, height = 8)
-# 
-
-
-
 # Plot boxplot manually
 Probability <- c(0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99)
 boxdata <-
-  cde2id %>% 
+  cde4id %>% 
   # filter(id==4669) %>%
   group_by(id, period, dow) %>% 
   summarise(q = quantile(demand, prob = Probability, type=8)) %>%
@@ -593,56 +461,11 @@ p_box <- boxdata %>%
   # geom_line(aes(x=period, y=Q2), alpha = 0.5) +
   scale_x_continuous(breaks = c(0, 12*(1:4))) + 
   labs(x = "Time of week", y = "Demand (kWh)", color = "Probability") +
-  facet_grid(factor(id, levels = c(1472, 7049, 5136))~dow, scales = "fixed") + 
+  facet_grid(id~dow, scales = "fixed") + 
   scale_color_manual(name = "Probability",
                      values = c("99.0%"=boxcols[7], "95.0%"=boxcols[6], "50.0%"=boxcols[5]), 
                      labels = c("99.0%", "95.0%", "50.0%")) 
 p_box
-ggsave(paste0(folder, "electricity_hdrbox_3id_7dow.png"), p_box, width = 12, height = 8, dpi = 500)
-save(p_box, file = "data/electricity_quantileplot_3ids.rda")
-
-
-
-
-
-###-------------------------------------------------
-## specificity and sensitivity
-###-------------------------------------------------
-# xtab_set <- function(A, B){
-#   both <- union(A,B)
-#   KNN <- both %in% A %>% factor(levels=c(TRUE, FALSE))
-#   ANN <- both %in% B %>% factor(levels=c(TRUE, FALSE))
-#   return(table(KNN, ANN))
-# }
-# # set.seed(1)
-# # A <- sample(letters[1:20],10,replace=TRUE)
-# # B <- sample(letters[1:20],10,replace=TRUE)
-# # xtab_set(A,B)
-# # #        inB
-# # # inA     FALSE TRUE
-# # #   FALSE     0    5
-# # #   TRUE      6    3
-# 
-# ht1 <- xtab_set(A=ph1$plot_env$outliers, B=pha1$plot_env$outliers)
-# ht2 <- xtab_set(A=ph2$plot_env$outliers, B=pha2$plot_env$outliers)
-# ht3 <- xtab_set(A=ph3$plot_env$outliers, B=pha3$plot_env$outliers)
-# ht4 <- xtab_set(A=ph4$plot_env$outliers, B=pha4$plot_env$outliers)
-# 
-# library(caret)
-# specificity(ht1) # Specificity is always 0, because the outlier union appears at least in one set
-# sensitivity(ht1)
-# sensitivity(ht2)
-# sensitivity(ht3)
-# sensitivity(ht4)
-# 
-# # For ID 1003
-# # > sensitivity(ht1)
-# # [1] 0.45
-# # > sensitivity(ht2)
-# # [1] 0.4
-# # > sensitivity(ht3)
-# # [1] 0.6
-# # > sensitivity(ht4)
-# # [1] 0.55
-
+ggsave(paste0("paper/figures/Electricity_2d_plot_hdrbox_7dow_4id_1typical_3anomalous.png"), p_box, width = 10, height = 8, dpi = 500)
+save(p_box, file = "data/Electricity_2d_quantileplot_4id.rda")
 
