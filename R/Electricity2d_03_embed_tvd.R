@@ -10,6 +10,7 @@ library(hdrcde)
 library(igraph)
 library(matrixcalc)
 library(ggforce)
+library(patchwork)
 Jmisc::sourceAll("R/sources")
 # scen <- 1
 scen <- as.numeric(commandArgs()[[6]])
@@ -121,12 +122,10 @@ print("DC-KDE summary statistics")
 summary(fisomap$estimate)
 p_isomap <- plot_outlier(x = metric_isomap, gridsize = gridsize, prob = prob, riem.scale = riem.scale, f = fisomap, ell.size = 0, label = ids)
 
-p_hdr_isomap$p + p_isomap$p
+# p_hdr_isomap$p + p_isomap$p
 
 save(method, fixden_isomap, fisomap, p_hdr_isomap, p_isomap,
-     # trueden, cors,
      file = paste0("data/compareden_electricity_2d_N", N, "_", method, "_radius", radius, "_k", k, "_searchtype", searchtype, "_r", format(r, decimal.mark = "_"), ".rda"))
-# if(!file.exists(paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype, ".rda"))) 
 # save(metric_isomap, file = paste0("data/metric_", method, "_electricity_2d_radius", radius, "_k", k, "_searchtype", searchtype,  "_r", format(r, decimal.mark = "_"), ".rda"))
 
 paste("End at:", Sys.time())
