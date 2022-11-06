@@ -192,6 +192,7 @@ f20cols <- f20cols %>%
   mutate_all(funs(str_replace(., "1", blues9[5]))) %>% 
   mutate_all(funs(str_replace(., "2", blues9[9]))) %>% 
   as.matrix()
+f20cols[f20cols == "0"] <- "\#0000ffff"
 tabletop20 <- f20 %>% 
   kableExtra::kbl(caption = "Top 20 anomalous household IDs using density estimates of different 2-dimensional embedding. The left five columns are anomalies by DC-KDE, while the right five columns are anomalies using KDE. The blue colored IDs are IDs that are detected over three times, with the darker one indicating five times and the lighter one indicating four times.", booktabs = TRUE, digits = 3, escape = FALSE, col.names = NULL, align=rep('c', 10)) %>%
   kable_styling(latex_options = "scale_down") %>%
