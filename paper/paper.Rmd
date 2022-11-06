@@ -43,18 +43,16 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = TRUE,
+  echo = FALSE,
   cache = T,
   messages = FALSE,
   warning = FALSE,
-  eval = TRUE
-  # include = FALSE
+  eval = TRUE,
+  include = TRUE
 )
 options(tinytex.verbose = TRUE)
 library(tidyverse)
 library(here)
-# library(hdrcde)
-# library(car)
 library(patchwork)
 library(kableExtra)
 # Jmisc::sourceAll(here::here("R/sources"))
@@ -383,16 +381,58 @@ Although full details for data processing and dimension reduction are provided i
 ```{r electricityembedding, fig.align = 'center', out.width = "90%", fig.cap="Highest density region plots of the 2-D embedding for $3,639$ households, with each point representing the distribution of one household and colors indicating the density estimated from DC-KDE (left panel) and KDE (right panel). The black points with blue text indexing are the top 20 anomalous households found by each dimension reduction method in each row.", echo=FALSE, eval=T}
 knitr::include_graphics("figures/Electricity_2d_5levels_outliers_comparison_5ml_r180.png")
 ```
-```{r electricityoutliers}
-load("figures/Electricity_2d_hdrtable_umapvs4ml_radius20_r180.rda")
-tabletop20
+```{r electricityoutliers, eval=F}
+load("figures/Electricity_2d_table_outlier_idcompare_5ml_radius20_r180.rda")
+# f20cols <- paste0("\\", f20cols)
+# tabletop20 <- 
+  f20 %>% 
+  kableExtra::kbl(caption = "Top 20 anomalous household IDs using density estimates of different 2-dimensional embedding. The left five columns are anomalies by DC-KDE, while the right five columns are anomalies using KDE. The blue colored IDs are IDs that are detected over three times, with the darker one indicating five times and the lighter one indicating four times.", booktabs = TRUE, digits = 3, escape = FALSE, col.names = NULL, align=rep('c', 10)) %>%
+  # kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = TRUE) %>%
+  add_header_above(c(" " = 1, rep(c("ISOMAP" = 1, "LLE" = 1, "Laplacian Eigenmaps" = 1, "t-SNE" = 1, "UMAP" = 1), 2))) %>% 
+  add_header_above(c(" " = 1, "DC-KDE" = 5, "KDE" = 5)) %>%
+  # row_spec(1, bold = TRUE) %>% 
+  column_spec(1, bold = FALSE) %>% 
+  column_spec(2, bold = freqmax[,2], color = f20cols[,2]) %>% 
+  column_spec(3, bold = freqmax[,3], color = f20cols[,3]) %>% 
+  column_spec(4, bold = freqmax[,4], color = f20cols[,4]) %>% 
+  column_spec(5, bold = freqmax[,5], color = f20cols[,5]) %>% 
+  column_spec(6, bold = freqmax[,6], color = f20cols[,6]) %>% 
+  column_spec(7, bold = freqmax[,7], color = f20cols[,7], border_left = TRUE) %>% 
+  column_spec(8, bold = freqmax[,8], color = f20cols[,8]) %>% # background = grey(0.9)
+  column_spec(9, bold = freqmax[,9], color = f20cols[,9]) %>% 
+  column_spec(10, bold = freqmax[,10], color = f20cols[,10]) %>% 
+  column_spec(11, bold = freqmax[,11], color = f20cols[,11])
+# tabletop20
 ```
 
 \autoref{fig:electricityembedding} presents the highest density regions of the 2-dimensional embedding for each dimension reduction method, ISOMAP, LLE, Laplacian Eigenmaps, t-SNE and UMAP, with the left panels showing the densities estimated with the distortion corrected KDE and the right panels showing those estimate with KDE. There are six density regions colored in the plot, $1\%$, $5\%$, $50\%$, $90\%$, $99\%$ and $>99\%$, and darker colors indicate lower density regions. The black points indexed with blue household IDs are the top 20 anomalies with the lowest densities. First of all, for the same electricity data, each dimension reduction method generates quite different embeddings, meaning that distortions exist in these embeddings. When comparing row-wise for the same embedding, it can be seen that ISOMAP and LLE give similar anomalies while the outliers are more clustered for Laplacian Eigenmaps, t-SNE and UMAP with DC-KDE compared with the KDE. As the anomalous IDs are not easy to distinguish in the plots, we list them in \autoref{tab:electricityoutliers} and highlight the IDs that are most identifies as anomalies. The darker blue points are those households that are identified five times out of the ten cases shown in \autoref{fig:electricityembedding}, and lighter blue points are those identified four times. Again, KDE with distortion correction methods find more anomalies in common regardless of the dimension reduction methods, compared with KDE where only LLE could find similar anomalies to other cases. Without distortion correction, the density estimates are different not only in scaling, but also shows inconsistency in the rank of density estimates.
 
 ```{r electricityhdrpercent}
 load("figures/Electricity_2d_hdrtable_umapvs4ml_radius20_r180.rda")
-table_outlierpercent
+# table_outlierpercent <- 
+hdrtable %>% 
+  head(n = 2) %>% 
+  `rownames<-` (c(">99\\% HDR", "99\\% HDR")) %>% 
+  kableExtra::kbl(caption = "Proportion of the same outliers as UMAP in two highest density regions when estimating densities for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE, align = "c",
+                  # col.names = c(rep(c("DC-KDE", "KDE"), 4))
+  ) %>%
+  # kable_classic("striped") %>%
+  kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = TRUE) %>%
+  add_header_above(c("HDRs" = 1, rep(c("DC-KDE" = 1, "KDE" = 1), 4))) %>%
+  add_header_above(c(" " = 1, "ISOMAP" = 2, "LLE" = 2, "Laplacian Eigenmaps" = 2, "t-SNE" = 2)) %>% 
+  # column_spec(1, bold = TRUE) %>% 
+  # add_indent(1:6) %>% 
+  column_spec(2, bold = hdrmax[,1]) %>% 
+  column_spec(3, bold = hdrmax[,2]) %>% 
+  column_spec(4, bold = hdrmax[,3]) %>% 
+  column_spec(5, bold = hdrmax[,4]) %>% 
+  column_spec(6, bold = hdrmax[,5]) %>% 
+  column_spec(7, bold = hdrmax[,6]) %>% 
+  column_spec(8, bold = hdrmax[,7]) %>% 
+  column_spec(2*(1:4), border_left = T, background = grey(0.9))
+# table_outlierpercent
 ```
 ```{r electricityrank, fig.align = 'center', out.width = "90%", fig.cap="Highest density region plots of the 2-D embedding for $3,639$ households, with each point representing the distribution of one household and colors indicating the density estimated from DC-KDE (left panel) and KDE (right panel). The black points with blue text indexing are the top 20 anomalous households found by each dimension reduction method in each row.", echo=FALSE, eval=T}
 knitr::include_graphics("figures/Electricity_2d_rankplot_3639id_umapvs4ml_radius20_r180.png")
@@ -402,11 +442,11 @@ Unlike the simulations where the ground truth densities are known, in the applic
 \autoref{fig:electricityrank} presents the visualization of density ranking in log scale. The grey shading area covers the density rank from 1 to 20, which are the anomalies listed in \autoref{tab:electricityoutliers}. Again, the plots show the robustness of density estimated with distortion correction regardless of the dimension reduction methods.
 
 
-```{r electricityoutliers, fig.align = 'center', out.width = "90%", fig.cap="Electricity usage plots of all 535 days for the most typical household and two anomalies in rows and KDE with distortion correction (left panel) and KDE (right panel) in columns.", echo = FALSE, eval=T}
+```{r electricityraw, fig.align = 'center', out.width = "90%", fig.cap="Electricity usage plots of all 535 days for the most typical household and two anomalies in rows and KDE with distortion correction (left panel) and KDE (right panel) in columns.", echo = FALSE, eval=T}
 knitr::include_graphics("figures/Electricity_2d_compare4id_1typical_3anomalous.png")
 ```
 
-Now let us take a close look at the typical and anomalous distributions of households. According to \autore{tab:electricityoutliers}, we pick the three dark blue indexes that are identified as anomalies the most times, which are Household 3161, 4546, 7049, as well as the most typical household with the highest density estimate, Households 2396, for illustration. Their half-hourly electricity demands across the entire trial period are plotted in \autoref{fig:electricityoutliers}. Compared with ID 2396, the other three households show different usage patterns. ID 3161 has much less electricity usage in summers, mostly below 1kWh, than in winters, above 3kWh. As this data set does not include the energy used for cooling or heating systems, it is possible that there are other large electronic appliances used in winter for this household. The other two anomalous IDs, 4546 and 7049, however, have nearly zero kWh electricity consumption for many days and some spikes for other days. It is likely that these two households are not occupied all the time during the trial and could be used as a AirBnb place or holiday place.
+Now let us take a close look at the typical and anomalous distributions of households. According to \autoref{tab:electricityoutliers}, we pick the three dark blue indexes that are identified as anomalies the most times, which are Household 3161, 4546, 7049, as well as the most typical household with the highest density estimate, Households 2396, for illustration. Their half-hourly electricity demands across the entire trial period are plotted in \autoref{fig:electricityraw}. Compared with ID 2396, the other three households show different usage patterns. ID 3161 has much less electricity usage in summers, mostly below 1kWh, than in winters, above 3kWh. As this data set does not include the energy used for cooling or heating systems, it is possible that there are other large electronic appliances used in winter for this household. The other two anomalous IDs, 4546 and 7049, however, have nearly zero kWh electricity consumption for many days and some spikes for other days. It is likely that these two households are not occupied all the time during the trial and could be used as a AirBnb place or holiday place.
 
 ```{r electricityhdrsvkde, fig.align = 'center', out.width = "90%", fig.cap="Quantile region plots of electricity demand against the time of week for one typical household 1472 and two anomalies, 7049 and 5136. The day-of-the-week patterns is much more different for Household 7049 compared with 5136, the latter of which does not have the obvious meal time related usage patterens.", echo = FALSE, eval=T}
 knitr::include_graphics("figures/Electricity_2d_plot_hdrbox_7dow_4id_1typical_3anomalous.png")
