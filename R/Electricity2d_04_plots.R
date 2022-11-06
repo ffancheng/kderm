@@ -316,7 +316,7 @@ table_outlierpercent <-
 hdrtable %>% 
   head(n = 2) %>% 
   `rownames<-` (c(">99\\% HDR", "99\\% HDR")) %>% 
-  kableExtra::kbl(caption = "Percentage of the same outliers as UMAP in two highest density regions when estimating densities for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE, align = "c",
+  kableExtra::kbl(caption = "Proportion of the same outliers as UMAP in two highest density regions when estimating densities for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE, align = "c",
                   # col.names = c(rep(c("DC-KDE", "KDE"), 4))
   ) %>%
   kable_classic("striped") %>% 
