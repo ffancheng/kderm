@@ -186,13 +186,9 @@ freqmax <- apply(f20, 2, function(x) x %in% f20rep$.) # highlight all ids that a
 freqmax1 <- apply(f20, 2, function(x) x %in% f20rep$.[f20rep$Freq == 5])
 freqmax2 <- apply(f20, 2, function(x) x %in% f20rep$.[f20rep$Freq == 4])
 f20cols <- freqmax1*2 + freqmax2
-f20cols <- f20cols %>% 
-  as_tibble() %>%
-  mutate_all(as.character) %>% 
-  mutate_all(funs(str_replace(., "1", blues9[5]))) %>% 
-  mutate_all(funs(str_replace(., "2", blues9[9]))) %>% 
-  as.matrix()
-f20cols[f20cols == "0"] <- "\#0000ffff"
+f20cols[f20cols == 0] <- "#000000"
+f20cols[f20cols == 1] <- blues9[5]
+f20cols[f20cols == 2] <- blues9[7]
 tabletop20 <- f20 %>% 
   kableExtra::kbl(caption = "Top 20 anomalous household IDs using density estimates of different 2-dimensional embedding. The left five columns are anomalies by DC-KDE, while the right five columns are anomalies using KDE. The blue colored IDs are IDs that are detected over three times, with the darker one indicating five times and the lighter one indicating four times.", booktabs = TRUE, digits = 3, escape = FALSE, col.names = NULL, align=rep('c', 10)) %>%
   kable_styling(latex_options = "scale_down") %>%
@@ -203,12 +199,12 @@ tabletop20 <- f20 %>%
   column_spec(1, bold = FALSE) %>% 
   column_spec(2, bold = freqmax[,2], color = f20cols[,2]) %>% 
   column_spec(3, bold = freqmax[,3], color = f20cols[,3]) %>% 
-  column_spec(4, bold = freqmax[,4], color = f20cols[,4]) %>% 
+  column_spec(4, bold = freqmax[,4], color = f20cols[,4], width = "1cm") %>% 
   column_spec(5, bold = freqmax[,5], color = f20cols[,5]) %>% 
   column_spec(6, bold = freqmax[,6], color = f20cols[,6]) %>% 
   column_spec(7, bold = freqmax[,7], color = f20cols[,7], border_left = TRUE) %>% 
   column_spec(8, bold = freqmax[,8], color = f20cols[,8]) %>% # background = grey(0.9)
-  column_spec(9, bold = freqmax[,9], color = f20cols[,9]) %>% 
+  column_spec(9, bold = freqmax[,9], color = f20cols[,9], width = "1cm") %>% 
   column_spec(10, bold = freqmax[,10], color = f20cols[,10]) %>% 
   column_spec(11, bold = freqmax[,11], color = f20cols[,11])
 tabletop20

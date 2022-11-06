@@ -381,15 +381,16 @@ Although full details for data processing and dimension reduction are provided i
 ```{r electricityembedding, fig.align = 'center', out.width = "90%", fig.cap="Highest density region plots of the 2-D embedding for $3,639$ households, with each point representing the distribution of one household and colors indicating the density estimated from DC-KDE (left panel) and KDE (right panel). The black points with blue text indexing are the top 20 anomalous households found by each dimension reduction method in each row.", echo=FALSE, eval=T}
 knitr::include_graphics("figures/Electricity_2d_5levels_outliers_comparison_5ml_r180.png")
 ```
-```{r electricityoutliers, eval=F}
+```{r electricityoutliers, eval=T}
 load("figures/Electricity_2d_table_outlier_idcompare_5ml_radius20_r180.rda")
-# f20cols <- paste0("\\", f20cols)
 # tabletop20 <- 
   f20 %>% 
-  kableExtra::kbl(caption = "Top 20 anomalous household IDs using density estimates of different 2-dimensional embedding. The left five columns are anomalies by DC-KDE, while the right five columns are anomalies using KDE. The blue colored IDs are IDs that are detected over three times, with the darker one indicating five times and the lighter one indicating four times.", booktabs = TRUE, digits = 3, escape = FALSE, col.names = NULL, align=rep('c', 10)) %>%
-  # kable_styling(latex_options = "scale_down") %>%
+  kableExtra::kbl(caption = "Top 20 anomalous household IDs using density estimates of different 2-dimensional embedding. The left five columns are anomalies by DC-KDE, while the right five columns are anomalies using KDE. The blue colored IDs are IDs that are detected over three times, with the darker one indicating five times and the lighter one indicating four times.", booktabs = TRUE, digits = 3, escape = FALSE, align=rep('c', 10),
+                  col.names = c(" ", rep(c("ISOMAP", "LLE", "Laplacian Eigenmaps", "t-SNE", "UMAP"), 2))
+                  ) %>%
+  kable_styling(latex_options = "scale_down") %>%
   kable_paper(full_width = TRUE) %>%
-  add_header_above(c(" " = 1, rep(c("ISOMAP" = 1, "LLE" = 1, "Laplacian Eigenmaps" = 1, "t-SNE" = 1, "UMAP" = 1), 2))) %>% 
+  # add_header_above(c(" " = 1, rep(c("ISOMAP" = 1, "LLE" = 1, "Laplacian Eigenmaps" = 1, "t-SNE" = 1, "UMAP" = 1), 2))) %>% 
   add_header_above(c(" " = 1, "DC-KDE" = 5, "KDE" = 5)) %>%
   # row_spec(1, bold = TRUE) %>% 
   column_spec(1, bold = FALSE) %>% 
@@ -399,7 +400,7 @@ load("figures/Electricity_2d_table_outlier_idcompare_5ml_radius20_r180.rda")
   column_spec(5, bold = freqmax[,5], color = f20cols[,5]) %>% 
   column_spec(6, bold = freqmax[,6], color = f20cols[,6]) %>% 
   column_spec(7, bold = freqmax[,7], color = f20cols[,7], border_left = TRUE) %>% 
-  column_spec(8, bold = freqmax[,8], color = f20cols[,8]) %>% # background = grey(0.9)
+  column_spec(8, bold = freqmax[,8], color = f20cols[,8]) %>%
   column_spec(9, bold = freqmax[,9], color = f20cols[,9]) %>% 
   column_spec(10, bold = freqmax[,10], color = f20cols[,10]) %>% 
   column_spec(11, bold = freqmax[,11], color = f20cols[,11])
@@ -410,17 +411,18 @@ load("figures/Electricity_2d_table_outlier_idcompare_5ml_radius20_r180.rda")
 
 ```{r electricityhdrpercent}
 load("figures/Electricity_2d_hdrtable_umapvs4ml_radius20_r180.rda")
+# hdrmax <- hdrmax[1:2,]
 # table_outlierpercent <- 
 hdrtable %>% 
   head(n = 2) %>% 
   `rownames<-` (c(">99\\% HDR", "99\\% HDR")) %>% 
   kableExtra::kbl(caption = "Proportion of the same outliers as UMAP in two highest density regions when estimating densities for four manifold learning embeddings.", booktabs = TRUE, digits = 3, escape = FALSE, align = "c",
-                  # col.names = c(rep(c("DC-KDE", "KDE"), 4))
+                  col.names = c(rep(c("DC-KDE", "KDE"), 4))
   ) %>%
   # kable_classic("striped") %>%
-  kable_styling(latex_options = "scale_down") %>%
-  kable_paper(full_width = TRUE) %>%
-  add_header_above(c("HDRs" = 1, rep(c("DC-KDE" = 1, "KDE" = 1), 4))) %>%
+  # kable_styling(latex_options = "scale_down") %>%
+  kable_paper(full_width = FALSE) %>%
+  # add_header_above(c("HDRs" = 1, rep(c("DC-KDE" = 1, "KDE" = 1), 4))) %>%
   add_header_above(c(" " = 1, "ISOMAP" = 2, "LLE" = 2, "Laplacian Eigenmaps" = 2, "t-SNE" = 2)) %>% 
   # column_spec(1, bold = TRUE) %>% 
   # add_indent(1:6) %>% 
@@ -452,8 +454,8 @@ Now let us take a close look at the typical and anomalous distributions of house
 knitr::include_graphics("figures/Electricity_2d_plot_hdrbox_7dow_4id_1typical_3anomalous.png")
 ```
 
-Further insights could be gained by comparing the quantile region plots of electricity demand against the time of the week for the same typical or anomalous households in \autoref{fig:electricityoutliers}. The distribution of the typical households in the top panel has shown a repeated period-of-the-week usage pattern, with higher usage during mealtime on all seven days of the week and slightly higher usage for weekends.
-This repeated pattern in a week window is also shown in some days of week for household ID 3161 with small spikes at noon and midnight but not on Fridays and Saturdays. As for the bottom two households, the middle row in \autoref{fig:electricityhdrsfixed} shows a distribution with zero median and a $75\%$ quantile of 1kWh from around 9pm to 6am, while the distributions for ID 7049 does not have an obvious pattern across different periods of the week. These findings show that distortion correction methods work well in estimating the densities of the electricity usage and detecting anomalous households in the smart meter data despite the various embeddings from different dimension reduction methods.
+Further insights could be gained by comparing the quantile region plots of electricity demand against the time of the week for the same typical or anomalous households in \autoref{fig:electricityraw}. The distribution of the typical households in the top panel has shown a repeated period-of-the-week usage pattern, with higher usage during mealtime on all seven days of the week and slightly higher usage for weekends.
+This repeated pattern in a week window is also shown in some days of week for household ID 3161 with small spikes at noon and midnight but not on Fridays and Saturdays. As for the bottom two households, the middle row in \autoref{fig:electricityhdrsvkde} shows a distribution with zero median and a $75\%$ quantile of 1kWh from around 9pm to 6am, while the distributions for ID 7049 does not have an obvious pattern across different periods of the week. These findings show that distortion correction methods work well in estimating the densities of the electricity usage and detecting anomalous households in the smart meter data despite the various embeddings from different dimension reduction methods.
 
 # Conclusions {#conclusion}
 
