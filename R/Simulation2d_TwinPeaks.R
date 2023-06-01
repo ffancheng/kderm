@@ -566,16 +566,16 @@ p
 
 
 # ISOMAP only for slides
-((p_den_isomap + labs(x = "", y = "ISOMAP", title = "True density") ) |
-    (p_isomap$p + labs(x = "", y = "", title = "DC-KDE") + noytext) |
-    (p_hdr_isomap$p + labs(x = "", y = "", title = "KDE") + noytext)) +
+((p_den_le + labs(x = "", y = "Laplacian Eigenmaps", title = "True density") ) |
+    (p_le$p + labs(x = "", y = "", title = "DC-KDE") + noytext) |
+    (p_hdr_le$p + labs(x = "", y = "", title = "KDE") + noytext)) +
   plot_layout(guides = 'collect') &
   scale_x_continuous(n.breaks = 4) &
   scale_y_continuous(n.breaks = 4) &
   theme(legend.direction = "horizontal", legend.position = "bottom", 
         legend.box = "horizontal",
         plot.title = element_text(hjust = 0.5, face = "bold"))
-# ggsave(paste0("paper/figures/", mapping, N,"_5levels_outliers_comparison_isomap_3cases_r", format(r, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
+# ggsave(paste0("paper/figures/", mapping, N,"_5levels_outliers_comparison_le_3cases_r", format(r, decimal.mark = "_"), ".png"), width = 12, height = 5, dpi = 300)
 
 
 
