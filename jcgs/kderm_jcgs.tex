@@ -1,0 +1,824 @@
+% !TeX program = pdfLaTeX
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx,psfrag,epsf}
+\usepackage{enumerate}
+\usepackage{natbib}
+\usepackage{textcomp}
+\usepackage[hyphens]{url} % not crucial - just used below for the URL
+\usepackage{hyperref}
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+%\pdfminorversion=4
+% NOTE: To produce blinded version, replace "0" with "1" below.
+\newcommand{\blind}{0}
+
+% DON'T change margins - should be 1 inch all around.
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-.5in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.3in}%
+\addtolength{\topmargin}{-.8in}%
+
+%% load any required packages here
+
+
+
+% Pandoc citation processing
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+% for Pandoc 2.8 to 2.10.1
+\newenvironment{cslreferences}%
+  {}%
+  {\par}
+% For Pandoc 2.11+
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1 \everypar{\setlength{\hangindent}{\cslhangindent}}\ignorespaces\fi
+  % set entry spacing
+  \ifnum #2 > 0
+  \setlength{\parskip}{#2\baselineskip}
+  \fi
+ }%
+ {}
+\usepackage{calc} % for calculating minipage widths
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+%% Any special functions or other packages can be loaded here.
+\usepackage{tabu,placeins,algorithmic}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\urlstyle{tt}  % use monospace font for urls
+\usepackage[cal = txupr]{mathalpha}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+\usepackage{mathtools}
+\mathtoolsset{showonlyrefs}
+\usepackage{amsfonts,amssymb}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Section}
+% \def\equationautorefname~#1\null{Equation~(#1)\null} % NOT showing Equation 1, but Section 2.1
+\usepackage{bm}
+\DeclareMathOperator\supp{supp}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+
+\begin{document}
+
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\if0\blind
+{
+  \title{\bf Distortion corrected kernel density estimate on Riemannian manifolds}
+
+  \author{
+        Fan Cheng \thanks{\href{mailto:Fan.Cheng@monash.edu}{\nolinkurl{Fan.Cheng@monash.edu}}} \\
+    Monash University\\
+     and \\     Rob J Hyndman \\
+    Monash University\\
+     and \\     Anastasios Panagiotelis \\
+    The University of Sydney\\
+      }
+  \maketitle
+} \fi
+
+\if1\blind
+{
+  \bigskip
+  \bigskip
+  \bigskip
+  \begin{center}
+    {\LARGE\bf Distortion corrected kernel density estimate on Riemannian manifolds}
+  \end{center}
+  \medskip
+} \fi
+
+\bigskip
+\begin{abstract}
+Manifold learning can be used to obtain a low-dimensional representation of the underlying Riemannian manifold given the high-dimensional data. However, kernel density estimates of the low-dimensional embedding with a fixed bandwidth fail to account for the way manifold learning algorithms distort the geometry of the Riemannian manifold. We propose a novel distortion-corrected kernel density estimator (DC-KDE) for any manifold learning embedding by introducing the estimated Riemannian metric of each point to fix the distortion in the line and volume elements. The geometric information of the manifold guarantees a more accurate density estimation of the true manifold, which subsequently could be used for anomaly detection. To compare our proposed estimator with a fixed-bandwidth kernel density estimator, we run two simulations with 2-D data from the Gaussian mixture model mapped into a 3-D twin peaks shape and a 5-D semi-hypersphere mapped in a 100-D space. We demonstrate that the proposed DC-KDE could improve the density estimates given a good manifold learning embedding and has higher rank correlations with the true manifold density. A shiny app in R is also developed for various simulation scenarios. The proposed method is applied to density estimation in statistical manifolds of electricity usage with the Irish smart meter data. This demonstrates the estimator's capability to fix the distortion of the manifold geometry and a new approach to anomaly detection in high-dimensional data.
+\end{abstract}
+
+\noindent%
+{\it Keywords:} manifold learning, variable bandwidth, Riemannian metric, geodesic distance, Gaussian kernels
+\vfill
+
+\newpage
+\spacingset{1.45} % DON'T change the spacing!
+
+\hypertarget{dckdeintro}{%
+\section{Introduction}\label{dckdeintro}}
+
+Multivariate kernel density estimation (KDE see Parzen (\protect\hyperlink{ref-Parzen1962-gt}{1962}); Scott (\protect\hyperlink{ref-Scott2015-vl}{2015}) and references therein) is a fundamental tool for exploratory data analysis and unsupervised learning. Applications of KDE include finding hot spots of traffic networks in the GIS environment (\protect\hyperlink{ref-Xie2008-eb}{Xie and Yan 2008}; \protect\hyperlink{ref-Okabe2009-nb}{Okabe, Satoh, and Sugihara 2009}), automatic detection in visual surveillance systems (\protect\hyperlink{ref-Elgammal2002-cw}{Elgammal et al. 2002}), wind power density detection (\protect\hyperlink{ref-Jeon2012-ac}{Jeon and Taylor 2012}) and prime prediction via Twitter messages (\protect\hyperlink{ref-Gerber2014-tq}{Gerber 2014}). For \(m\)-dimensional data where \(m\) is even of moderate size, KDE is challenging due to the well-known curse of dimensionality. However, the manifold hypothesis suggests that many high-dimensional datasets belong to a \(d\)-dimensional manifold \(M\) where \(d\ll m\). The problem of KDE on manifolds has been well studied in Hendriks (\protect\hyperlink{ref-Hendriks1990-bt}{1990}), Izenman (\protect\hyperlink{ref-Izenman1991-cj}{1991}), Pelletier (\protect\hyperlink{ref-Pelletier2005-vu}{2005}), Henry, Muñoz, and Rodríguez (\protect\hyperlink{ref-Henry2013-da}{2013}), and Berenfeld, Rosa, and Rousseau (\protect\hyperlink{ref-Berenfeld2022-fd}{2022}). However, in these settings, it is assumed that the underlying manifold is known, which is rarely true in practice. Our objective in this paper is to propose KDE for data that lie on some unknown manifold.
+
+When dealing with data that lie on a manifold, it is common to use dimension-reduction techniques. These algorithms which include ISOMAP, LLE, t-SNE, and UMAP among others, can be thought of as a mapping \(\psi:M\rightarrow \mathbb{R}^d\) that take points on the manifold \(\pmb{p}\) to \(d\)-dimensional vectors \(\pmb{y}\). Details of these algorithms are summarized in Cayton (\protect\hyperlink{ref-Cayton2005-dp}{2005}), Lee and Verleysen (\protect\hyperlink{ref-Lee2007-wq}{2007}), Izenman (\protect\hyperlink{ref-Izenman2012-mx}{2012}), and Cheng, Panagiotelis, and Hyndman (\protect\hyperlink{ref-Cheng2021-dh}{2021}). One could easily apply KDE to the output vectors \(\pmb{y}\). However, this would be a misleading representation of the density of points as they lie on the manifold. To see how, consider that the density on the manifold must be defined with respect to an appropriate volume form, that is
+\[Pr(\pmb{p}\in\mathcal{A})=\int_\mathcal{A} f(\pmb{p}) dvol_M,\]
+where \(f\) is the probability density function on the manifold, \(\pmb{p}\) is a point on the manifold, \(\mathcal{A}\) is some region on the manifold and \(dvol_M\) is a volume form on the manifold \(M\). By a change of variables, this would imply the following density for \(\pmb{y}\),
+\begin{equation}
+\label{eq:changevar}
+Pr(\pmb{y}\in\psi(\mathcal{A}))=\int\limits_{\psi(\mathcal{A})} (f\circ\psi^{-1})(\pmb{y})|\pmb{H}(\pmb{y})|^{1/2}d\pmb{y},
+\end{equation}
+where \(\psi(\mathcal{A})\) is the image of \(\mathcal{A}\) under \(\psi\) and \(\pmb{H}(\pmb{y})\) is the Riemannian metric expressed in local coordinates given by the mapping \(\psi\). It can be seen that the density in terms of \(\pmb{y}\), differs from the density on the manifold due to the term \(|\pmb{H}(\pmb{y})|^{1/2}\) which can be considered roughly analogous to the Jacobian determinant. Since \(\psi\) will typically be a non-linear function, the value of \(|\pmb{H}(\pmb{y})|^{1/2}\) will change across the manifold, in a way that measures the distortion induced by the dimension reduction algorithm. Notably, different choices of dimension reduction algorithm, imply different \(\psi\), meaning that if KDE is applied to the output \(\pmb{y}\) coming from two different dimension reduction algorithms, this could lead to two very different sets of conclusions about the density of the same point.
+
+In this paper, we propose a new KDE. Our estimator is also based on the output of dimension reduction algorithms but accounts for the distortion induced by the algorithm. For this reason, we refer to it as the distortion-corrected KDE (DC-KDE). Critical to our estimator, is obtaining an estimate of \(|\pmb{H}(\pmb{y})|^{1/2}\) for this purpose we use the Learn Metric algorithm of Perrault-Joncas and Meila (\protect\hyperlink{ref-Perrault-Joncas2013-pq}{2013}) which augments any dimension reduction algorithm with an estimate of the Riemannian at each data point. One particular downstream task that we are interested in is anomaly detection, where anomalies are identified as points of low density. In a number of simulation studies, we demonstrate two benefits that arise when using our new estimator. The first is that using distortion correction leads to more accurate density estimates and better detection of anomalies compared to the case where distortion correction is not used. The second is that when the estimates are found using different dimension reduction algorithms (e.g.~ISOMAP v UMAP), the results regarding the density estimates and the detection of anomalies are robust only when distortion correction is applied.
+
+In terms of data visualization, our approach allows a two or three-dimensional scatterplot of \(\pmb{y}\) to be augmented by coloring points according to the magnitude of the density estimate. In this way, the user is able to tell whether a region that has a cluster of points in the output space \(\pmb{y}\) is truly a high-density region or if instead, this is an artifact of the dimension reduction algorithm `squeezing' points together. This is particularly pertinent in the case of t-SNE which can form clusters of points even when no such clusters exist in the underlying data. Furthermore, our estimator can be used for manifolds with elements that are a variety of objects, for instance, rotational frames or images. In our application we consider a probabilistic manifold whose elements are densities, meaning that we estimate a density of densities. Finally, our proposed estimator also takes the form of a KDE with variable bandwidth meaning that it also contributes to extensive literature on this topic (see Section 6.6 of \protect\hyperlink{ref-Scott2015-vl}{Scott 2015} for a summary).
+
+The rest of the paper is organized as follows. In \autoref{kderm}, we present our distortion-corrected kernel density estimator for Riemannian manifolds. Our estimator combines insights from two existing papers, the first is Pelletier (\protect\hyperlink{ref-Pelletier2005-vu}{2005}) who propose a KDE for data on manifolds that are known, the second is Perrault-Joncas and Meila (\protect\hyperlink{ref-Perrault-Joncas2013-pq}{2013}) who propose the Learn Metric algorithm which we use to estimate the distortion induced by a dimension reduction algorithm. \autoref{simulation} is composed of two simulations; the first deals with 2-dimensional data from a Gaussian mixture model mapped onto a 3-dimensional `twin peaks' manifold and the second with a 5-dimensional semi-hypersphere data embedded into a 100-dimensional space. \autoref{dckdeapplication} contains an application to an Irish smart meter dataset that visualizes and identifies households with an anomalous distribution of energy usage. Conclusions and discussions are presented in \autoref{dckdeconclusion}. Some additional background on important terms in Riemannian geometry required to understand our proposed method is provided in \autoref{riemgeo}.
+
+\hypertarget{kderm}{%
+\section{Distortion Corrected Kernel density estimate on Riemannian manifolds}\label{kderm}}
+
+In this section, we introduce our method for kernel density estimation on manifolds that uses an embedding from a dimension reduction algorithm while correcting for the distortion induced by this embedding. Since some readers may be unfamiliar with the nuances of manifolds, we first discuss kernel density estimation for data in Euclidean space, then illustrate in \autoref{Pellet} how this generalizes to the estimator of Pelletier (\protect\hyperlink{ref-Pelletier2005-vu}{2005}), which can be applied when the data lie on some known manifold. In \autoref{MetLearn}, we describe the Learn Metric algorithm of Perrault-Joncas and Meila (\protect\hyperlink{ref-Perrault-Joncas2013-pq}{2013}), which augments an embedding derived from a dimension reduction algorithm with an estimate of the Riemannian metric expressed in local coordinates. By combining elements from the work of Pelletier (\protect\hyperlink{ref-Pelletier2005-vu}{2005}) and Perrault-Joncas and Meila (\protect\hyperlink{ref-Perrault-Joncas2013-pq}{2013}), we derive our own novel distortion-corrected kernel density estimate in \autoref{DCKDE}. To keep this section as succinct as possible, we do not define concepts such as manifolds, charts, geodesic distance, etc., but provide this information for readers unfamiliar with differential geometry in \autoref{riemgeo}.
+
+In the following, we denote \(M\) as the \(d\)-dimensional manifold from which our data are sampled. Points on this manifold are denoted \(\pmb{p}\) in general, with \(\pmb{p}_1,\dots,\pmb{p}_n\) denoting the observed sample. Often \(\pmb{p}_i\) will be high-dimensional vectors such that \(\pmb{p}_i\in\mathbb{R}^m\) with \(m\gg d\), however, this need not be the case. For instance, \(\pmb{p}_i\) may be probability distributions on a statistical manifold. The methods we propose for estimating the density at each \(\pmb{p}_i\) only require some sense of distance between the `input' points, \(d(\pmb{p}_i,\pmb{p}_j)\), such that we can apply dimension reduction algorithms to obtain an `output' embedding, \(\pmb{y}_1,\dots,\pmb{y}_n\), where \(\pmb{y}_i\in\mathbb{R}^d\). We will denote this embedding as \(\pmb{y}_i=\psi(\pmb{p}_i)\). Finally, we denote by \(\lambda\) the Lebesgue measure of \(\mathbb{R}^d\), letting \(\|\cdot\|\) be the usual Euclidean norm and following Pelletier (\protect\hyperlink{ref-Pelletier2005-vu}{2005}), we make the following assumptions about the kernel function \(K:\mathbb{R}_+\rightarrow\mathbb{R}\),
+\begin{equation}
+\begin{aligned}
+\label{eq:kernelcondition}
+& (i) \int_{\mathbb{R}^{d}} K(\|\pmb{y}\|) \mathrm{d} \lambda(\pmb{y})=1;
+(ii) \int_{\mathbb{R}^{d}} \pmb{y} K(\|\pmb{y}\|) \mathrm{d} \lambda(\pmb{y})=0;
+(iii) \int_{\mathbb{R}^{d}}\|\pmb{y}\|^{2} K(\|\pmb{y}\|) \mathrm{d} \lambda(\pmb{y})<\infty; \\
+& (iv) \supp K=[0; 1]; 
+(v) \sup K(\|\pmb{y}\|)=K(0).
+\end{aligned}
+\end{equation}
+
+Note that these conditions are different from (and in some cases stricter than) those normally used for kernel density estimation. For instance, condition (iv) requires the support of the kernel to be bounded. The reasons for this will become clearer when we discuss the manifold setting in more detail. Also, for illustration purposes, in this section, we pay particular attention to the uniform kernel for which \(K(z)\) equals one if \(0\leq z\leq1\) and zero otherwise. In our empirical section, more general kernel functions can be, and are, employed.
+
+For data \(\pmb{y}_i\in\mathbb{R}^d\) with \(i=1,\dots,N\) and assuming a bandwidth matrix \(r\pmb{I}\) where \(r\) is a global bandwidth, then the usual kernel density estimator at a point \(\pmb{y}\) is given by
+\begin{equation}
+\label{eq:vkde}
+\hat{f}(\pmb{y})=\frac{1}{N}\sum\limits_{i=1}^N \frac{1}{r^d} K\left(\frac{\|\pmb{y}-\pmb{y}_i\|}{r}\right).
+\end{equation}
+
+The intuition behind this estimator is very clear for a uniform kernel. The density at a point \(\pmb{y}\) is equal to the proportion of sample points that lie within a ball of radius \(r\) centered at \(\pmb{y}\), times a term that ensures the density integrates to 1. In general, the bandwidth matrix need not be proportional to the identity matrix. However, the intuition remains the same, only that the ball of radius \(r\) centered at \(\pmb{y}\) is found with respect to Mahalanobis distance rather than the usual Euclidean distance. For more on kernel density estimation in the Euclidean case, see Scott (\protect\hyperlink{ref-Scott2015-vl}{2015}) and references therein. Kernel density estimators of this form can and have been applied directly on the output embedding \(\pmb{y}\), and we will consider this approach as a benchmark in \autoref{simulation}.
+
+\hypertarget{Pellet}{%
+\subsection{Kernel Density estimation on manifolds}\label{Pellet}}
+
+For kernel density estimation on a known manifold, Pelletier (\protect\hyperlink{ref-Pelletier2005-vu}{2005}) propose the following estimator,
+\begin{equation}
+\label{eq:denriem}
+\hat{f}(\pmb{p}) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d \theta_{\pmb{p}_i}(\pmb{p})} K\left(\frac{d_g(\pmb{p}, \pmb{p}_i)}{r}\right),
+\end{equation}
+
+where \(d_g(\pmb{p}, \pmb{p}_i)\) denotes the geodesic distance between two points on the manifold \(\pmb{p}\) and \(\pmb{p}_i\) and \(\theta_{\pmb{p}_i}(\pmb{p})\) is known as the volume density function. The intuition behind the term \(K\left(\frac{d_g(\pmb{p}, \pmb{p}_i)}{r}\right)\) is relatively clear. For example, for a uniform kernel, the estimator at point \(\pmb{p}\) will still depend on the proportion of sample points within a ball of radius \(r\) centered at \(\pmb{p}\). However, in this case, the geodesic distance on the manifold is used, rather than Euclidean or Mahalanobis distance. An additional technical assumption is that \(r\) is less than the injectivity radius of the manifold. A definition of the injectivity radius is given by Chavel (\protect\hyperlink{ref-Chavel2006-mp}{2006}) and also provided in the appendix. For our purposes, it is sufficient to note that this assumption precludes the possibility that the radius of a ball around \(\pmb{p}\) is so large that some points `fall inside' the ball more than once. For example on a sphere, a ball with a radius greater than half the circumference of a great circle will wrap back around the sphere. This phenomenon also explains why the kernel function must be bounded for density estimation on manifolds.
+
+The inclusion of the volume density function \(\theta_{\pmb{p}_i}(\pmb{p})\) is perhaps not as immediately clear, therefore, before providing formal details, we will briefly discuss the intuition behind the inclusion of this term. We have already highlighted that when using a uniform kernel, the kernel density estimate at a point \(\pmb{p}\) directly depends on the proportion of sample points within a ball of radius \(r\) around \(\pmb{p}\). However, the volume of this ball must also be taken into account. In Euclidean space with the usual Lebesgue measure, a radius \(r\) ball will always have the same volume regardless of its center. The same does not hold for manifolds and therefore the volume density function must be included in the KDE to ensure that the estimated density integrates to one.
+
+More formally, the volume density function can be explained as follows. Consider the exponential map around \(\pmb{p}\), given by \(exp_{\pmb{p}}(\pmb{q})\), mapping vectors in the tangent space, \(\pmb{v}\in T_{\pmb{p}}M\), to points on the manifold, \(\pmb{q}\in M\). Loosely, \(\pmb{v}\) `points' in the direction of the geodesic between \(\pmb{p}\) and \(\pmb{q}\) and traveling along this geodesic at uniform speed \(\|\pmb{v}\|\) takes place in one unit of time. Now, consider a chart \(\varphi\) mapping points in the neighborhood of \(\pmb{p}\), via the inverse of the exponential map, to these \(\pmb{v}\) vectors, expressed in some local coordinate system. The volume density function is then the square root of the determinant of the Riemannian metric expressed in this coordinate system. In proving that the estimator integrates to 1, the volume density function cancels with the term \(|\pmb{H}(\pmb{y})|^{1/2}\) in Equation \eqref{eq:changevar}, where \(\psi\) is the logarithmic map around \(\pmb{p}_i\). For more on the volume density function, see Gallot, Hulin, and Lafontaine (\protect\hyperlink{ref-Gallot2004-rc}{2004}) and Brigant and Puechmorel (\protect\hyperlink{ref-Le_Brigant2019-lj}{2019}).
+
+\hypertarget{MetLearn}{%
+\subsection{Riemannian metric estimation}\label{MetLearn}}
+
+To be able to apply the estimator of Pelletier (\protect\hyperlink{ref-Pelletier2005-vu}{2005}) to the case where the manifold is not known, but where coordinates \(\pmb{y}_i\) for \(i=1,\dots,n\) are obtained from a dimension reduction algorithm, requires an estimate of the Riemannian metric. Formally, the Riemannian metric is a symmetric and positive definite tensor field that defines an inner product on the tangent space \(T_{\pmb{p}} M\) for every point \(\pmb{p} \in M\). Using the coordinates from a dimension reduction algorithm \(\pmb{y}\), angles, distances, and volumes in this Euclidean `output space' are not the same as on the manifold since dimension reduction algorithms introduce distortions. To alleviate this issue, Perrault-Joncas and Meila (\protect\hyperlink{ref-Perrault-Joncas2013-pq}{2013}) propose a method to augment \(\pmb{y}_1,\pmb{y}_2\dots,\pmb{y}_n\) with \(d\times d\) positive definite matrices, \(\pmb{H}_1,\pmb{H}_2\dots,\pmb{H}_n\), at each data point. These matrices estimate the Riemannian metric in local coordinates defined by the dimension reduction algorithm.
+
+While full details are provided in Perrault-Joncas and Meila (\protect\hyperlink{ref-Perrault-Joncas2013-pq}{2013}), we briefly describe the Learn Metric algorithm here. There are four main steps in the algorithm. First, a weighted neighborhood graph is constructed, with edges between \(\pmb{p}_i\) and \(\pmb{p}_j\) when \(\pmb{p}_i\) is a K-nearest neighbor of \(\pmb{p}_j\) or vice versa, and edge weights depending on the distance between \(\pmb{p}_i\) and \(\pmb{p}_j\) on the manifold. Second, the discrete Laplacian on this graph \(\hat{\mathcal{L}}_{\varepsilon,n}\) is estimated (\protect\hyperlink{ref-Zhou2011-za}{Zhou and Belkin 2011}), where \(\varepsilon\) is the radius parameter for the nearest neighbor graph. Third, a dimension reduction method is applied to obtain the output embedding \(\pmb{y}_1,\dots,\pmb{y}_n\). Fourth, the Riemannian metric at each point is estimated by exploiting the connection between the Riemannian metric and the Laplace Beltrami operator (to which the graph Laplacian at Step 2 is a discrete estimator). Full details on these four steps are provided in \autoref{alg:learnmetric}. This algorithm is implemented in a Python library \emph{megaman} (\protect\hyperlink{ref-McQueen2016-xz}{McQueen et al. 2016}) although our own results are based on a re-implementation of the algorithm in \emph{R}. Two parameters, \(c=0.25\) and \(\sqrt{\varepsilon} = 0.4\), are set as suggested in the \emph{megaman} library.
+
+As pointed out by Perrault-Joncas and Meila (\protect\hyperlink{ref-Perrault-Joncas2013-pq}{2013}), dimension reduction can be carried out such that the dimension of the output vectors is larger than the intrinsic manifold dimension \(d\). In this case, the ranks of the matrices \(\pmb{H}_i\) are equal to \(d\). Using a larger embedding dimension is justified since it is in general not possible to embed a manifold of dimension \(d\) globally into \(d\)-dimensional Euclidean space. In our simulated examples, we abstract from this issue by constructing examples that can be globally embedded into \(d\)-dimesional Euclidean space. In practice, to determine the dimension of the manifold, the \emph{two-nearest neighbor estimator (TWO-NN estimator)} (\protect\hyperlink{ref-Facco2017-rl}{Facco et al. 2017}; \protect\hyperlink{ref-Denti2021-jl}{Denti et al. 2021}) can be used (See Chapter 3 of Lee and Verleysen (\protect\hyperlink{ref-Lee2007-wq}{2007}) for more about intrinsic dimension estimation). The \emph{R} library \emph{intRinsic} (\protect\hyperlink{ref-Denti2021-qc}{Denti 2021}) implements this algorithm and is used in all examples involving real data where the intrinsic dimension is unknown.
+
+\begin{algorithm}[!htb]
+  \caption{Learn metric algorithm in \cite{Perrault-Joncas2013-pq} }
+  \label{alg:learnmetric}
+  \DontPrintSemicolon
+  \SetAlgoLined
+  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}\SetKwInOut{OptParameter}{optimization parameter}
+  \Input{ high-dimensional data $\pmb{x}_i \in \mathbb{R}^s$ for all $i=1,\ldots,N$ }
+  \Output{ low-dimensional data $\pmb{y}_i \in \mathbb{R}^d$ and its Riemannian metric $\pmb{H}_i$ for all $i=1,\ldots,N$ }
+  \Parameter{ embedding dimension $d$, bandwidth parameter $\sqrt{\varepsilon}$, manifold learning algorithm EMBED }
+  \OptParameter{ manifold learning parameters in EMBED }
+  \BlankLine
+  \begin{algorithmic}[1]
+
+  \STATE Construct a weighted neighborhood graph $\mathcal{G}_{w,\varepsilon}$ with weight matrix $\pmb{W}$ where $w_{i,j}=\exp(-\frac{1}{\varepsilon}\|\pmb{x}_i-\pmb{x}_j\|^2)$ for data points $\pmb{x}_i,\pmb{x}_j \in \mathbb{R}^s$;
+
+  \STATE Calculate the $N\times N$ geometric graph Laplacian $\widetilde{\mathcal{L}}_{\varepsilon,N}$ by
+  $$
+  \widetilde{\mathcal{L}}_{\varepsilon,N} = 1/(c\varepsilon)(\widetilde{D}^{-1} \widetilde{W} - I_N),
+  $$
+  where $\widetilde{D}=diag{\widetilde{W}\pmb{1}}$, $\widetilde{W} = D^{-1}WD^{-1}$, and $D = diag{W\pmb{1}}$;
+
+  \STATE Embed all data point $\pmb{X}\in \mathbb{R}^s$ to embedding coordinates $\pmb{Y}=(\pmb{y}^1,\dots,\pmb{y}^d)^\prime$ by any existing manifold learning algorithm EMBED;
+  
+  \STATE Obtain the $d\times d\times N$ tensor $\pmb{\tilde{H}}$ by applying the graph Laplacian $\widetilde{\mathcal{L}}_{\sqrt{\varepsilon},N}$ to the embedding coordinates matrix $\pmb{Y}$ with elements in $\pmb{\tilde{H}}$ found by
+  $$
+    \pmb{\tilde{H}}^{lk \cdot} = \frac{1}{2} \left[\tilde{\mathcal{L}}_{\varepsilon, N}\left(\pmb{y}^l \odot \pmb{y}^k\right) - \pmb{y}^l \odot\left(\tilde{\mathcal{L}}_{\varepsilon, n} \pmb{y}^k\right) - \pmb{y}^k \odot\left(\tilde{\mathcal{L}}_{\varepsilon, n} \pmb{y}^l\right)\right],
+  $$
+  where $l,k=1,\dots,d$, $\pmb{\tilde{H}}^{lki}$ is the element in row $l$ and column $k$ of the inverse Riemannian corresponding to observation $i$, and the $\odot$ calculation is the element-wise product between two vectors; 
+
+  \STATE For each embedding data point $\pmb{y}_i, i=1,\dots,N$, calculate its $d\times d$ Riemannian metric $\pmb{H}_i$ as the rank $d$ pseudo inverse of $\tilde{\pmb{H}^{\cdot\cdot i}}$ below 
+  $$
+    \pmb{H}_i = \pmb{U} \pmb{\Lambda}_d^{-1} \pmb{U}^\prime,
+  $$
+  where $[\pmb{U}, \pmb{\Lambda}]$ is the eigendecomposition of the $d\times d$ matrix $\tilde{\pmb{H}^{\cdot\cdot i}}$, $\pmb{U}$ is the matrix of column eigenvectors ordered by the eigenvalues in descending order, and $\pmb{\Lambda}_d$ is a diagonal matrix containing the top $d$ largest eigenvalues.
+
+  \end{algorithmic}
+\end{algorithm}
+
+\hypertarget{DCKDE}{%
+\subsection{Distortion corrected KDE}\label{DCKDE}}
+
+With all fundamentals introduced, we can now give our novel Distortion Corrected KDE (DC-KDE) as
+\begin{equation}
+\label{eq:denestimator}
+\hat{f}(\pmb{y}_j) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{r^d} \bigg(\frac{|\det \pmb{H}_j|}{|\det \pmb{H}_i|} \bigg)^{1/2} K\bigg( \frac{\| \pmb{H}^{-1/2}_i (\pmb{y}_j - \pmb{y}_i)\|}{r} \bigg).
+\end{equation}
+
+The estimator has a similar structure to Equation \eqref{eq:denriem} with some key differences. To understand these differences, it is first critical to appreciate that the coordinates \(\pmb{H}^{-1/2}_i (\pmb{y}_j - \pmb{y}_i)\) give an embedding that is approximately isometric in a small neighborhood around the \(i^{th}\) observed point (this insight is discussed at length in Section 6.2 of Perrault-Joncas and Meila (\protect\hyperlink{ref-Perrault-Joncas2013-pq}{2013})). This is crucial for two reasons. First, this implies that the term \(\| \pmb{H}^{-1/2}_i (\pmb{y}_j - \pmb{y}_i)\|\) approximates the geodesic distance between \(\pmb{y}_i\) and \(\pmb{y}_j\). Second, the estimator in Equation \eqref{eq:denriem} is valid only when the coordinate mapping is the logarithmic map around \(\pmb{y}_i\), and it is this mapping that is approximated by \(\pmb{H}^{-1/2}_i (\pmb{y}_j - \pmb{y}_i)\). For this reason, there is a ratio of two determinants to ensure the density integrates to one, the first is a consequence of the mapping from the manifold to the coordinate system (from a dimension reduction algorithm), while the second is the transformation \(\pmb{H}^{-1/2}_i (\pmb{y}_j - \pmb{y}_i)\) which ensures that the embedding approximates the logarithmic map. Also worth noting is the resemblance between the estimator and multivariate variable bandwidth estimation (\protect\hyperlink{ref-Breiman1977-qc}{Breiman, Meisel, and Purcell 1977}; \protect\hyperlink{ref-Jones1990-oe}{Jones 1990}; \protect\hyperlink{ref-Terrell1992-ut}{Terrell and Scott 1992}).
+
+One limitation of the kernel density estimator is that the density can be estimated only at points where data have been observed since the estimator requires the Riemannian \(\pmb{H}_j\). To estimate the density at points that do not correspond to observed data, any smoothed average of nearest neighbors can be used instead. We note that the particular downstream task that we are interested in is anomaly detection for which only the density estimates at observed sample points are required since anomalies are identified as the points with the lowest density. The entire workflow is summarized in \autoref{fig:vkde}. The last two steps in \autoref{fig:vkde} are our main contributions, generating distortion-corrected KDE with adaptive Riemannian metric \(\pmb{H}_i\) at each point and computing the highest density region plots based on the density estimates for anomaly detection. Compared to the anomaly detection with a general kernel density estimator in Cheng, Panagiotelis, and Hyndman (\protect\hyperlink{ref-Cheng2021-dh}{2021}), the changes are also highlighted in blue. With this anomaly detection process, outliers based on the lowest densities could be detected more accurately regardless of the distortion in manifold learning.
+
+
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/DC-KDE} 
+
+}
+
+\caption{The proposed schematic for anomaly detection with distortion-corrected kernel density estimates.}\label{fig:vkde}
+\end{figure}
+
+\hypertarget{simulation}{%
+\section{Simulations}\label{simulation}}
+
+In this section, we examine two scenarios for both low and high dimensions to test our proposed distortion-corrected KDE. For visualization purposes, \autoref{twodgaussian} presents an example of a two-dimensional manifold embedded in 3-dimensional ambient Euclidean space. As a high-dimensional example, the second simulation in \autoref{fivedgaussian} is based on a 4-dimensional manifold embedded in a 100-dimensional ambient space. To estimate the density, we use the dimension reduction algorithms ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP. In general, we aim to highlight two advantages of our proposed distortion-corrected KDE compared to KDE applied directly to the output coordinates. First, the density estimates are closer to the ground truth when distortion correction is used, and as a consequence, distortion correction is more adept at detecting anomalies. Second, we show how density estimation and anomaly detection are more robust to a different choice of dimension reduction method when distortion correction is used.
+
+\hypertarget{twodgaussian}{%
+\subsection{Twin peaks example}\label{twodgaussian}}
+
+The simulation setup for the twin peaks example is to first generate vectors \(\pmb{v}_1,\dots,\pmb{v}_N\) for \(N=2000\) from a 2-dimensional Gaussian mixture model. The mixture has four components with different means
+\(\pmb{\mu_1}=(0.25, 0.25)^\prime, \pmb{\mu_2}=(0.25, 0.75)^\prime, \pmb{\mu_3}=(0.75, 0.25)^\prime, \pmb{\mu_4}=(0.75, 0.75)^\prime\) and the same variance-covariance matrix \(\pmb{\Sigma}_i=diag(0.016, 0.016), i=1,2,3,4\). The mixture proportions
+are equally set as \(\pi_i=0.25, i=1,2,3,4\). The two-dimensional data in \autoref{fig:metadensity} is mapped to a `twin peaks' surface via the following
+\begin{equation}
+\label{eq:twinpeak}
+\begin{array}{lcl}
+x_1 = v_1, \\
+x_2 = v_2, \\
+x_3 = \sin(\pi v_1) \tan (3 v_2).
+\end{array}
+\end{equation}
+
+The three-dimensional twin peaks mapping is shown in \autoref{fig:twinpeaks3d}. The colors in both \autoref{fig:metadensity} and \autoref{fig:twinpeaks3d} indicate the true density of the data via the twin peaks mapping, with lower density points in darker colors scattered in the outer as well as center areas.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{figures/truedensity_twinpeaks_dc_labv} 
+
+}
+
+\caption{Underlying data for the Gaussian mixture model of four kernels with means $(0.25, 0.25), (0.25, 0.75), (0.75, 0.25), (0.75, 0.75)$ and the same variance-covariance matrix $diag(0.016, 0.016)$. The colors indicate the true density of the data when they are mapped via the twin peaks function. Lower density points in darker colors are scattered both in the outer and center areas.}\label{fig:metadensity}
+\end{figure}
+
+
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.75\linewidth]{figures/scatterplot3d_twinpeaks_dc} 
+
+}
+
+\caption{Scatterplot of the 3-d twin peaks data with the same colors indicating the true density as in \autoref{fig:metadensity}.}\label{fig:twinpeaks3d}
+\end{figure}
+
+It is important to note that the \emph{true density} on the manifold is not simply a Gaussian mixture, since the mapping in Equation \eqref{eq:twinpeak} distorts the distribution. To recover the true distribution requires the correct Jacobian term for the pushforward from \(\pmb{v}\) to the volume form of twin peaks manifold. By treating the \(\pmb{v}\) as an `output' embedding from input points \(\pmb{x}\) that lie on the true manifold and applying the Learn Metric algorithm, we can obtain \(\pmb{\Gamma}_i\) for \(i=1,\dots,n\) where \(\pmb{\Gamma}_i\) is the Riemannian of the coordinate system given by \(\pmb{v}\). This notation is distinct from \(\pmb{H}_i\) which is the output of the Learn Metric algorithm for a coordinate system obtained via a dimension reduction algorithm. The true density on the manifold can be obtained as \(f(\pmb{p}_i)=f(\pmb{v}_i)|\pmb{\Gamma}_i|^{1/2}\), where \(f(\pmb{v}_i)\) is the density of a four-component mixture of normals. Knowledge of \(\pmb{v}\) and \(\pmb{\Gamma_i}\) will not be used when estimating the density but only to establish a `ground truth' for densities on the manifold. \autoref{fig:metadensity} shows the simulated \(\pmb{v}\) with color indicating the true density of data on the manifold. Anomalies are defined as points with the lowest densities shown in darker colors and with `typical' points having the highest density shown in yellow. The anomalies are found around the edges of the plot, but there is also a low-density region between the means of the four mixture components. The objective is to determine whether we can correctly identify these features without any knowledge of the true density or the \(\pmb{v}\).
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.85\linewidth]{figures/Twin Peak2000_5levels_outliers_comparison_5ml_r0_5} 
+
+}
+
+\caption{Highest density region plots of five manifold learning embeddings of the twin peaks data in each row. The top 20 outliers, highlighted in black and indexed in blue text, are found by the true manifold density (left panel), DC-KDE (middle panel), and KDE (right panel). DC-KDE finds more true outliers than KDE in all five rows.}\label{fig:tpoutliers}
+\end{figure}
+
+\autoref{fig:tpoutliers} summarizes the results. Each row of panels corresponds to a different dimension reduction technique, while the left, center and right columns correspond to density estimates for the ground truth density, distortion-corrected KDE, and KDE respectively. We set the bandwidth parameter in the DC-KDE \eqref{eq:denestimator} as \(r=0.5\). Colors show the different estimated densities at each point with anomalies shown in black with blue indexing, and higher density points shown in yellow. For many methods, the salient features of the ground truth distribution are clear regardless of whether distortion correction is applied, for example for ISOMAP, all three plots, identify a similar set of outliers and four high-density regions. On the other hand for LLE, the left panel shows that dimension reduction pulls outliers on the manifold towards the center. The distortion-corrected KDE can account for this, while KDE without distortion correction on the other hand does not correctly identify the anomalies. For t-SNE, the ground truth and distortion-corrected KDE identify four regions of high density, while a KDE estimate without distortion correction seems to identify a larger number of modes. This concurs with the common observation that t-SNE tends to output clusters even where such clusters may not be present in the underlying data.
+
+\begin{table}
+
+\caption{\label{tab:tpcors}Correlation between true density ranking and estimated density ranking for different manifold learning embeddings of the twin peak data. Distortion-corrected KDE outperforms for all dimension reduction algorithms and gives the higher rank correlation to the output of t-SNE and UMAP.}
+\centering
+\begin{tabular}[t]{l>{}l>{}l>{}l>{}l>{}l}
+\toprule
+  & ISOMAP & LLE & Laplacian.Eigenmaps & t.SNE & UMAP\\
+\midrule
+DC-KDE & \textbf{0.823} & \textbf{0.673} & \textbf{0.672} & \textbf{0.806} & \textbf{0.794}\\
+KDE & 0.798 & 0.500 & 0.606 & 0.451 & 0.469\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We can gain further insight by comparing the correlation between ranks of true densities and estimated densities from KDE with and without density correction by \autoref{tab:tpcors}. Distortion correction improves the rank correlation for all dimension reduction algorithms. In particular, while applying KDE to the output of t-SNE and UMAP leads to a moderate correlation below 0.5, applying distortion correction improves these rank correlations to values close to 0.8.
+
+\begin{figure}
+
+{\centering \includegraphics[width=1\linewidth]{figures/Twin Peak2000_densityrank_comparison_isomap_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse} 
+
+}
+
+\caption{Scatterplot of log scale ranks of true density and estimated density ranks for DC-KDE (in the left panel) and KDE (in the right panel) based on ISOMAP embedding. The colors indicate different levels of highest density regions and the shapes indicate whether the density estimators correctly classify the true anomalies. The shading contains all anomalies that are both truly and correctly identified. KDE without distortion correction gives more misclassified anomalies.}\label{fig:tpisomapden}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=1\linewidth]{figures/Twin Peak2000_densityrank_comparison_tsne_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse} 
+
+}
+
+\caption{Scatterplot of log scale ranks of true density and estimated density ranks for DC-KDE (in the left panel) and KDE (in the right panel) based on t-SNE embedding. KDE without distortion correction gives many more misclassified anomalies.}\label{fig:tptsneden}
+\end{figure}
+
+In \autoref{fig:tpisomapden}, we plot ranks of the estimated density against the true density for the ISOMAP embedding with the left panels showing results for distortion correction and the right panel showing results without distortion correction. Data are presented on a log scale to highlight anomalies. The bottom left shaded region contains all points that are truly anomalies and are identified as such (true positives), where an anomaly is defined as a point not falling within a \(99\%\) highest density region. The middle shaded region contains anomalies that are true positives in the sense of not lying in a \(90\%\) HDR. Points lying outside squares (shown as triangles) are incorrectly classified. For example, the three red triangles in the middle left of the left panel are truly anomalies since they lie outside the \(99\%\) HDR, but are not classified as such (although they are true positives if a 90\% HDR is used). Overall, the right panel contains many more misclassified anomalies, which shows that failing to apply distortion correction can have a severe impact on anomaly detection. \autoref{fig:tptsneden} shows the same plot but for t-SNE. The quality of t-SNE is worse than ISOMAP in this example therefore many more anomalies are misclassified. However, the difference between KDE with and without distortion correction is stark. These results highlight the importance of applying distortion correction especially when the quality of dimension reduction may not be high.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{figures/Twin Peak2000_density_compare_isomapvs4ml_radius8_r0_5_rank} 
+
+}
+
+\caption{Comparison of ranks of the estimated densities based on ISOMAP  and four other dimension reduction algorithms in each row. Distortion-corrected KDE (on the left panel) and KDE (on the right panel) are compared and DC-KDE shows the robustness to the use of different dimension reduction methods.}\label{fig:tpisomapvs4ml}
+\end{figure}
+
+Finally, \autoref{fig:tpisomapvs4ml} demonstrates the robustness of distortion correction methods to the use of a dimension reduction algorithm. Each row of panels compares ranks of the estimated densities based on a dimension reduction algorithm to the estimated density based on ISOMAP. The left column shows results when distortion correction is applied, and the right column when it is not applied. It can be seen that the rank correlation between estimates based on different dimension reduction algorithms is much higher when distortion correction is applied. This is critical since conclusions will be more robust to the choice of dimension reduction algorithm.
+
+\hypertarget{fivedgaussian}{%
+\subsection{Semi-hypersphere example embedded in 100-D space}\label{fivedgaussian}}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.7\linewidth]{figures/tourr_5d_semisphere} 
+
+}
+
+\caption{Scatterplot display of the animation of a 5-D tour path with shapes indexing two Gaussian mixture components and the colors showing the distance to the kernel cores. Distant points in darker colors could be seen as anomalies.}\label{fig:fivedmeta}
+\end{figure}
+
+As a high-dimensional experiment, we generate the underlying data from a 5-dimensional semi-hypersphere, embedded within 100-dimensional ambient space. To start with, we simulate vectors \((\pmb{v}_1, \dots, \pmb{v}_N)^\prime\) for \(N=10,000\) points from a 4-dimensional Gaussian mixture model with two mixture components, \(\mathcal{N}(\pmb{\mu}_1, \pmb{\Sigma}_1)\) and \(\mathcal{N}(\pmb{\mu}_2, \pmb{\Sigma}_2)\), with the same means \(\pmb{\mu}_1 = \pmb{\mu}_2 =(0, 0, 0, 0)^\prime\) and different variance-covariance matrices \(\pmb{\Sigma}_1 = diag(1,1,1,1)\) and \(\pmb{\Sigma}_2 = diag(2,2,2,2)\). The mixture proportions are set as \(\pi_1=0.99\) and \(\pi_2=0.01\). With this design, the observations from the second component tend to be outlying anomalies. The data are mapped to a hemisphere via the equation
+\(v_1^2 + v_2^2 + v_3^2 + v_4^2 + v_5^2 = r^2\) where \(v_5>0\) and \(r\) is set as \(8\).
+\autoref{fig:fivedmeta} shows a scatterplot which is a single frame from a 5-D tour path\footnote{See the animation of the 5-D grand tour at \url{https://github.com/ffancheng/kderm/blob/master/paper/figures/tourr_5d_animation.gif}.} animation using the R package \emph{tourr} (\protect\hyperlink{ref-Wickham2011-ir}{Wickham et al. 2011}). The round and triangular point shapes indicate the two mixture components \(\mathcal{N}(\pmb{\mu}_1, \pmb{\Sigma}_1)\) and
+\(\mathcal{N}(\pmb{\mu}_2, \pmb{\sigma}_2)\), and the colors indicate the distance between each point and the center of the distribution. It can be seen that the most distant points are in darker colors and triangular shapes, meaning that the most anomalous observations are generated from the second mixture component.
+
+To embed the 5-D hyper-semisphere into 100-D space, we append 95 zero columns to \(\pmb{v}_i\) so that \(\pmb{v}_i=(v_1, \dots, v_5, 0, \dots, 0), i=1,\dots,N\). Next, we rotate the \(100\)-dimensional vectors \((\pmb{v}_1, \dots, \pmb{v}_N)^\prime\) by multiplying by a randomly generated rotation matrix. To generate the rotation matrix we first simulate elements from a uniform \((0,1)\) distribution, stack them into a \(100\times 100\) matrix \(\pmb{A}\) and then take the R matrix from the QR decomposition of \(\pmb{A}\). Rotating the vectors results in input vectors that are no longer sparse. Nonetheless, the intrinsic dimension of this is still \(d=4\).
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{figures/sim4d10000_density_comparison_4ml_radius10_k200_rankdensity_circleoutlier_with1rec} 
+
+}
+
+\caption{Rank comparison between the true density and estimated density from both DC-KDE and KDE. Four manifold learning methods are used row-wise. The point shapes indicate whether they are the true outliers, and the grey shading highlights the top 1\% rank region. The colors show the distance to the center of the semisphere, with darker points being distant from the center.}\label{fig:fivedisomapden}
+\end{figure}
+
+Following similar steps to \autoref{twodgaussian}, we estimate the densities of the 4-D manifold and compare them with the ground truth density. The bandwidth parameter for the DC-KDE estimator is set as \(r=1\) for this example. In \autoref{tab:fivedcors}, the rank correlations between true densities and estimated densities from DC-KDE and KDE are presented. For ISOMAP and LLE, KDE without distortion correction has a slightly higher rank correlation with the true density than for KDE with distortion correction, but these differences are negligible and both density estimators have a very high correlation of more than 0.96. However, for Laplacian Eigenmaps and UMAP, more distortion is induced through dimension reduction, the rank correlation between estimated and true densities is close to 0 when distortion correction is not applied. In the same settings, the corresponding rank correlations are relatively high at 0.87 and 0.78 for Laplacian Eigenmaps and UMAP respectively, when distortion correction is applied.
+
+Figure \autoref{fig:fivedisomapden} is constructed in a similar fashion to \autoref{fig:tpisomapden} to show the effect of distortion correction on the detection of anomalies. As in \autoref{fig:fivedmeta}, the point shapes indicate which of the two mixture Gaussian mixture components an observation was generated from and the colors indicate the distance from the center of the distribution with outliers shown in darker colors. The ranks of the estimated densities are shown against ranks of true densities (on the log scale) with panels on the left showing distortion-corrected KDE and panels on the right showing KDE without distortion correction. The panels from top to bottom show four dimension reduction algorithms: ISOMAP, LLE, Laplacian Eigenmaps, and UMAP. Note that we exclude t-SNE algorithm in this section because it is designed mainly for low-dimensional visualization purposes and is only applicable to an embedding dimension less than or equal to three.
+
+Comparing the left and right panels for each row, we notice that KDE with distortion correction has fewer misclassified observations, and therefore outperforms KDE. For UMAP, almost all ground truth anomalies (points outside a \(99\%\) HDR) are not correctly detected using KDE, while almost all anomalies are correctly detected after correcting for distortion. For DC-KDE in the left panel there are several triangles in a horizontal line, this arises, due to many points having an estimated density of close to zero (values less than \(10^{-7}\)) which leads to tied ranks. These low-density points are all detected as anomalies for all dimension reduction algorithms, which again shows the robustness of DC-KDE.
+
+\begin{table}
+
+\caption{\label{tab:fivedcors}Correlation between true density and estimated density for four manifold learning embeddings of the 100-D data. DC-KDE has a slightly lower rank correlation for ISOMAP and LLE above 0.96, but significantly outperfoms KDE for Laplacian Eigenmaps and UMAP when more distortion is induced in dimension reduction.}
+\centering
+\begin{tabular}[t]{l>{}l>{}l>{}l>{}l}
+\toprule
+  & ISOMAP & LLE & Laplacian.Eigenmaps & UMAP\\
+\midrule
+DC-KDE & 0.968 & 0.970 & \textbf{0.8674} & \textbf{0.782}\\
+KDE & \textbf{0.976} & \textbf{0.971} & 0.0328 & -0.181\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}
+
+\caption{\label{tab:fourdhdrtable}Proportion comparison of outliers in correct highest density regions in density estimation of four manifold learning embeddings for the 100-D data.}
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{l|>{}c>{}c|>{}c>{}c|>{}c>{}c|>{}cc}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{ISOMAP} & \multicolumn{2}{c}{LLE} & \multicolumn{2}{c}{Laplacian Eigenmaps} & \multicolumn{2}{c}{UMAP} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-7} \cmidrule(l{3pt}r{3pt}){8-9}
+  & DC-KDE & KDE & DC-KDE & KDE & DC-KDE & KDE & DC-KDE & KDE\\
+\midrule
+>99\% HDR & \cellcolor[HTML]{E6E6E6}{\textbf{0.830}} & 0.490 & \cellcolor[HTML]{E6E6E6}{\textbf{0.830}} & 0.240 & \cellcolor[HTML]{E6E6E6}{\textbf{0.840}} & 0.840 & \cellcolor[HTML]{E6E6E6}{\textbf{0.770}} & 0.000\\
+99\% HDR & \cellcolor[HTML]{E6E6E6}{\textbf{0.818}} & 0.685 & \cellcolor[HTML]{E6E6E6}{\textbf{0.805}} & 0.478 & \cellcolor[HTML]{E6E6E6}{\textbf{0.815}} & 0.595 & \cellcolor[HTML]{E6E6E6}{\textbf{0.632}} & 0.032\\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\autoref{tab:fourdhdrtable} further illustrates the proportions of correctly classified anomalies in the \(>99\%\) and \(99\%\) highest density regions. Compared with KDE, the proportions are always higher when distortion correction methods are used. The proportions with distortion correction are very close for ISOMAP, LLE, and Laplacian Eigenmaps with a value of around \(83\%\) while slightly lower for UMAP at around \(77\%\). This could be due to the severe distortion usually induced by the UMAP algorithm.
+
+\hypertarget{dckdeapplication}{%
+\section{Application}\label{dckdeapplication}}
+
+In this application, we use the smart meter data from the \emph{CER Smart Metering Project - Electricity Customer Behaviour Trial, 2009-2010} in Ireland (\protect\hyperlink{ref-cer2012-data}{Commission for Energy Regulation (CER) 2012}) between 14 July 2009 and 31 December 2010. The CER dataset\footnote{accessed via the Irish Social Science Data Archive - www.ucd.ie/issda.} records the half-hourly electricity consumption of individual residential and commercial properties, but not including energy for cooling or heating systems. We selected the \(3,639\) residential data with no missing values during the data collection period for a total of \(535\) days.
+
+For the electricity consumption data of residential individuals, it is worthwhile to explore the distribution of electricity demand rather than the raw consumption data, so as to study the usage patterns of different households or different periods of the week (\protect\hyperlink{ref-Hyndman2018-ia}{Hyndman, Liu, and Pinson 2018}). This can be considered as a case of dimension reduction on a statistical manifold, that is a manifold with elements that are probability distributions. Cheng, Panagiotelis, and Hyndman (\protect\hyperlink{ref-Cheng2021-dh}{2021}) propose estimators of the Total Variation Metric and Hellinger distance between distributions that can be used in a computationally practical manner for dimension reduction on statistical manifolds. Again, we use ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP for dimension reduction to obtain a \(2\)-dimensional embedding for kernel density estimation and anomaly detection. To this end, we compare the density estimates from KDE with and without distortion correction and show how robust the anomalies are to different dimension reduction algorithms, only when distortion correction is used. We use the highest density regions plot to visualize the density estimates. However, for this real data set with an unknown structure, the ground truth densities are unknown and it is not possible to tell which anomalies are the true ones.
+
+Although full details for data processing and dimension reduction are provided in Cheng, Panagiotelis, and Hyndman (\protect\hyperlink{ref-Cheng2021-dh}{2021}), we briefly describe the process here. For each household, a discrete approximation of the distribution of electricity demand at each one of the \(336\) half-hourly periods of the week is found. For any pair of households the total variation metric can be found between the distributions corresponding to any half hour of the week, and summing over these gives a distance measure between the pair of households, subsequently used for dimension reduction algorithms and the Learn Metric algorithm. The number of nearest neighbors in manifold learning \(K\) is set as \(100\) and the bandwidth parameter \(r=180\) to match the distances between the distributions of households.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.85\linewidth]{figures/Electricity_2d_5levels_outliers_comparison_5ml_r180} 
+
+}
+
+\caption{Highest density region plots of the 2-D embedding for $3,639$ households, with each point representing the distribution of one household and colors indicating the density estimated from DC-KDE (left panel) and KDE (right panel). The black points with blue text indexing are the top 20 anomalous households found by each dimension reduction method in each row.}\label{fig:electricityembedding}
+\end{figure}
+\begin{table}
+
+\caption{\label{tab:electricityoutliers}Top 20 anomalous household IDs using density estimates of different 2-dimensional embedding. The left five columns are anomalies by DC-KDE, while the right five columns are anomalies using KDE. The blue-colored IDs are IDs that are detected over three times, with the darker one indicating five times and the lighter one indicating four times.}
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabu} to \linewidth {>{}c>{}c>{}c>{}c>{}c>{}c|>{}c>{}c>{}c>{}c>{}c}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{5}{c}{DC-KDE} & \multicolumn{5}{c}{KDE} \\
+\cmidrule(l{3pt}r{3pt}){2-6} \cmidrule(l{3pt}r{3pt}){7-11}
+  & ISOMAP & LLE & Laplacian Eigenmaps & t-SNE & UMAP & ISOMAP & LLE & Laplacian Eigenmaps & t-SNE & UMAP\\
+\midrule
+1 & \textcolor[HTML]{000000}{6317} & \textcolor[HTML]{2171B5}{\textbf{7049}} & \textcolor[HTML]{2171B5}{\textbf{3161}} & \textcolor[HTML]{000000}{4826} & \textcolor[HTML]{2171B5}{\textbf{4546}} & \textcolor[HTML]{000000}{6317} & \textcolor[HTML]{000000}{1881} & \textcolor[HTML]{000000}{6317} & \textcolor[HTML]{000000}{4190} & \textcolor[HTML]{000000}{6533}\\
+2 & \textcolor[HTML]{000000}{1353} & \textcolor[HTML]{2171B5}{\textbf{4546}} & \textcolor[HTML]{000000}{5269} & \textcolor[HTML]{000000}{1069} & \textcolor[HTML]{2171B5}{\textbf{7049}} & \textcolor[HTML]{000000}{4884} & \textcolor[HTML]{6BAED6}{\textbf{6199}} & \textcolor[HTML]{000000}{6643} & \textcolor[HTML]{000000}{6817} & \textcolor[HTML]{000000}{5899}\\
+3 & \textcolor[HTML]{000000}{4884} & \textcolor[HTML]{000000}{1881} & \textcolor[HTML]{000000}{4875} & \textcolor[HTML]{2171B5}{\textbf{4546}} & \textcolor[HTML]{000000}{1069} & \textcolor[HTML]{000000}{5092} & \textcolor[HTML]{6BAED6}{\textbf{5356}} & \textcolor[HTML]{000000}{6764} & \textcolor[HTML]{000000}{6492} & \textcolor[HTML]{000000}{6345}\\
+4 & \textcolor[HTML]{2171B5}{\textbf{4546}} & \textcolor[HTML]{000000}{6952} & \textcolor[HTML]{000000}{7300} & \textcolor[HTML]{2171B5}{\textbf{7049}} & \textcolor[HTML]{000000}{4862} & \textcolor[HTML]{000000}{1353} & \textcolor[HTML]{000000}{4233} & \textcolor[HTML]{000000}{1058} & \textcolor[HTML]{000000}{2309} & \textcolor[HTML]{000000}{1884}\\
+5 & \textcolor[HTML]{2171B5}{\textbf{7049}} & \textcolor[HTML]{000000}{6838} & \textcolor[HTML]{000000}{4880} & \textcolor[HTML]{6BAED6}{\textbf{1533}} & \textcolor[HTML]{000000}{3639} & \textcolor[HTML]{000000}{5580} & \textcolor[HTML]{2171B5}{\textbf{7049}} & \textcolor[HTML]{000000}{5105} & \textcolor[HTML]{000000}{2546} & \textcolor[HTML]{000000}{3278}\\
+\addlinespace
+6 & \textcolor[HTML]{000000}{1366} & \textcolor[HTML]{000000}{3874} & \textcolor[HTML]{000000}{5599} & \textcolor[HTML]{000000}{4265} & \textcolor[HTML]{6BAED6}{\textbf{1964}} & \textcolor[HTML]{000000}{5594} & \textcolor[HTML]{000000}{1821} & \textcolor[HTML]{000000}{6577} & \textcolor[HTML]{000000}{2907} & \textcolor[HTML]{000000}{5463}\\
+7 & \textcolor[HTML]{2171B5}{\textbf{3161}} & \textcolor[HTML]{000000}{1069} & \textcolor[HTML]{000000}{3222} & \textcolor[HTML]{000000}{4862} & \textcolor[HTML]{000000}{2249} & \textcolor[HTML]{000000}{2576} & \textcolor[HTML]{2171B5}{\textbf{4546}} & \textcolor[HTML]{000000}{3880} & \textcolor[HTML]{000000}{4536} & \textcolor[HTML]{000000}{5504}\\
+8 & \textcolor[HTML]{000000}{1074} & \textcolor[HTML]{000000}{2249} & \textcolor[HTML]{000000}{1776} & \textcolor[HTML]{000000}{3639} & \textcolor[HTML]{6BAED6}{\textbf{6199}} & \textcolor[HTML]{000000}{1366} & \textcolor[HTML]{000000}{3431} & \textcolor[HTML]{000000}{5358} & \textcolor[HTML]{000000}{6898} & \textcolor[HTML]{000000}{1782}\\
+9 & \textcolor[HTML]{000000}{6681} & \textcolor[HTML]{6BAED6}{\textbf{1964}} & \textcolor[HTML]{000000}{1161} & \textcolor[HTML]{000000}{5546} & \textcolor[HTML]{000000}{3892} & \textcolor[HTML]{000000}{6681} & \textcolor[HTML]{000000}{1569} & \textcolor[HTML]{000000}{1366} & \textcolor[HTML]{000000}{4128} & \textcolor[HTML]{000000}{5965}\\
+10 & \textcolor[HTML]{000000}{1701} & \textcolor[HTML]{000000}{1569} & \textcolor[HTML]{000000}{3655} & \textcolor[HTML]{000000}{4896} & \textcolor[HTML]{000000}{6209} & \textcolor[HTML]{000000}{5291} & \textcolor[HTML]{6BAED6}{\textbf{1964}} & \textcolor[HTML]{000000}{5545} & \textcolor[HTML]{000000}{7368} & \textcolor[HTML]{000000}{6081}\\
+\addlinespace
+11 & \textcolor[HTML]{000000}{3136} & \textcolor[HTML]{6BAED6}{\textbf{1533}} & \textcolor[HTML]{000000}{6169} & \textcolor[HTML]{000000}{4555} & \textcolor[HTML]{000000}{6952} & \textcolor[HTML]{2171B5}{\textbf{3161}} & \textcolor[HTML]{000000}{6568} & \textcolor[HTML]{000000}{2160} & \textcolor[HTML]{000000}{2232} & \textcolor[HTML]{000000}{4894}\\
+12 & \textcolor[HTML]{000000}{1881} & \textcolor[HTML]{000000}{4555} & \textcolor[HTML]{000000}{4830} & \textcolor[HTML]{6BAED6}{\textbf{6199}} & \textcolor[HTML]{000000}{4896} & \textcolor[HTML]{000000}{1701} & \textcolor[HTML]{000000}{7300} & \textcolor[HTML]{000000}{6585} & \textcolor[HTML]{000000}{6273} & \textcolor[HTML]{000000}{5937}\\
+13 & \textcolor[HTML]{000000}{6785} & \textcolor[HTML]{000000}{6526} & \textcolor[HTML]{000000}{2284} & \textcolor[HTML]{000000}{6952} & \textcolor[HTML]{000000}{6838} & \textcolor[HTML]{000000}{4749} & \textcolor[HTML]{000000}{7438} & \textcolor[HTML]{000000}{5824} & \textcolor[HTML]{000000}{1557} & \textcolor[HTML]{000000}{5522}\\
+14 & \textcolor[HTML]{000000}{5092} & \textcolor[HTML]{000000}{3639} & \textcolor[HTML]{000000}{6526} & \textcolor[HTML]{000000}{6838} & \textcolor[HTML]{6BAED6}{\textbf{1533}} & \textcolor[HTML]{000000}{6699} & \textcolor[HTML]{000000}{4401} & \textcolor[HTML]{000000}{4932} & \textcolor[HTML]{000000}{3500} & \textcolor[HTML]{000000}{5580}\\
+15 & \textcolor[HTML]{000000}{5269} & \textcolor[HTML]{6BAED6}{\textbf{6199}} & \textcolor[HTML]{000000}{1694} & \textcolor[HTML]{6BAED6}{\textbf{1964}} & \textcolor[HTML]{000000}{1569} & \textcolor[HTML]{000000}{5504} & \textcolor[HTML]{000000}{3434} & \textcolor[HTML]{000000}{6410} & \textcolor[HTML]{000000}{1932} & \textcolor[HTML]{000000}{6902}\\
+\addlinespace
+16 & \textcolor[HTML]{000000}{2576} & \textcolor[HTML]{000000}{5531} & \textcolor[HTML]{000000}{3431} & \textcolor[HTML]{000000}{7104} & \textcolor[HTML]{000000}{3213} & \textcolor[HTML]{000000}{3170} & \textcolor[HTML]{000000}{2249} & \textcolor[HTML]{000000}{3023} & \textcolor[HTML]{000000}{3119} & \textcolor[HTML]{000000}{7243}\\
+17 & \textcolor[HTML]{000000}{1262} & \textcolor[HTML]{000000}{4875} & \textcolor[HTML]{000000}{2523} & \textcolor[HTML]{000000}{3892} & \textcolor[HTML]{000000}{4401} & \textcolor[HTML]{000000}{5899} & \textcolor[HTML]{000000}{3213} & \textcolor[HTML]{000000}{1497} & \textcolor[HTML]{000000}{3809} & \textcolor[HTML]{000000}{6699}\\
+18 & \textcolor[HTML]{000000}{5966} & \textcolor[HTML]{6BAED6}{\textbf{5356}} & \textcolor[HTML]{6BAED6}{\textbf{5356}} & \textcolor[HTML]{2171B5}{\textbf{3161}} & \textcolor[HTML]{000000}{6766} & \textcolor[HTML]{000000}{2658} & \textcolor[HTML]{2171B5}{\textbf{3161}} & \textcolor[HTML]{000000}{7293} & \textcolor[HTML]{000000}{6108} & \textcolor[HTML]{000000}{5549}\\
+19 & \textcolor[HTML]{000000}{5937} & \textcolor[HTML]{000000}{3892} & \textcolor[HTML]{000000}{2233} & \textcolor[HTML]{000000}{6799} & \textcolor[HTML]{000000}{4265} & \textcolor[HTML]{000000}{5189} & \textcolor[HTML]{6BAED6}{\textbf{1533}} & \textcolor[HTML]{000000}{5580} & \textcolor[HTML]{000000}{4516} & \textcolor[HTML]{000000}{5048}\\
+20 & \textcolor[HTML]{6BAED6}{\textbf{5356}} & \textcolor[HTML]{000000}{4896} & \textcolor[HTML]{000000}{5125} & \textcolor[HTML]{000000}{6209} & \textcolor[HTML]{000000}{6799} & \textcolor[HTML]{000000}{2669} & \textcolor[HTML]{000000}{4555} & \textcolor[HTML]{000000}{6224} & \textcolor[HTML]{000000}{5937} & \textcolor[HTML]{000000}{1923}\\
+\bottomrule
+\end{tabu}}
+\end{table}
+
+\autoref{fig:electricityembedding} presents the highest density regions of the 2-dimensional embedding for each dimension reduction method, ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, with the left panels showing the densities estimated with the distortion corrected KDE and the right panels showing those estimate with KDE. There are six density regions colored in the plot, \(1\%\), \(5\%\), \(50\%\), \(90\%\), \(99\%\) and \(>99\%\), and darker colors indicate lower density regions. The black points indexed with blue household IDs are the top 20 anomalies with the lowest densities. First of all, for the same electricity data, each dimension reduction method generates quite different embeddings, meaning that distortions exist in these embeddings. When comparing row-wise for the same embedding, it can be seen that ISOMAP and LLE give similar anomalies while the outliers are more clustered for Laplacian Eigenmaps, t-SNE, and UMAP with DC-KDE compared with the KDE. As the anomalous IDs are not easy to distinguish in the plots, we list them in \autoref{tab:electricityoutliers} and highlight the IDs that are most identified as anomalies. The darker blue points are those households that are identified five times out of the ten cases shown in \autoref{fig:electricityembedding}, and lighter blue points are those identified four times. Again, KDE with distortion correction methods finds more anomalies in common regardless of the dimension reduction methods, compared with KDE where only LLE could find similar anomalies to other cases. Without distortion correction, the density estimates are different not only in scale, but also show inconsistency in the rank of density estimates.
+
+\begin{table}
+
+\caption{\label{tab:electricityhdrpercent}Proportion of the same outliers as UMAP in two highest density regions when estimating densities for four manifold learning embeddings.}
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{l|>{}c>{}c|>{}c>{}c|>{}c>{}c|>{}cc}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{ISOMAP} & \multicolumn{2}{c}{LLE} & \multicolumn{2}{c}{Laplacian Eigenmaps} & \multicolumn{2}{c}{t-SNE} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-7} \cmidrule(l{3pt}r{3pt}){8-9}
+  & DC-KDE & KDE & DC-KDE & KDE & DC-KDE & KDE & DC-KDE & KDE\\
+\midrule
+>99\% HDR & \cellcolor[HTML]{E6E6E6}{0.189} & \textbf{0.243} & \cellcolor[HTML]{E6E6E6}{\textbf{0.189}} & 0.027 & \cellcolor[HTML]{E6E6E6}{\textbf{0.622}} & 0.000 & \cellcolor[HTML]{E6E6E6}{\textbf{0.865}} & 0.108\\
+99\% HDR & \cellcolor[HTML]{E6E6E6}{\textbf{0.359}} & 0.248 & \cellcolor[HTML]{E6E6E6}{\textbf{0.503}} & 0.000 & \cellcolor[HTML]{E6E6E6}{\textbf{0.697}} & 0.007 & \cellcolor[HTML]{E6E6E6}{\textbf{0.628}} & 0.083\\
+\bottomrule
+\end{tabular}}
+\end{table}
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{figures/Electricity_2d_rankplot_3639id_umapvs4ml_radius20_r180} 
+
+}
+
+\caption{Comparison of ranks of the estimated densities based on UMAP and four dimension reduction algorithms in each row. Distortion-corrected KDE (on the left panel) and KDE (on the right panel) are compared and DC-KDE shows a higher level of robustness to the use of different dimension reduction methods.}\label{fig:electricityrank}
+\end{figure}
+
+Unlike for the simulations where the ground truth densities are known, in the applications, we have no knowledge of the truly anomalous households. To explore the robustness of anomaly detection both with and without distortion correction, we assume, in this case, that the anomalies given by UMAP are the `true' ones and evaluate the performance of the other four dimension reduction methods, ISOMAP, LLE, Laplacian Eigenmaps and t-SNE. The results are summarized in \autoref{tab:electricityhdrpercent} which can be interpreted similarly to \autoref{tab:fourdhdrtable}. \autoref{tab:electricityhdrpercent} presents the proportions of `true' outliers (given by UMAP) where anomalies fall outside the \(>99\%\) and \(99\%\) HDRs respectively that are also identified as anomalies by different dimension reduction methods. Both DC-KDE and KDE are shown in the table. Apart from the lower percentage of ISOMAP in \(>99\%\) HDRs, distortion-corrected KDE gives higher proportions of true outliers in all other methods. The improvement brought by distortion correction is much more pronounced in Laplacian Eigenmaps and t-SNE which would otherwise detect almost completely different anomalies to UMAP. \autoref{fig:electricityrank} presents the visualization of density ranking in log scale. The grey shading area covers the density rank from 1 to 20, which are the anomalies listed in \autoref{tab:electricityoutliers}. Again, the plots show the robustness of density estimated with distortion correction regardless of the dimension reduction methods. The robustness of anomaly detection to different methods when using distortion correction is also shown in \autoref{tab:electricityoutliers}. The household indices shown in darker shades of blue are identified as anomalies the most with dimension reduction algorithms. It is notable that without applying distortion correction, Laplacian Eigenmaps, t-SNE and UMAP do not identify any of the same anomalies as ISOMAP and LLE.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/Electricity_2d_compare4id_1typical_3anomalous} 
+
+}
+
+\caption{Electricity usage plots of all 535 days for the most typical household (top row) and three anomalies.}\label{fig:electricityraw}
+\end{figure}
+
+We now further examine households 3161, 4546, and 7049, which appear as anomalies for at least three dimension reduction algorithms as well as Households 2396, which is the most typical household with the highest density estimate. Their half-hourly electricity demands across the entire trial period are plotted in \autoref{fig:electricityraw}. Compared with ID 2396, the other three households show different usage patterns. ID 3161 has much less electricity usage in summers, mostly below 1kWh, than in winters, above 3kWh. As this data set does not include the energy used for cooling or heating systems, it is possible that there are other large electronic appliances used in winter for this household. The other two anomalous IDs, 4546 and 7049, however, have nearly zero kWh electricity consumption for many days and some spikes for other days. It is likely that these two households are not occupied all the time during the trial and could be used as temporary accommodation (e.g.~through a holiday rental service such as Airbnb).
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/Electricity_2d_plot_hdrbox_7dow_4id_1typical_3anomalous} 
+
+}
+
+\caption{Quantile region plots of electricity demand against the time of the week for one typical household 1472 and three anomalies, 3161, 4546, and 7049. The day-of-the-week patterns are much more different for Household 4546 and 7049 compared with 3161.}\label{fig:electricityhdrsvkde}
+\end{figure}
+
+Further insights could be gained by comparing the quantile region plots of electricity demand against the time of the week for the same typical or anomalous households in \autoref{fig:electricityraw}. The distribution of the typical households in the top panel has shown a repeated period-of-the-week usage pattern, with higher usage during mealtime on all seven days of the week and slightly higher usage for weekends.
+This repeated pattern in a week window is also shown on some days of the week for household ID 3161 with small spikes at noon and midnight but not on Fridays and Saturdays. As for the bottom two households, the middle row in \autoref{fig:electricityhdrsvkde} shows a distribution with zero median and a \(75\%\) quantile of 1kWh from around 9 pm to 6 am, while the distributions for ID 7049 do not have an obvious pattern across different periods of the week. These findings show that distortion correction methods work well in estimating the densities of the electricity usage and detecting anomalous households in the smart meter data despite the various embeddings from different dimension reduction methods.
+
+\hypertarget{dckdeconclusion}{%
+\section{Conclusions}\label{dckdeconclusion}}
+
+In this paper, we propose a novel distortion correction method to estimate the density of an embedding from manifold learning algorithms and further identify outliers based on the densities. Compared with KDE, our distortion-corrected KDE makes use of geometric information for each data point to correct the distortion induced by the embedding. The Riemannian metric is estimated with the Learn Metric algorithm to approximate the geodesic distance and volume density function locally at each point. We compare our proposed method with KDE by two simulation settings, a 2-D manifold embedded as a 3-D twin peaks shape and a 4-D manifold mapped in a 100-D ambient space, and show that DC-KDE could generate more accurate kernel density estimation is more robust to the choice of dimension reduction algorithm.
+
+As an empirical example, we explore the distributions of \(3,639\) households and \(336\) time periods of the week in the Irish smart meter data. Five manifold learning algorithms, including ISOMAP, LLE, Laplacian Eigenmaps, t-SNE, and UMAP, are applied to get the 2-D embedding, followed by density estimation with KDE and DC-KDE. Without the ground truth density, we assume that UMAP gives the true densities and compare both density estimation methods by looking at the distributions of the most typical households with the highest densities and three anomalous households that are identified most times. The distortion correction methods could identify the typical households with repeated time-of-the-week usage patterns, while the distributions of the outliers are anomalous in different ways.
+
+There are several open questions to be explored. The first involves the selection of bandwidth parameters and kernel types for kernel density estimation, which has been widely explored in many KDE-related literature. For densities on unknown manifolds, Berenfeld and Hoffmann (\protect\hyperlink{ref-Berenfeld2021-as}{2021}) also provide some insights on the assumptions of the kernel function in \eqref{eq:kernelcondition}. The second one is that the proposed density estimation method is only limited to the embedding points. Although for the downstream task of anomaly detection, only density estimated on these points is needed, it would be worth exploring the out-of-sample density estimation and estimation on the boundary of manifolds (\protect\hyperlink{ref-Berry2017-rz}{Berry and Sauer 2017}) in the future.
+The last question is related to the quality of the embedding from dimension reduction methods. Although our distortion correction method is fairly robust to different choices of manifold learning methods, in certain cases, when the data structure is too complex and the distortion is too severe to correct, the quantitative relationship between embedding quality and density estimation accuracy is not immediately clear. The embedding quality could be measured using one of the metrics discussed in the online supplementary material of Cheng, Panagiotelis, and Hyndman (\protect\hyperlink{ref-Cheng2021-dh}{2021}), but when the ground truth densities are unknown, which is usually the case with real-world data set, it is hard to tell whether the distortion is corrected in the right way. The density estimates on the edges of the whole data structure could also be explored because most outer area points tend to be detected as outliers. However, the outperformance of DC-KDE over KDE has been shown in the higher dimensional simulation data and the electricity usage data, which are more related to real-life data sets.
+
+\hypertarget{acknowledgment}{%
+\section*{Acknowledgment}\label{acknowledgment}}
+\addcontentsline{toc}{section}{Acknowledgment}
+
+This research was supported in part by the Monash eResearch Centre and eSolutions-Research Support Services through the use of the MonARCH HPC Cluster. The first author acknowledges the financial support of the Monash Graduate Scholarship (MGS) and the Monash International Tuition Scholarship (MITS) at Monash University.
+
+\appendix
+
+\hypertarget{riemgeo}{%
+\section{Notions about Riemannian geometry}\label{riemgeo}}
+
+In this appendix, we present some notions about the Riemannian geometry used in this paper.
+
+\hypertarget{differentiable-manifolds}{%
+\subsection{Differentiable manifolds}\label{differentiable-manifolds}}
+
+In topology, a \emph{homeomorphism} is a bijective map between two topological spaces that is continuous in both directions. A \emph{Hausdorff space} is a topological space where any two distinct points can be separated by disjoint neighborhoods. And a \(d\)-dimensional (topological) \emph{manifold} \(M\) is a connected Hausdorff space \((M, \mathcal{T}_M)\) where the neighborhood \(U\) for each point \(p\) is homeomorphic to an open subset \(V\) of the Euclidean space \(\mathbb{R}^d\). Such a homeomorphism \(\varphi: U \rightarrow V\) together with \(U\) gives a (coordinate) \emph{chart}, denoted as \((U, \varphi)\), with the corresponding local coordinates \((x^1(p),\dots, x^d(p)) := \varphi(p)\). Further, a collection of charts \(\{U_\alpha, \varphi_\alpha\}\) ranging over the manifold \(M\) is called an \emph{atlas}, denoted as \(\mathcal{A}\).
+
+The manifold \(M\) is a \emph{differentiable manifold} if there exists an atlas of \(M\), \(\{U_\alpha, \varphi_\alpha\}\), such that the \emph{transition maps} between any two charts,
+\[
+\varphi_\beta \circ \varphi_\alpha^{-1}: \varphi_\alpha(U_\alpha \cap U_\beta) \rightarrow \varphi_\beta(U_\alpha \cap U_\beta),
+\] are differentiable of class \(C^\infty\) (smooth).
+Let \(\varphi\) be an injective map: \(E \rightarrow \varphi(E)\). Then \(\varphi\) is an \emph{embedding} of \(E\) into \(M\) if and only if
+\(\varphi: E \rightarrow \varphi(E)\) is a homeomorphism, and \(\varphi(E)\) is called an embedded submanifold of \(M\) with the subspace topology.
+
+\hypertarget{tangent-vector-and-tangent-space}{%
+\subsection{Tangent vector and tangent space}\label{tangent-vector-and-tangent-space}}
+
+The tangent vector at point \(p\) can be intuitively viewed as the velocity of a curve passing through point \(p\) or as the directional derivatives at \(p\). Here we define the tangent vector via the velocity of curves.
+
+For any point \(p \in M\), let \(\gamma_1: (-\epsilon_1, \epsilon_1)\rightarrow M\) and \(\gamma_2: (-\epsilon_2, \epsilon_2)\rightarrow M\) be two smooth curves passing through \(p\), i.e.~\(\gamma_1(0) = \gamma_2(0) = p\). We say \(\gamma_1\) and \(\gamma_2\) are \emph{equivalent} if and only if there exists a chart \((U,\varphi)\) at \(p\) such that
+\[
+(\varphi \circ \gamma_1)^\prime(0) = (\varphi \circ \gamma_2)^\prime(0).
+\]
+A \emph{tangent vector} to a manifold \(M\) at point \(p\), denoted as \(v_p\), is any equivalent class of the differentiable curves initialized at \(p\). The set of all tangent vectors at \(p\) defines the \emph{tangent space} of \(M\) at \(p\), denoted as \(T_pM\). The tangent space is a vector space of dimension \(d\), equal to the dimension of \(M\), and it does not depend on the chart \(\varphi\) locally at \(p\). The collection of all tangent spaces defines the \emph{tangent bundle}, \(TM = \cup_{p \in M}T_pM\).
+
+Tangent vectors can also be seen as the directional derivatives at \(p\). For a given coordinate chart \(\varphi=(x^1,\dots,x^d)\), the tangent vectors defining partial
+derivatives are denoted as \(\frac{\partial}{\partial x^1}(p),\dots,\frac{\partial}{\partial x^d}(p)\), which defines a \emph{basis} of the tangent space.
+The tangent space \(T_pM\) also admits a dual space \(T^\star_pM\) called the \emph{cotangent space} with the corresponding \emph{cotangent vectors} \(z_p: T^\star_pM \rightarrow \mathbb{R}^d\) and a basis denoted as \(dx^1(p),\dots,dx^d(p)\).
+
+\hypertarget{riemannian-metric-and-geodesic-distance}{%
+\subsection{Riemannian metric and geodesic distance}\label{riemannian-metric-and-geodesic-distance}}
+
+A Riemannian metric \(g_p\) defined on the tangent space \(T_pM\) at each point \(p\) is a local inner product \(T_pM \times T_pM \rightarrow \mathbb{R}\), where \(g_p\) is a \(d\times d\) symmetric positive definite matrix and varies smoothly at \(p\). Generally, we
+omit the subscript \(p\) and refer to \(g\) as the Riemannian metric. The inner product between two vectors \(u, v \in T_pM\) is written as \(\langle u, v \rangle_g = g_{ij}u^iv^j\) using the Einstein summation convention where implicit summation over all indices, \(\sum_{i,j} g_{ij}u^iv^j\), is assumed. A differentiable manifold \(M\) endowed with the Riemannian metric \(g\) on each tangent space \(T_pM\) is called a \emph{Riemannian manifold} \((M,g)\).
+
+The Riemannian metric \(g\) can be used to define the norm of a vector \(u\), \(\|u\| = \sqrt{\langle u,v \rangle_g}\), and the angle between two vectors \(u\) and \(v\), \(\cos\theta = \frac{\langle u,v \rangle_g}{\|u\| \|v\|}\), which are the geometric quantities induced by \(g\). It could also be used to define the line element \(dl^2 = g_{ij}dx^i dx^j\) and the volume element \(dV_g = \sqrt{\det(g)}dx^1 \dots dx^d\), where \((x^1,\dots,x^d)\) are the local coordinates of the chart \((U, \varphi)\).
+For a curve \(\gamma: I \rightarrow M\), the length of the curve is
+\[
+l(\gamma) = \sqrt{\int_0^1 \|\gamma^\prime(t)\|^2_g dt} = \sqrt{\int_0^1 g_{ij} \frac{dx^i}{dt} \frac{dx^j}{dt} dt},
+\]
+where \(\gamma(I) \subset U\). The volume of \(W \subset U\) is defined as
+\[
+Vol(W) = \int_W \sqrt{\det(g)}dx^1 \cdots dx^d,
+\]
+which is also called the \emph{Riemannian measure} on \(M\).
+
+The \emph{geodesics} of \(M\) are the smooth curves that locally join the points along the shortest path on the manifold. Intuitively, geodesics are the \emph{straightest possible curves} in a Riemannian manifold (Section 7.2.3 of \protect\hyperlink{ref-Nakahara2018-zs}{Nakahara 2018}).
+A curve \(\gamma: I \rightarrow M\) is a geodesic if for all indices \(i,j,k\), the second-order ordinary differential equation is satisfied,
+\[
+\frac{d^2 x^i}{dt^2} + \Gamma^i_{jk} \frac{d x^j}{dt} \frac{dx^k}{dt} = 0,
+\]
+where \(\{x^i\}\) are the coordinates of the curve \(\gamma\) and \(\Gamma^i_{jk}\) is the \emph{Christoffel symbol} defined by
+\[
+\Gamma^i_{jk} = \frac{1}{2} \sum_l g^{il} (\frac{\partial g_{il}}{\partial x^k}
++ \frac{\partial g_{kl}}{\partial x^j} - \frac{\partial g_{jk}}{\partial x^l}).
+\]
+The geodesics have a constant speed with norm \(\| \gamma^\prime(t) \|\), and they are the local minimizers of the arc
+length functional \(l:\gamma \rightarrow \sqrt{\int_0^1 \| \gamma^\prime(t) \|_g^2 dt}\) when the curves are defined over the interval \([0,1]\).
+The \emph{geodesic distance} \(d_g\) is the length of the shortest geodesic between two points on the manifold. For a point \(p \in M\), when the geodesic distance starting at \(p\) is not minimized, we call such set of points the \emph{cut locus} of \(p\), and the distance to the cut locus is the \emph{injectivity radius} at \(p \in M\). Therefore, the injectivity radius of the Riemannian manifold \((M,g)\), \(\textit{inj}_gM\), is the infimum of the injectivity radii over all points on the manifold.
+
+\hypertarget{exponential-map-and-logarithmic-map}{%
+\subsection{Exponential map and logarithmic map}\label{exponential-map-and-logarithmic-map}}
+
+Denote \(B(p, r) \subset M\) as an open ball centered at point \(p\) with radius \(r\). Then \(B(0_p, r) = exp_p^{-1}(B(p,r))\) is an open neighborhood of \(0_p\) in the tangent space at \(p\), \(T_pM\), where \(exp_p\) is the \emph{exponential map} at point \(p\). The exponential map maps a tangent vector \(u \in B(0_p, r)\) to the endpoint of the geodesic \(\gamma: I \rightarrow M\) satisfying \(\gamma(0)=p, \gamma^{\prime}(0)=u\), and \(\gamma(1)=exp_p(u)\). It is a differentiable bijective map of differentiable inverse (i.e.~\emph{diffeomorphism}). Intuitively, the exponential map moves point \(p\) to an endpoint at speed \(u\) after covering the length of \(\|u\|\) along the geodesic in one time unit.
+
+The inverse of the exponential map is called the \emph{logarithm map}, denoted as \(\log_p(q):= \exp^{-1}_p(q)\), which gives the tangent vector to get from point \(p\) to \(q\) in one unit time. Also define the \emph{geodesic ball} centered at \(p\) of radius \(r > 0\) as the image by the exponential map of \(B(0_p, r) \subset T_pM\) with \(r < \textit{inj}_gM\). Then we could interpolate a geodesic \(\gamma\) between two points \(p\) and \(q\) with the exponential map and the logarithmic map, \(\gamma(t) = \exp_p(t\log_p(q))\), and the geodesic distance is given by \(d_g(p,q) = \|\log_p(q)\|_g\).
+
+\hypertarget{pushforward-and-pullback-metric}{%
+\subsection{Pushforward and pullback metric}\label{pushforward-and-pullback-metric}}
+
+Pushforward and pullback are two notions corresponding to the notions of tangent and cotangent vectors.
+Let \(\phi: M \rightarrow E\) be a smooth map between the Riemannian manifold \((M,g)\) to another smooth manifold \(E\). Then the differential of \(\phi\) at point \(p\) is a linear map \(d\phi_p: T_pM \rightarrow T_{\phi (p)}E\), which pushes the tangent vector \(u \in T_pM\) at point \(p\) forward to the tangent vector \(\phi_*u \in T_{\phi (p)}E\) at the mapping point \(\phi(p)\).
+The image of the tangent vector \(u \in T_pM\) under the differential \(d\phi_p\), denoted as \(d\phi_p u\) is called the pushforward of \(u\) by the map \(\phi\).
+Then pushforward metric \(h=\varphi_*g\) of the Riemannian metric \(g\) along \(\varphi\) is given by the inner product
+\[
+\langle \phi_*u,\phi_*v \rangle_{\varphi*g} = \langle d\phi_p \phi_*u, d\phi_p \phi_*v \rangle_{g}.
+\]
+
+The tangent vectors \(\phi_*u\) are equivalent to the velocity vector of a curve \(\gamma: I\rightarrow M\) passing through point \(p\) at time zero with a constant speed \(\gamma^{\prime}(0)=u\),
+\[
+d\phi_p(\gamma^{\prime}(0)) = (\phi \circ \gamma)^\prime (0).
+\]
+Similarly, the pullback maps the cotangent vectors \(z_{f(p)}\) at \(f(p) \in E\) to cotangent vectors at \(p \in M\) acting on tangent vectors \(u \in T_pM\). The linear map is called the pullback by \(\phi\) and is often denoted as \(\phi^*\).
+
+\hypertarget{twinpeaksappe}{%
+\section{Rank comparison plots for twin peaks mapping}\label{twinpeaksappe}}
+
+This appendix contains the comparison plots for the density rank between DC-KDE and KDE using different manifold learning algorithms, similar to \autoref{fig:tpisomapden}, \autoref{fig:tptsneden}, and \autoref{fig:tpisomapvs4ml}. By comparing these plots, it could be concluded that DC-KDE could categorize the density ranks into the highest density regions more accurately than KDE. By correcting the distortion in different manifold learning embeddings, DC-KDE is more robust in identifying the lowest density regions, which are usually used to detect anomalies.
+
+\begin{figure}
+
+{\centering \includegraphics[width=1\linewidth]{figures/Twin Peak2000_densityrank_comparison_lle_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse} 
+
+}
+
+\caption{Scatterplot of true density and estimated density ranks of LLE embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.}\label{fig:tplleden}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=1\linewidth]{figures/Twin Peak2000_densityrank_comparison_le_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse} 
+
+}
+
+\caption{Scatterplot of true density and estimated density ranks of Laplaxian Eigenmaps embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.}\label{fig:tpleden}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=1\linewidth]{figures/Twin Peak2000_densityrank_comparison_umap_radius8_r0_5_logrank_rec_colprob_smallblocks3_crossfalse} 
+
+}
+
+\caption{Scatterplot of true density and estimated density ranks of UMAP embedding for DC-KDE and KDE, with colors indicating the absolute rank errors weighted by the sum of true and estimated ranks. DC-KDE shows a strong linear positive relationship with a higher rank correlation compared to KDE.}\label{fig:tpumapden}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{figures/Twin Peak2000_density_compare_llevs4ml_radius8_r0_5_rank} 
+
+}
+
+\caption{Comparison of outliers found by LLE compared to the other four for DC-KDE (on the left panel) and KDE (on the right panel). The four colors and shapes represent the four gaussian kernels in the 2-D metadata. Outliers found by DC-KDE are more consistent regardless of the manifold learning embedding.}\label{fig:tpllevs4ml}
+\end{figure}
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak2000_density_compare_levs4ml_radius8_r0_5_rank} 
+
+}
+
+\caption{Comparison of outliers found by Laplacian Eigemaps compared to the other four for DC-KDE (on the left panel) and KDE (on the right panel).}\label{fig:tplevs4ml}
+\end{figure}
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak2000_density_compare_tsnevs4ml_radius8_r0_5_rank} 
+
+}
+
+\caption{Comparison of outliers found by t-SNE compared to the other four for DC-KDE (on the left panel) and KDE (on the right panel).}\label{fig:tptsnevs4ml}
+\end{figure}
+\begin{figure}
+
+{\centering \includegraphics[width=0.95\linewidth]{figures/Twin Peak2000_density_compare_umapvs4ml_radius8_r0_5_rank} 
+
+}
+
+\caption{Comparison of outliers found by UMAP compared to the other four for DC-KDE (on the left panel) and KDE (on the right panel).}\label{fig:tpumapvs4ml}
+\end{figure}
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-Berenfeld2021-as}{}}%
+Berenfeld, Clément, and Marc Hoffmann. 2021. {``Density Estimation on an Unknown Submanifold.''} \emph{European Journal of Sport Science: EJSS: Official Journal of the European College of Sport Science} 15 (1): 2179--2223. \url{https://doi.org/10.1214/21-EJS1826}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Berenfeld2022-fd}{}}%
+Berenfeld, Clément, Paul Rosa, and Judith Rousseau. 2022. {``Estimating a Density Near an Unknown Manifold: A Bayesian Nonparametric Approach,''} May. \url{http://arxiv.org/abs/2205.15717}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Berry2017-rz}{}}%
+Berry, Tyrus, and Timothy Sauer. 2017. {``Density Estimation on Manifolds with Boundary.''} \emph{Computational Statistics \& Data Analysis} 107 (March): 1--17. \url{https://doi.org/10.1016/j.csda.2016.09.011}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Breiman1977-qc}{}}%
+Breiman, Leo, William Meisel, and Edward Purcell. 1977. {``Variable Kernel Estimates of Multivariate Densities.''} \emph{Technometrics: A Journal of Statistics for the Physical, Chemical, and Engineering Sciences} 19 (2): 135--44. \url{https://doi.org/10.1080/00401706.1977.10489521}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Le_Brigant2019-lj}{}}%
+Brigant, Alice le, and Stéphane Puechmorel. 2019. {``Approximation of Densities on Riemannian Manifolds.''} \emph{Entropy} 21 (1). \url{https://doi.org/10.3390/e21010043}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Cayton2005-dp}{}}%
+Cayton, Lawrence. 2005. {``Algorithms for Manifold Learning.''} \emph{Univ. Of California at San Diego Tech. Rep} 12 (1-17): 1.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Chavel2006-mp}{}}%
+Chavel, Isaac. 2006. \emph{Riemannian Geometry: A Modern Introduction}. Cambridge University Press.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Cheng2021-dh}{}}%
+Cheng, Fan, Anastasios Panagiotelis, and Rob J Hyndman. 2021. {``Computationally Efficient Learning of Statistical Manifolds.''} \emph{arXiv e-Prints}, February, arXiv:2103.11773. \url{https://ui.adsabs.harvard.edu/abs/2021arXiv210311773C}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-cer2012-data}{}}%
+Commission for Energy Regulation (CER). 2012. {``CER Smart Metering Project - Electricity Customer Behaviour Trial, 2009-2010 {[}Dataset{]}.''} \emph{Irish Social Science Data Archive}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Denti2021-qc}{}}%
+Denti, Francesco. 2021. {``intRinsic: An {R} Package for Model-Based Estimation of the Intrinsic Dimension of a Dataset,''} February. \url{https://arxiv.org/abs/2102.11425}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Denti2021-jl}{}}%
+Denti, Francesco, Diego Doimo, Alessandro Laio, and Antonietta Mira. 2021. {``Distributional Results for {Model-Based} Intrinsic Dimension Estimators,''} April. \url{https://arxiv.org/abs/2104.13832}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Elgammal2002-cw}{}}%
+Elgammal, A, R Duraiswami, D Harwood, and L S Davis. 2002. {``Background and Foreground Modeling Using Nonparametric Kernel Density Estimation for Visual Surveillance.''} \emph{Proceedings of the IEEE} 90 (7): 1151--63. \url{https://doi.org/10.1109/JPROC.2002.801448}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Facco2017-rl}{}}%
+Facco, Elena, Maria d'Errico, Alex Rodriguez, and Alessandro Laio. 2017. {``Estimating the Intrinsic Dimension of Datasets by a Minimal Neighborhood Information.''} \emph{Scientific Reports} 7 (1): 12140. \url{https://doi.org/10.1038/s41598-017-11873-y}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gallot2004-rc}{}}%
+Gallot, Sylvestre, Dominique Hulin, and Jacques Lafontaine. 2004. {``Riemannian Metrics.''} In \emph{Riemannian Geometry}, 51--127. Berlin, Heidelberg: Springer Berlin Heidelberg. \url{https://doi.org/10.1007/978-3-642-18855-8/_2}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Gerber2014-tq}{}}%
+Gerber, Matthew S. 2014. {``Predicting Crime Using Twitter and Kernel Density Estimation.''} \emph{Decision Support Systems} 61 (May): 115--25. \url{https://doi.org/10.1016/j.dss.2014.02.003}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Hendriks1990-bt}{}}%
+Hendriks, Harrie. 1990. {``Nonparametric Estimation of a Probability Density on a Riemannian Manifold Using Fourier Expansions.''} \emph{Annals of Statistics} 18 (2): 832--49. \url{http://www.jstor.org/stable/2242136}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Henry2013-da}{}}%
+Henry, Guillermo, Andrés Muñoz, and Daniela Rodríguez. 2013. {``Locally Adaptive Density Estimation on Riemannian Manifolds.''} \emph{SORT-Statistics and Operations Research Transactions} 37 (2): 111--30. \url{https://raco.cat/index.php/SORT/article/view/271165}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Hyndman2018-ia}{}}%
+Hyndman, R J, X Liu, and P Pinson. 2018. {``Visualizing Big Energy Data: Solutions for This Crucial Component of Data Analysis.''} \emph{IEEE Power Energ. Mag.}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Izenman1991-cj}{}}%
+Izenman, Alan Julian. 1991. {``Review Papers: Recent Developments in Nonparametric Density Estimation.''} \emph{Journal of the American Statistical Association} 86 (413): 205--24. \url{https://doi.org/10.1080/01621459.1991.10475021}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Izenman2012-mx}{}}%
+---------. 2012. {``Introduction to Manifold Learning.''} \emph{WIREs Comp Stat} 4 (5): 439--46.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Jeon2012-ac}{}}%
+Jeon, Jooyoung, and James W Taylor. 2012. {``Using Conditional Kernel Density Estimation for Wind Power Density Forecasting.''} \emph{Journal of the American Statistical Association} 107 (497): 66--79. \url{https://doi.org/10.1080/01621459.2011.643745}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Jones1990-oe}{}}%
+Jones, M C. 1990. {``Variable Kernel Density Estimates and Variable Kernel Density Estimates.''} \emph{The Australian Journal of Statistics} 32 (3): 361--71.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Lee2007-wq}{}}%
+Lee, John A, and Michel Verleysen. 2007. \emph{Nonlinear Dimensionality Reduction}. Springer Science \& Business Media.
+
+\leavevmode\vadjust pre{\hypertarget{ref-McQueen2016-xz}{}}%
+McQueen, James, Marina Meilă, Jacob VanderPlas, and Zhongyue Zhang. 2016. {``Megaman: Scalable Manifold Learning in Python.''} \emph{J. Mach. Learn. Res.} 17 (148): 1--5.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Nakahara2018-zs}{}}%
+Nakahara, M. 2018. \emph{{Geometry, topology and physics}}. {CRC press}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Okabe2009-nb}{}}%
+Okabe, Atsuyuki, Toshiaki Satoh, and Kokichi Sugihara. 2009. {``A Kernel Density Estimation Method for Networks, Its Computational Method and a {GIS‐based} Tool.''} \emph{Geographical Information Systems} 23 (1): 7--32. \url{https://doi.org/10.1080/13658810802475491}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Parzen1962-gt}{}}%
+Parzen, Emanuel. 1962. {``On Estimation of a Probability Density Function and Mode.''} \emph{Annals of Mathematical Statistics} 33 (3): 1065--76.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Pelletier2005-vu}{}}%
+Pelletier, Bruno. 2005. {``Kernel Density Estimation on Riemannian Manifolds.''} \emph{Statistics \& Probability Letters} 73 (3): 297--304.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Perrault-Joncas2013-pq}{}}%
+Perrault-Joncas, Dominique, and Marina Meila. 2013. {``Non-Linear Dimensionality Reduction: Riemannian Metric Estimation and the Problem of Geometric Discovery,''} May. \url{https://arxiv.org/abs/1305.7255}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Scott2015-vl}{}}%
+Scott, David W. 2015. \emph{{Multivariate Density Estimation: Theory, Practice, and Visualization}}. John Wiley \& Sons.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Terrell1992-ut}{}}%
+Terrell, George R, and David W Scott. 1992. {``Variable Kernel Density Estimation.''} \emph{Annals of Statistics} 20 (3): 1236--65.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Wickham2011-ir}{}}%
+Wickham, Hadley, Dianne Cook, Heike Hofmann, and Andreas Buja. 2011. {``Tourr: An {R} Package for Exploring Multivariate Data with Projections.''} \emph{Journal of Statistical Software} 40 (April): 1--18. \url{https://doi.org/10.18637/jss.v040.i02}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Xie2008-eb}{}}%
+Xie, Zhixiao, and Jun Yan. 2008. {``Kernel Density Estimation of Traffic Accidents in a Network Space.''} \emph{Computers, Environment and Urban Systems} 32 (5): 396--406. \url{https://doi.org/10.1016/j.compenvurbsys.2008.05.001}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Zhou2011-za}{}}%
+Zhou, Xueyuan, and Mikhail Belkin. 2011. {``Semi-Supervised Learning by Higher Order Regularization.''} In \emph{Proceedings of the Fourteenth International Conference on Artificial Intelligence and Statistics}, 15:892--900. Proceedings of Machine Learning Research. JMLR Workshop; Conference Proceedings.
+
+\end{CSLReferences}
+
+\bibliographystyle{agsm}
+\bibliography{kderm.bib}
+
+
+
+\end{document}
