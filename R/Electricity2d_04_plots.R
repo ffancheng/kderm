@@ -162,6 +162,23 @@ phdr5ml
 ggsave(paste0("paper/figures/Electricity_2d_5levels_outliers_comparison_5ml_r", format(r, decimal.mark = "_"), ".png"), phdr5ml, width = 9, height = 12, dpi = 300)
 
 
+# SLides
+phdriso <- (
+  ((
+    (p_isomap$p + labs(x = "", y = "ISOMAP", title = "DC-KDE")) |
+      (p_hdr_isomap$p + labs(x = "", y = "", title = "KDE") + noytext ) 
+  ) & scale_y_continuous(breaks = c(-250, 0, 250)))
+
+) + 
+  plot_layout(guides = 'collect') &
+  # guides(HDRs = guide_legend(nrow = 1)) &
+  theme(legend.direction = "horizontal", legend.position = "bottom", 
+        legend.box = "horizontal", axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+phdriso
+ggsave(paste0("paper/figures/Electricity_2d_5levels_outliers_comparison_isomap_r", format(r, decimal.mark = "_"), ".png"), phdriso, width = 10, height = 6, dpi = 300)
+
+
 ###-------------------------------------------------
 ## Table for top 20 outlier IDs
 ###-------------------------------------------------
