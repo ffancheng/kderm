@@ -3,12 +3,47 @@
 \usepackage{amsmath}
 \usepackage{graphicx,psfrag,epsf}
 \usepackage{enumerate}
-\usepackage{natbib}
+%\usepackage{natbib}
 \usepackage{textcomp}
 \usepackage[hyphens]{url} % not crucial - just used below for the URL
 \usepackage{hyperref}
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+%% BIBLIOGRAPHY
+
+
+\usepackage[style=authoryear-comp, backend=biber, natbib=true]{biblatex}
+\ExecuteBibliographyOptions{bibencoding=utf8, minnames=1, maxnames=3, maxbibnames=99,dashed=false, terseinits=true, giveninits=true, uniquename=false, uniquelist=false,doi=false, isbn=false, url=true, sortcites=false, date=year}
+
+$for(bibliography)$
+\addbibresource{$bibliography$}
+$endfor$
+
+\DeclareFieldFormat{url}{\texttt{\url{#1}}}
+\DeclareFieldFormat[article]{url}{}
+\DeclareFieldFormat[article]{pages}{#1}
+\DeclareFieldFormat[inproceedings]{pages}{\lowercase{pp.}#1}
+\DeclareFieldFormat[incollection]{pages}{\lowercase{pp.}#1}
+\DeclareFieldFormat[article]{volume}{\mkbibbold{#1}}
+\DeclareFieldFormat[article]{number}{\mkbibparens{#1}}
+\DeclareFieldFormat[article]{title}{\MakeCapital{#1}}
+\DeclareFieldFormat[inproceedings]{title}{#1}
+\DeclareFieldFormat{shorthandwidth}{#1}
+% No dot before number of articles
+\usepackage{xpatch}
+\xpatchbibmacro{volume+number+eid}{\setunit*{\adddot}}{}{}{}
+% Remove In: for an article.
+\renewbibmacro{in:}{%
+  \ifentrytype{article}{}{%
+  \printtext{\bibstring{in}\intitlepunct}}}
+
+\makeatletter
+\DeclareDelimFormat[cbx@textcite]{nameyeardelim}{\addspace}
+\makeatother
+\renewcommand*{\finalnamedelim}{%
+  %\ifnumgreater{\value{liststop}}{2}{\finalandcomma}{}% there really should be no funny Oxford comma business here
+  \addspace\&\space}
 
 %\pdfminorversion=4
 % NOTE: To produce blinded version, replace "0" with "1" below.
@@ -66,51 +101,50 @@ $endfor$
 
 
 \def\spacingset#1{\renewcommand{\baselinestretch}%
-{#1}\small\normalsize} \spacingset{1}
+  {#1}\small\normalsize} \spacingset{1}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \if0\blind
-{
-  \title{\bf $title$}
+  {
+    \title{\bf $title$}
 
-  \author{
-    $for(authors)$
-    $authors.name$ $if(authors.thanks)$\thanks{$authors.thanks$} $endif$\\
-    $authors.affiliation$\\
-    $sep$ and \\ $endfor$
-  }
-  \maketitle
-} \fi
+    \author{
+      $for(authors)$
+      $authors.name$ $if(authors.thanks)$\thanks{$authors.thanks$} $endif$\\
+      $authors.affiliation$\\
+      $sep$ and \\ $endfor$
+    }
+    \maketitle
+  } \fi
 
 \if1\blind
-{
-  \bigskip
-  \bigskip
-  \bigskip
-  \begin{center}
-    {\LARGE\bf $title$}
-  \end{center}
-  \medskip
-} \fi
+  {
+    \bigskip
+    \bigskip
+    \bigskip
+    \begin{center}
+      {\LARGE\bf $title$}
+    \end{center}
+    \medskip
+  } \fi
 
 \bigskip
 \begin{abstract}
-$abstract$
+  $abstract$
 \end{abstract}
 
 \noindent%
 {\it Keywords:} $for(keywords)$$keywords$$sep$, $endfor$
-\vfill
+  \vfill
 
-\newpage
-\spacingset{1.45} % DON'T change the spacing!
+  \newpage
+  \spacingset{1.45} % DON'T change the spacing!
 
 $body$
 
-\bibliographystyle{agsm}
-\bibliography{$for(bibliography)$$bibliography$$sep$,$endfor$}
+  \printbibliography
 
 $for(after_body)$\input $after_body$$endfor$
 
