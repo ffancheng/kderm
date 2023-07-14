@@ -1,15 +1,16 @@
 ---
-title: "Distortion corrected kernel density estimate on Riemannian manifolds"
+title: "Distortion corrected kernel density estimator on Riemannian manifolds"
 blinded: 0 # Set to 1 for blinding
 authors:
   - name: Fan Cheng
     affiliation: Monash University
-    thanks: Fan.Cheng@monash.edu
   - name: Rob J Hyndman
     affiliation: Monash University
+    thanks: Rob J Hyndman's research is partially funded by the Australian Government through the Australian Research Council Industrial Transformation Training Centre in Optimisation Technologies, Integrated Methodologies, and Applications (OPTIMA), Project ID IC200100009. 
   - name: Anastasios Panagiotelis
     affiliation: The University of Sydney
-abstract: "Manifold learning can be used to obtain a low-dimensional representation of the underlying Riemannian manifold given the high-dimensional data. However, kernel density estimates of the low-dimensional embedding with a fixed bandwidth fail to account for the way manifold learning algorithms distort the geometry of the Riemannian manifold. We propose a novel distortion-corrected kernel density estimator (DC-KDE) for any manifold learning embedding by introducing the estimated Riemannian metric of each point to fix the distortion in the line and volume elements. The geometric information of the manifold guarantees a more accurate density estimation of the true manifold, which subsequently could be used for anomaly detection. To compare our proposed estimator with a fixed-bandwidth kernel density estimator, we run two simulations with 2-D data from the Gaussian mixture model mapped into a 3-D twin peaks shape and a 5-D semi-hypersphere mapped in a 100-D space. We demonstrate that the proposed DC-KDE could improve the density estimates given a good manifold learning embedding and has higher rank correlations with the true manifold density. A shiny app in R is also developed for various simulation scenarios. The proposed method is applied to density estimation in statistical manifolds of electricity usage with the Irish smart meter data. This demonstrates the estimator's capability to fix the distortion of the manifold geometry and a new approach to anomaly detection in high-dimensional data."
+    thanks: Corresponding Author
+abstract: "Manifold learning obtains a low-dimensional representation of an underlying Riemannian manifold supporting high-dimensional data. Kernel density estimates of the low-dimensional embedding with a fixed bandwidth fail to account for the way manifold learning algorithms distort the geometry of the Riemannian manifold. We propose a novel distortion-corrected kernel density estimator (DC-KDE) for any manifold learning embedding, with a bandwidth that depends on the estimated Riemannian metric at each data point. Exploiting the geometric information of the manifold leads to more accurate density estimation, which subsequently could be used for anomaly detection. To compare our proposed estimator with a fixed-bandwidth kernel density estimator, we run two simulations including one with data lying in a 100 dimensional ambient space. We demonstrate that the proposed DC-KDE improves the density estimates as long as the manifold learning embedding is of sufficient quality, and has higher rank correlations with the true manifold density. Further simulation results are provided via a supplementary  R shiny app. The proposed method is applied to density estimation in statistical manifolds of electricity usage with the Irish smart meter data. "
 keywords:
   - manifold learning
   - variable bandwidth
