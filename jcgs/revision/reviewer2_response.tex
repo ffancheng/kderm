@@ -66,7 +66,9 @@ We would like to thank the reviewer for their thorough evaluation and constructi
 
 \textit{It would be nice to include some short computation proving that the density estimator defined by formula (4) indeed integrates to one, if the \(H_{i}\) is the true metric matrix at point \(y_{i}\). Or give an "exact" counterpart of (4) that does integrate to one (is it (3)?)}
 
-\textcolor{blue}{We appreciate the reviewer's positive feedback on our manuscript. In response to the suggestion, we have added \textcolor{red}{[TODO] a short computation in Section 2.3 of the revised manuscript, demonstrating that the density estimator integrates to one when \(H_{i}\) is the true metric matrix at point \(y_{i}\). Additionally, we clarify that formula (3) serves as an "exact" counterpart.} }
+\textcolor{blue}{We appreciate the reviewer's positive feedback on our manuscript. In response to the suggestion, weclarify that Equation (3) serves as an ``exact'' counterpart of Equation (4). We now state:\\
+	``The estimator has a similar structure to Equation (3) which can be seen as the counterpart to Equation (4) if the Riemannian is known exactly.''
+} 
 
 \section*{Typos and Notational Consistency}
 
@@ -76,21 +78,21 @@ We are grateful for the reviewer's attention to details regarding typographical 
 
    \textcolor{blue}{%
    We have corrected the missing "metric" in the specified line. \\
-   "Critical to our estimator, is obtaining an estimate of $|\bm{H}(\bm{y})|^{1/2}$ for this purpose we use the Learn Metric algorithm of \textcite{Perrault-Joncas2013-pq} which augments any dimension reduction algorithm with an estimate of the Riemannian \textbf{metric} at each data point."
+   ``Critical to our estimator, is obtaining an estimate of $|\bm{H}(\bm{y})|^{1/2}$ for this purpose we use the Learn Metric algorithm of \textcite{Perrault-Joncas2013-pq} which augments any dimension reduction algorithm with an estimate of the Riemannian \textbf{metric} at each data point.''
    }
 
 2. \textit{p. 6 line 50: it should be \(\exp _{p}(v)\) instead of \(\exp _{p}(q)\)}
 
    \textcolor{blue}{
    The notation has been corrected to \(\exp_{p}(v)\) as suggested. \\
-   "Consider the exponential map around \(\bm{p}\), given by \(exp_{\bm{p}}(\bm{v})\), mapping vectors in the tangent space, \(\bm{v}\in T_{\bm{p}}M\), to points on the manifold, \(\bm{q}\in M\)."
+   ``Consider the exponential map around \(\bm{p}\), given by \(exp_{\bm{p}}(\bm{v})\), mapping vectors in the tangent space, \(\bm{v}\in T_{\bm{p}}M\), to points on the manifold, \(\bm{q}\in M\).''
    }
 
 3. \textit{p7, in reference "Brigant and Puechmorel", the name is Le Brigant and not Brigant}
 
    \textcolor{blue}{
    We have updated the reference in the bib file and the inline reference to "Le Brigant and Puechmorel" to reflect the correct name. \\
-   "For more on the volume density function, see \textcite{Gallot2004-rc} and \textcite{Le_Brigant2019-lj}."}
+   ``For more on the volume density function, see \textcite{Gallot2004-rc} and \textcite{Le_Brigant2019-lj}.''}
 
 4. \textit{In formula (1) the determinant seems to be denoted by \(|\cdot|\) while in formula (4) by det. Maybe homogenize the notations.}
 
@@ -111,7 +113,7 @@ We are grateful for the reviewer's attention to details regarding typographical 
 
    \textcolor{blue}{
    We have reviewed and corrected the use of "Riemannian metric" as suggested. \\
-   "By treating the \(\bm{v}\) as an `output' embedding from input points \(\bm{x}\) that lie on the true manifold and applying the Learn Metric algorithm, we can obtain \(\bm{\Gamma}_i\) for \(i=1,\dots,n\) where \(\bm{\Gamma}_i\) is the Riemannian \textbf{metric} of the coordinate system given by \(\bm{v}\)."
+   ``By treating the \(\bm{v}\) as an `output' embedding from input points \(\bm{x}\) that lie on the true manifold and applying the Learn Metric algorithm, we can obtain \(\bm{\Gamma}_i\) for \(i=1,\dots,n\) where \(\bm{\Gamma}_i\) is the Riemannian \textbf{metric} of the coordinate system given by \(\bm{v}\).''
    }
 
 
