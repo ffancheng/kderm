@@ -12,7 +12,7 @@
 \usepackage{lipsum}
 \usepackage{graphicx}
 \usepackage[style=authoryear]{biblatex}
-\addbibresource{kderm.bib}
+\addbibresource{../kderm.bib}
 
 \renewcommand*{\finalnamedelim}{\addspace\&\space}
 \renewcommand*{\finallistdelim}{\addspace\&\space}
@@ -86,9 +86,9 @@ We would like to extend our appreciation to the reviewer for their detailed and 
     \caption{Comparison of KDE methods for high-dimensional data.}
     \label{fig:kde}
     \end{figure}
-    
+
    \textcolor{blue}{
-   Figure \ref{fig:kde} shows the comparison of the density estimates for the 100-D example with different density estimations. We use different violin plots to display the distribution of the density estimates, and they are, from left to right, the true density of the manifold, distortion-corrected KDE, KDE using ISOMAP embedding, and KDE on the 100-D data with $\mathbf{H} = h^2 \mathbf{I}$ as bandwidth matrix. By comparing with the true density distribution, both in the violin shape and the y-axis scale, we could tell that DC-KDE gives the closest density estimates to the true ones, and KDE on 100-D data performs very poorly with almost all 0 estimates. \\ 
+   Figure \ref{fig:kde} shows the comparison of the density estimates for the 100-D example with different density estimations. We use different violin plots to display the distribution of the density estimates, and they are, from left to right, the true density of the manifold, distortion-corrected KDE, KDE using ISOMAP embedding, and KDE on the 100-D data with $\mathbf{H} = h^2 \mathbf{I}$ as bandwidth matrix. By comparing with the true density distribution, both in the violin shape and the y-axis scale, we could tell that DC-KDE gives the closest density estimates to the true ones, and KDE on 100-D data performs very poorly with almost all 0 estimates. \\
    In high-dimensional spaces, the data sparsity leads to exponentially slower convergence rates and requires an impractically large sample size to achieve reliable density estimates. Computationally, KDE in 100-D (>=6-D) is extremely demanding, both in terms of processing time and memory requirements. Bandwidth selection, as a crucial part of KDE, also becomes increasingly difficult and unreliable as the number of dimensions grows. Furthermore, the interpretability of the results diminishes significantly in such a high dimension space. All these factors combined make traditional KDE methods unsuitable for 100-dimensional data, and dimension reduction is essential as proposed here.
    }
 
