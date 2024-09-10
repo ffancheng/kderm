@@ -16,7 +16,6 @@ Jmisc::sourceAll("R/sources")
 scen <- as.numeric(commandArgs()[[6]])
 r <- 180 #1 
 # quantile(nn2res$nn.dists)
-# 0%      25%      50%      75%     100% 
 # 0.0000 179.6016 187.3877 194.8748 277.0549 
 
 load("data/half_count_ratio_3639id336tow.rda")
