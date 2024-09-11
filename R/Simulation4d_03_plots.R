@@ -1,5 +1,5 @@
 ###--------------------------------------------------------
-## 1. Gather and plot the results from 4 scenarios in HPC results
+## 1. Gather and plot the results from 4 scenarios in HPC results: 4-D manifold embedding in 100-D space simulation
 ###--------------------------------------------------------
 rm(list = ls())
 library(tidyverse)
@@ -147,7 +147,7 @@ p_rank
 
 
 
-
+# Not run
 # ----KDE with ks::kde on 100-d data instead of 4-d embedding-------------------
 library(weird)
 library(tictoc)
@@ -473,8 +473,8 @@ frank_long <- frank %>%
 #   theme(legend.position = "none")
 
 
-library(ggplot2)
-library(viridis)  # For a nice color palette
+# Put the violin plot in the review paper
+library(viridis)
 # library(hrbrthemes)  # For a sleek theme
 
 frank_long |> 
