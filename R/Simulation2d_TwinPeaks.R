@@ -10,6 +10,8 @@ library(ks)
 library(patchwork)
 library(plotly)
 library(kableExtra)
+# remotes::install_github("jefferis/RANN@master-L1") # also install https://www.cs.umd.edu/~mount/ANN/
+library(RANN.L1)
 Jmisc::sourceAll(here::here("R/sources"))
 
 # Data size

@@ -25,6 +25,8 @@
 #' 
 #' @examples
 #' require(dimRed)
+#' require(RANN)
+#' require(RANN.L1)
 #' x <- dimRed::loadDataSet("Swiss Roll")
 #' metricML(x, s = 2, k = 5, radius = .4, method = "annIsomap", annmethod = "kdtree", epsilon = 0, distance = "euclidean", treetype = "kd", searchtype = "radius")
 #' metricML(x, s = 3, k = 10, method = "annLLE", annmethod = "annoy", nt = 50, distance = "manhattan")
