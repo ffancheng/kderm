@@ -1,3 +1,4 @@
+# Shiny app for simulation
 # Note: When first deployed, the app will show Error in if: argument is of length zero for the plots location.
 # It comes from ml_outlier(x=sim_data()) where the input is reactive
 # Just ignore it and wait a few seconds and the plots will show up
@@ -5,7 +6,6 @@
 library(shiny)
 library(shinydashboard)
 library(plotly)
-library(maniTools)
 library(tidyverse)
 library(dimRed)
 library(viridis)
@@ -15,6 +15,9 @@ library(matrixcalc)
 library(ggforce)
 library(patchwork)
 # library(copula)
+# devtools::install_github("jefferis/RANN@master-L1")
+library(RANN.L1)
+library(maniTools)
 Jmisc::sourceAll(here::here("R/sources"))
 set.seed(1)
 

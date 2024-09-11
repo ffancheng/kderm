@@ -1,3 +1,6 @@
+## -----------------------------------------------------------------------------
+## This script is for the similation for twin peaks data (KDE and DC-KDE)
+## -----------------------------------------------------------------------------
 rm(list = ls())
 library(tidyverse)
 library(dimRed)
@@ -1010,4 +1013,4 @@ p_isovs4ml <- ggplot(p_data, aes(x = !!sym(xname), y = value)) +
 # Spec and sensitivity for correctly categorized outliers, over a small area in the top left (Done using log10 instead)
 # Change plot of true density colors to 5 levels (Done)
 # Table of rank correlation (Done)
-# Table of embedding quality
+# Table of embedding quality (Removed)
