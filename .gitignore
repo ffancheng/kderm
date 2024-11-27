@@ -4,6 +4,7 @@ data/
 reports/
 revision
 paper/figures/tourr_render/*.png
+R.zip
 
 # Jupyter notebook files
 .ipynb_checkpoints/
