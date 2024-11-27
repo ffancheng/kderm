@@ -1,8 +1,8 @@
 # Folders
 references/
 data/
-reports/swissroll/
-paper/untitled.Rmd
+reports/
+revision
 paper/figures/tourr_render/*.png
 
 # Jupyter notebook files
