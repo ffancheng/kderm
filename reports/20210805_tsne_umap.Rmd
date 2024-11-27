@@ -1,0 +1,255 @@
+---
+title: "Comparison between t-SNE and UMAP"
+author: "Fan Cheng"
+date: "2021-08-05"
+bibliography: references.bib
+biblio-style: authoryear-comp
+output: 
+  # prettydoc::html_pretty:
+    # theme: cayman
+    # theme: flatly
+    # rmdformats::readthedown:
+    # toc: true
+    # float: true
+  bookdown::pdf_document2:
+    keep_tex: false
+    toc: false
+    includes:
+      in_header: preamble.tex
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<!-- 
+## MLANN paper revision
+
+- Added t-SNE and UMAP implementation. 
+
+- Introduction: add references for t-SNE and UMAP; more explanations on why embedding quality matters more than recall rate; add references on t-SNE variations and UMAP using NN-Descent for fast NN and their limitation [?].  
+
+- Manifold learning: explain parameter settings for $K$ and $d$; t-SNE and UMAP; UMAP algorithm pointed to the paper [?]. 
+
+- Quality measures: recall rate definition and why high recall rate is not enough for preserving accurate local structure [any insights?]. 
+
+- Unify embedding dimension as $d=2$ for a better-visualization reason. Plus, t-SNE only works for $d=1,2,3$ since it's designed mainly for high-dimensional data visualization with scatterplots.
+
+- MNIST experiments: list ML parameter settings; Update $d=2$ result. 
+
+- Smart meter data application: clarify dimension $p=200$ and N for different scenarios. 
+
+- Conclusions: extension is possible for other methods (ML & ANN) to avoid adding other methods later; add intrinsic dimension reference from Chris [?]. 
+-->
+
+
+# t-SNE
+
+t-Distributed Stochastic Neighbor Embedding [t-SNE; @Van_der_Maaten2008-dv] is a dimension reduction technique well suited for the visualization of high-dimensional data in scatterplots. It works by minimizing the Kullback-Leibler divergence $KL(P||Q)$ between two joint distributions, $p_{ij}$ and $q_{ij}$, measuring the pairwise similarities of the high-dimensional input data $x_i$ and the low-dimensional embedded points $y_i$ respectively. 
+To better capture the local data structure and solve the crowding problem, a normalized Student-t kernel is chosen for $q_{ij}$ since it is heavy-tailed, while a Gaussian kernel is used for $p_{ij}$. The bandwidth of the Gaussian kernel, $\sigma_i$ is set to control the *perplexity* of the conditional distribution, relating to the density of the input data. Considering the asymmetry of the Kullback-Leibler divergence, the object function aims at modelling similar points in the input space by nearby points in the embedding space. Analytical form of the gradient is used in the Gradient Descent optimization of Kullback-Leibler divergence. Details can be found in Algorithm \@ref(alg:tsne). Variants of the Barnes-Hut algorithm can be used to approximate the gradient of the object function [@Van_Der_Maaten2014-in].
+
+
+
+\begin{algorithm}[!htb]
+  \caption{t-SNE}
+  \label{alg:tsne}
+  \DontPrintSemicolon
+  \SetAlgoLined
+  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}\SetKwInOut{OptParameter}{optimization parameter}
+  \Input{ high-dimensional data $x_i$ for all $i=1,\ldots,N$ }
+  \Output{ low-dimensional embedding $y_i$ for all $i=1,\ldots,N$ }
+  \Parameter{ \textit{perplexity} }
+  \OptParameter{ number of iterations $T$, learning rate $\eta$, momentum $\alpha(t)$ }
+  \BlankLine
+  \begin{algorithmic}[1]
+
+  \STATE Compute the Gaussian conditional probability of distances for $x_i$ and $x_j$ as $p_{j \mid i}$ using
+  $$
+    p_{j \mid i}=\frac{\exp \left(-\left\|x_{i}-x_{j}\right\|^{2} / 2 \sigma_{i}^{2}\right)}{\sum_{k \neq i} \exp \left(-\left\|x_{i}-x_{k}\right\|^{2} / 2 \sigma_{i}^{2}\right)}
+  $$
+  where the variance $\sigma_{i}$ for each $x_i$ optimized with the perplexity parameter by $ 2 ^ {-\sum_j{p_{j \mid i} \log_2{p_{j \mid i}}}} = \textit{perplexity} $, and set $p_{i \mid i}=0$;
+
+  \STATE Set the probability as $p_{i j}=(p_{j \mid i}+p_{i \mid j}) / (2 N)$;
+
+  \STATE Initialize the optimization solution as $\mathcal{Y}^{(0)} = \{ y_1, \dots, y_N \}$ and $\mathcal{Y}^{(1)}$ sampled from normal distribution $\mathcal{N}(0, 10^{-4} \boldsymbol{I})$;
+
+  \FOR{$t = 1,\dots,T$}
+
+  \STATE Compute the Student t-distribution of distances between $y_i$ and $y_j$ as 
+  $$
+    q_{i j}=\frac{\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1}}{\sum_{k \neq l}\left(1+\left\|y_{k}-y_{l}\right\|^{2}\right)^{-1}};
+  $$
+
+  \STATE Compute the gradient of the Kullback-Leibler divergence loss function for all $i=1,\ldots,N$ as
+  $$
+    \frac{\delta KL}{\delta y_{i}}=4 \sum_{j}\left(p_{i j}-q_{i j}\right)\left(y_{i}-y_{j}\right)\left(1+\left\|y_{i}-y_{j}\right\|^{2}\right)^{-1} ;
+  $$
+
+  \STATE Update $ \mathcal{Y}^{(t)}=\mathcal{Y}^{(t-1)} + \eta \frac{\delta KL}{\delta \mathcal{Y}} + \alpha(t)\left(\mathcal{Y}^{(t-1)}-\mathcal{Y}^{(t-2)}\right). $
+
+  \ENDFOR
+
+  \end{algorithmic}
+\end{algorithm}
+
+
+Perplexity: to balance attention between local and global aspects of your data. 
+
+- The parameter is a guess about the number of close neighbors each point has. The original paper says, *“The performance of SNE is fairly robust to changes in the perplexity, and typical values are between 5 and 50.”*
+
+Other hyperparameters: these choices interact with the amount of momentum and the step size are employed in the gradient descent. It is therefore common to run the optimization several times on a data set to find appropriate values for the parameters.
+
+
+## Illustration
+
+Below are some figures to illustrate the steps in t-SNE from a book named *Machine Learning with R, the tidyverse, and mlr* by Hefin I. Rhys. 
+
+```{r tsne, fig.align = 'center', out.width = "80%", echo = FALSE, fig.cap = "", eval=TRUE}
+knitr::include_graphics(here::here("reports/figures/tsne1.png"))
+knitr::include_graphics(here::here("reports/figures/tsne2.png"))
+knitr::include_graphics(here::here("reports/figures/tsne3.png"))
+knitr::include_graphics(here::here("reports/figures/tsne4.png"))
+```
+
+\clearpage
+
+# UMAP
+
+UMAP [Uniform Manifold Approximation and Projection; @McInnes2018-xo] is a competitive dimension reduction methods with t-SNE in increasing speed and preseving global structure. It is based on Laplacian Eigenmaps, considering Riemannian geometry and algebraic topology. Instead of optimizing the similarities in t-SNE, UMAP works by minimizing the error between two topological representations from the input space and embedding space. The error is measured by the cross entropy $C$ of two local fuzzy simplical sets built from the nearest neighborhood graph, with edge weights representing the likelihood that two points are connected.
+UMAP extends a raidus outwards at each point until overlap with the nearest neighbors, with a \textit{min\_dist} as a desired separation between nearby embedded points to control global structure. Finally, similar to t-SNE, stochastic gradient descent is used for the optimization of object function. The algorithm and hyperparameters are detailed in Section 4 of @McInnes2018-xo. 
+
+
+\begin{algorithm}[!htb]
+  \caption{UMAP}
+  \label{alg:umap}
+  \DontPrintSemicolon
+  \SetAlgoLined
+  \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}\SetKwInOut{Parameter}{parameter}
+  \Input{ high-dimensional data $x_i$ for all $i=1,\ldots,N$ }
+  \Output{ low-dimensional embedding $y_i$ for all $i=1,\ldots,N$ }
+  \Parameter{ number of nearest neighbors $K$, minimum distance between embedded points \textit{min\_dist}, amount of optimization work \textit{n\_epochs}}
+  \BlankLine
+  \begin{algorithmic}[1]
+
+  \STATE Construct the weighted $K$-nearest neighborhood graph with the distance to the nearest neighbor as $\rho_i$ for each $x_i$;
+
+  \STATE Compute the exponential probability of distances between $x_i$ and $x_j$ as $p_{j \mid i}$ using
+  $$
+    p_{i \mid j}=e^{-\frac{d\left(x_{i}, x_{j}\right)-\rho_{i}}{\sigma_{i}}},
+  $$
+  where $d$ can be any distance metric, such that $\log_2{K} = \sum_{i} p_{i j}$;
+
+  \STATE Construct a local fuzzy simplicial set by setting $p_{i j}=p_{j \mid i}+p_{i \mid j} - p_{i \mid j} p_{j \mid i}$;
+
+  \STATE Compute the distribution of distances between $y_i$ and $y_j$ as
+  $$
+    q_{i j}=\left(1+a\left(y_{i}-y_{j}\right)^{2 b}\right)^{-1},
+  $$
+  where $a$ and $b$ are found using \textit{min\_dist} parameter such that
+  $$
+      q_{i j} \approx\left\{\begin{array}{ll}
+  1 & \text { if } y_{i}-y_{j} \leq \textit{min\_dist} \\
+  e^{-\left(y_{i}-y_{j}\right)-\textit{min\_dist}} & \text { if } y_{i}-y_{j} > \textit{min\_dist};
+  \end{array}\right.
+  $$
+
+  \STATE The cost function is constructed using a binary fuzzy set cross entropy (CE) as
+  $$
+    CE(X, Y)=\sum_{i} \sum_{j}\left[p_{i j}(X) \log \left(\frac{p_{i j}(X)}{q_{i j}(Y)}\right)+\left(1-p_{i j}(X)\right) \log \left(\frac{1-p_{i j}(X)}{1-q_{i j}(Y)}\right)\right]
+  $$
+
+  \STATE Initialize the embedding coordinates $y_i$ using the graph Laplacian similar to Laplacian Eigenmaps in Algorithm \@ref(alg:le);
+
+  \STATE Optimize $y_i$ by minimizing the cross entropy using stochastic gradient descent with \textit{n\_epochs}.
+
+  \end{algorithmic}
+\end{algorithm}
+
+
+## Parameters
+
+- $K$: number of nearest neighbors
+
+- \textit{min\_dist}: the minimum distance between points in low-dimensional space. 
+ 
+    This parameter controls how tightly UMAP clumps points together, with low values leading to more tightly packed embeddings. Larger values of \textit{min\_dist} will make UMAP pack points together more loosely, focusing instead on the preservation of the broad topological structure.
+
+
+## Illustration
+
+Below are some figures to illustrate the steps in UMAP from the same book.
+
+```{r umap, fig.align = 'center', out.width = "75%", echo = FALSE, fig.cap = "", eval=TRUE}
+knitr::include_graphics(here::here("reports/figures/umap.png"))
+```
+
+
+# Compare
+
+The biggest difference between the the output of UMAP when compared with t-SNE is this balance between local and global structure - UMAP is often better at preserving global structure.
+
+## Visualization examples
+
+The following blog contains visualization examples for comparing t-SNE and UMAP, as well as the effect of hyperparameters on the embedding.
+
+https://pair-code.github.io/understanding-umap/
+
+## t-SNE disadvantages
+
+- tSNE does not scale well for rapidly increasing sample sizes.
+
+- tSNE does not preserve global data structure. Only within cluster distances are meaningful while between cluster similarities are not guaranteed, therefore it is widely acknowledged that clustering on tSNE is not a very good idea.
+
+- tSNE can practically only embed into 2 or 3 dimensions.
+
+- tSNE can not work with high-dimensional data directly, Autoencoder or PCA are often used for performing a pre-dimensionality reduction before plugging it into the tSNE. 
+
+- tSNE consumes too much memory for its computations which becomes especially obvious when using large perplexity.
+
+
+## Takeaways from the blog 
+
+- Hyperparameters really matter
+
+- Cluster sizes in a UMAP plot mean nothing
+
+- Distances between clusters might not mean anything
+
+- Random noise doesn’t always look random
+
+  Especially at low values of n_neighbors, spurious clustering can be observed.
+
+- You may need more than one plot
+
+
+# Things related to our paper
+
+t-SNE Variants: implemented via Barnes-Hut approximations for gradient descent process, which also limits the implementation to two or three dimensions. @Tang2016-ho extended t-SNE with the LargeVis algorithm where random projection trees are used to reduce time cost.
+
+L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms. Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
+
+
+UMAP: allow any distance metric for constructing high-dimensional distance probabilities using NN-Descent [@Dong2011-ee] algorithm; used procrustes measure to measure stability of the embedding.
+
+
+# Estimating intrinsic dimensions
+
+There are multiple methods to estimate the intrinsic dimensions, with 17 of them implemented in R package *Rdimtools*. 
+
+https://kisungyou.com/Rdimtools/reference/index.html#section--dimension-estimation
+
+- Running 5 of them on MNIST dataset gives around 12 dimensions as an output. 
+
+- How to deal with the implementation of t-SNE then?
+
+- How to unify this in the paper?
+
+# TODO
+
+- Run simulations for both dimension 2 and 12 on MNIST and check if the conclusion holds. 
+
+- For electricity dataset, since the goal is to find anomalies, we could choose dimension 2 for simplicity. (otherwise compute densities for high-dimensional embedding)
+
+
+# References

@@ -1,0 +1,593 @@
+---
+title: "More data and methods for metric learning"
+author: "Fan Cheng"
+date: "2021-08-19"
+output: 
+  # prettydoc::html_pretty:
+    # theme: cayman
+    # theme: flatly
+    rmdformats::readthedown:
+    toc: true
+    float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+```{r libraries, message=FALSE, echo=TRUE, results='hide'}
+library(tidyverse)
+library(dimRed)
+library(reticulate)
+library(here)
+library(viridis)
+library(hdrcde)
+library(igraph)
+library(matrixcalc)
+library(akima)
+library(car)
+library(ggforce)
+library(ks)
+library(patchwork)
+library(copula)
+library(plotly)
+Jmisc::sourceAll(here::here("R/sources"))
+set.seed(123)
+```
+
+```{r}
+# data size and meta data dimension
+N <- 2000
+p <- 2
+```
+
+# Swiss roll from copula
+
+```{r simu, echo=TRUE}
+# ----Swiss roll from copula-----------------------------------------
+# ## a 3-dimensional normal copula
+# norm.cop <- normalCopula(0.5, dim = p)
+# u <- rCopula(N, norm.cop)
+# den <- dCopula(u, norm.cop)
+# # 3-d t copula
+# t.cop <- tCopula(c(0.5, 0.3), dim = p, dispstr = "toep",
+#                  df = 2, df.fixed = TRUE)
+# u <- rCopula(N, t.cop)
+# den <- dCopula(u, t.cop)
+# 
+## a 2-dimensional Clayton copula
+cl3 <- claytonCopula(2, dim = p)
+co <- rCopula(N, cl3)
+# pairs(u)
+claytonden <- dCopula(co, cl3) # true density
+
+# swiss roll mapping
+swissRollMapping <- function (x, y) { # U(1.5pi, 4.5pi)
+    cbind(x = x * cos(x),
+          y = y,
+          z = x * sin(x))
+}
+u_sr <- (1.5 * pi) * (1 + 2 * co) 
+claytonsr <- swissRollMapping(u_sr[,1], u_sr[,2])
+
+# semi-sphere mapping
+sphereMapping <- function (phi, psi) { # x~U(0,2pi); y~U(-1,1)
+    cbind(x = cos(phi) * sin(psi),
+          y = sin(phi) * sin(psi),
+          z = cos(psi))
+}
+u_sp <- tibble(x = co[,1], y = co[,2]) %>% 
+  mutate(x = 2 * pi * x, y = 2 * y - 1)
+claytonsp <- sphereMapping(u_sp$x, u_sp$y)
+
+# twin peak mapping
+twinPeaksMapping <- function (x, y) { # x,y~U(-1,1)
+    cbind(x = x,
+          y = y,
+          z = sin(pi * x) * tanh(3 * y))
+}
+u_tp <- 2 * co - 1
+claytontp <- twinPeaksMapping(u_tp[,1], u_tp[,2])
+
+# S curve mapping
+sCurveMapping <- function (t, y) { # x~U(-1.5pi, 1.5pi); y~U(0,2)
+    cbind(x = sin(t),
+          y = y,
+          z = sign(t) * (cos(t) - 1))
+}
+u_sc <- cbind(1.5 * pi * (2 * co[,1] - 1), 2 * co[,2])
+claytonsc <- sCurveMapping(u_sc[,1], u_sc[,2])
+```
+
+
+```{r copulaplot}
+claytondata <- as_tibble(claytonsr)
+u <- u_sp
+# highlight true density of u: red for high densities and black for low ones
+col <- rep("grey", N)
+col[head(order(claytonden), n=20)] <- "black"
+col[tail(order(claytonden), n=20)] <- "gold"
+par(mfrow=c(1,2))
+plot(u[,1:2], xlab = expression(italic(u)[1]*"'"), ylab = expression(italic(u)[2]*"'"), 
+     col = col, cex = 0.4)
+scatterplot3d::scatterplot3d(claytondata, color = col)
+plot_ly(data = claytondata, x = ~ x, y = ~ y, z = ~ z, color = col,
+        type = "scatter3d", mode = "markers", size = 1, text = paste("density:", round(claytonden, 4)))
+```
+
+# Swiss roll from a Gaussian Mixture Model
+
+```{r gaussian}
+# randomly sampling from a Gaussian Mixture Model with centers/means at (7.5,7.5), (7.5,12.5), (12.5,7.5) and (12.5,12.5). The covariance for each gaussian was the 2x2 identity matrix
+# 400 points in each of the four clusters
+## Option 1. read data from online resource http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.html
+# preswissroll <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/preswissroll.dat", col_names = FALSE)
+# preswissroll_label <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/preswissroll_labels.dat", col_names = FALSE)$X1 %>% as.factor()
+# swissroll <- read_table("http://people.cs.uchicago.edu/~dinoj/manifold/swissroll.dat", col_names = c("x", "y", "z"))
+# preswissroll %>% 
+#   add_column(label = preswissroll_label) %>% 
+#   ggplot(aes(X1, X2, col = label)) + 
+#   geom_point()
+
+## Option 2. manually generate multivariate normal random numbers
+n <- round(N/4)
+R <- matrix(c(1, 0,
+              0, 1), 
+            nrow = 2, ncol = 2)
+# mu1 <- c(7.5, 7.5)
+# mu2 <- c(7.5, 12.5)
+# mu3 <- c(12.5, 7.5)
+# mu4 <- c(12.5, 12.5)
+mu <- tribble(
+  ~mu1, ~mu2,
+  7.5, 7.5,
+  7.5, 12.5,
+  12.5, 7.5,
+  12.5, 12.5)
+
+# mvtnorm::rmvnorm(n, mean = mu, sigma = R)
+# MASS::mvrnorm(n, mu = mu1, Sigma = R)
+preswissroll <- NULL
+for(i in 1:4) {
+  # mui <- get(paste0("mu", i))
+  mui <- as.matrix(mu[i,])
+  a <- mvtnorm::rmvnorm(n, mean = mui, sigma = R)
+  den <- mvtnorm::dmvnorm(a, mean = mui, sigma = R)
+  a <- cbind(a, i, den)
+  preswissroll <- rbind(preswissroll, a)
+}
+colnames(preswissroll) <- c("x", "y", "label", "den")
+preswissroll <- preswissroll %>%
+  as_tibble() %>% 
+  mutate(label = as.factor(label),
+         x = (x - 5)/10, y = (y - 5)/10,
+         den = den * 10 # y = h(x) = (x-5)/10; x = 10*y + 5; dx/dy = 10; f_Y(y) = f_X(x) * 10
+         ) 
+preswissroll %>%
+  ggplot(aes(x, y, col = den)) + 
+  geom_point() + 
+  scale_color_viridis()
+```
+
+
+```{r gaussianmap, echo=FALSE, eval=TRUE}
+# meta data co \in [0,1]
+co <- as.matrix(preswissroll[,1:2])
+# Swiss Roll mapping
+u_sr <- (1.5 * pi) * (1 + 2 * co) 
+gaussiansr <- swissRollMapping(u_sr[,1], u_sr[,2])
+# semi-sphere mapping
+u_sp <- tibble(x = co[,1], y = co[,2]) %>% 
+  mutate(x = 2 * pi * x, y = 2 * y - 1)
+gaussiansp <- sphereMapping(u_sp$x, u_sp$y)
+# twin peak mapping
+u_tp <- 2 * co - 1
+gaussiantp <- twinPeaksMapping(u_tp[,1], u_tp[,2])
+# S curve mapping
+u_sc <- cbind(1.5 * pi * (2 * co[,1] - 1), 2 * co[,2])
+gaussiansc <- sCurveMapping(u_sc[,1], u_sc[,2])
+```
+
+```{r gaussinplot}
+gaussiandata <- as_tibble(gaussiansr)
+u <- u_sr
+plot_ly(data = gaussiandata, x = ~ x, y = ~ y, z = ~ z, color = preswissroll$den,
+        type = "scatter3d", mode = "markers", size = 1, 
+        text = paste("density:", round(preswissroll$den, 5))
+        )
+```
+
+
+# Isomap 
+
+## Metric learning
+
+```{r, eval = FALSE}
+load("swissroll/gaussiansr_metric4methods.rda")
+```
+
+
+```{r parameters}
+# train <- claytondata
+train <- gaussiandata
+# Parameters fixed
+x <- train
+N <- nrow(x)
+s <- 2
+k <- 20
+method <- "annIsomap"
+annmethod <- "kdtree"
+distance <- "euclidean"
+treetype <- "kd"
+searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
+radius <- 8 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm. Note that the radius need to be changed for different datasets, not to increase k
+```
+
+
+```{r, message=FALSE, eval = TRUE}
+metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, invert.h = TRUE, 
+                          eps = 0,
+                          annmethod = annmethod, distance = distance, treetype = treetype,
+                          searchtype = searchtype
+                          )
+summary(metric_isomap)
+```
+
+```{r ggellipse, include=FALSE, eval=FALSE}
+plot_embedding(metric_isomap) +
+  labs(x = "ISO1", y = "ISO2") +
+  plot_ellipse(metric_isomap, add = T, n.plot = 50,
+             color = blues9[5], fill = blues9[5], alpha = 0.1,
+             ell_size = .3)
+```
+
+
+
+## Outlier plot based on density estimates
+
+### Fixed bandwidth
+
+```{r}
+# fixed bandwidth
+fn <- metric_isomap$embedding
+E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
+E2 <- fn[,2]
+prob <- c(1, 50, 99)
+ell_size <- 0 # ellipse size for plotting
+p_hdr_isomap <- hdrscatterplot_new(E1, E2, levels = prob, noutliers = 20, label = NULL)
+p_hdr_isomap_p <- p_hdr_isomap$p + 
+  plot_ellipse(metric_isomap, add = T, n.plot = 50, 
+             color = blues9[5], fill = blues9[5], alpha = 0.2, ell_size = ell_size)
+```
+
+### Pointwise adaptive bandwidth
+
+```{r outliers}
+Rn <- metric_isomap$rmetric # array
+n.grid <- 10
+fisomap <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
+fxy_isomap <- hdrcde:::interp.2d(fisomap$x, fisomap$y, fisomap$z, x0 = E1, y0 = E2)
+# plot_contour(metric_isomap, n.grid = n.grid, scales = 1/20)
+```
+
+```{r hdroutliers}
+# source(here::here("R/sources/hdrplotting.R"))
+p_isomap <- plot_outlier(x = metric_isomap, n.grid = n.grid, prob = prob, scales = 1, ell_size = ell_size, 
+                         f = fisomap
+                         )
+# p_isomap$p
+# p_isomap$outlier # top outliers first
+# p_isomap$densities # ascending densities matching $outlier order
+(p_hdr_isomap_p / p_isomap$p ) + # coord_fixed()
+  plot_layout(guides = 'collect')
+```
+
+
+
+# LLE
+
+```{r lle, eval = TRUE}
+x <- train
+method <- "annLLE"
+metric_lle <- metricML(x, s = s, k = k, radius = radius, method = method, invert.h = TRUE, 
+                       eps = 0,
+                      annmethod = annmethod, distance = distance, treetype = treetype,
+                      searchtype = searchtype
+)
+```
+
+```{r lleplot}
+fn <- metric_lle$embedding
+Rn <- metric_lle$rmetric
+E1 <- fn[,1]; E2 <- fn[,2]
+flle <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
+fxy_lle <- hdrcde:::interp.2d(flle$x, flle$y, flle$z, x0 = E1, y0 = E2)
+# plot_embedding(metric_lle)
+# plot_ellipse(metric_lle, n.plot = 50)
+# plot_contour(metric_lle, n.grid = 20, scales = 1/20)
+
+p_lle <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = 20, scales = 1, ell_size = ell_size,
+                      f = flle)
+p_hdr_lle <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
+p_hdr_lle_p <- p_hdr_lle$p + 
+  plot_ellipse(metric_lle, n.plot = 50, add = T, ell_size = ell_size)
+(p_hdr_lle_p + p_lle$p) + coord_fixed()
+```
+
+
+
+# t-SNE
+
+```{r tsne, message=FALSE, warning=FALSE, eval=TRUE}
+## ----tsne, message=FALSE, warning=FALSE, eval=TRUE------------------------------
+x <- train
+method <- "anntSNE"
+perplexity <- 30 # round(k / 3) # 30 by default
+theta <- 0 # for exact tSNE in the C++ tSNE Barnes-Hut implementation
+# tictoc::tic()
+metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = method, 
+                        annmethod = annmethod, eps = 0, distance = distance, treetype = treetype,
+                        searchtype = searchtype, perplexity = perplexity, theta = theta, invert.h = TRUE)
+```
+
+```{r tsneplot, eval = TRUE}
+fn <- metric_tsne$embedding
+Rn <- metric_tsne$rmetric
+E1 <- fn[,1]; E2 <- fn[,2]
+ftsne <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
+fxy_tsne <- hdrcde:::interp.2d(ftsne$x, ftsne$y, ftsne$z, x0 = E1, y0 = E2)
+# plot_embedding(metric_tsne)
+# plot_ellipse(metric_tsne, n.plot = 50)
+# plot_contour(metric_tsne, n.grid = 20, scales = 1/20)
+```
+
+```{r, echo = F}
+# source(here::here("R/sources/hdrplotting.R"))
+p_tsne <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers = 20, scales = 1, f = ftsne, ell_size = ell_size)
+p_hdr_tsne <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
+p_hdr_tsne_p <- p_hdr_tsne$p + 
+  plot_ellipse(metric_tsne, n.plot = 50, add = T, ell_size = ell_size)
+(p_hdr_tsne_p + p_tsne$p) + coord_fixed()
+```
+
+
+
+# UMAP
+
+```{r , eval = TRUE}
+x <- train
+method <- "annUMAP"
+metric_umap <- metricML(x, s = s, k = k, radius = radius, method = method, 
+                        annmethod = annmethod, eps = 0, distance = distance, treetype = treetype,
+                        searchtype = searchtype, 
+                        invert.h = TRUE)
+```
+
+
+```{r}
+fumap <- metric_umap$embedding
+E1 <- fumap[,1]; E2 <- fumap[,2]
+fumap <- vkde2d(x = E1, y = E2, h = Rn, n = n.grid)
+fxy_umap <- hdrcde:::interp.2d(fumap$x, fumap$y, fumap$z, x0 = E1, y0 = E2)
+# plot_embedding(metric_umap)
+# plot_ellipse(metric_umap, n.plot = 50)
+# plot_contour(metric_umap, n.grid = 20, scales = 1/20)
+
+p_umap <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers = 20, scales = 1, ell_size = ell_size)
+p_hdr_umap <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
+p_hdr_umap_p <- p_hdr_umap$p +
+  plot_ellipse(metric_umap, n.plot = 50, add = T)
+(p_hdr_umap_p + p_umap$p) + coord_fixed()
+```
+
+
+
+# Outliers with KDE compared with true densities
+
+```{r trueden}
+fxy <- claytonden # True densities
+fxy <- preswissroll$den
+# Calculates falpha needed to compute HDR of bivariate density den.
+# Also finds approximate mode.
+if(max(prob) > 50) {# Assume prob is coverage percentage
+  alpha <- (100-prob)/100
+} else {# prob is tail probability (for backward compatibility)
+  alpha <- prob}
+alpha <- sort(alpha)
+falpha <- quantile(fxy, alpha)
+# # Vector region of length N
+# region <- rep(100, N)
+# levels <- prob
+# for (i in seq_along(levels))
+#   region[fxy > falpha[i]] <- 100 - levels[i]
+# # Construct region factor
+# levels <- sort(unique(region[region < 100]), decreasing = TRUE)
+# levels <- c(levels, 100)
+# x$Region <- factor(region,
+#                    levels = levels,
+#                    labels = c(paste(head(levels, -1)), ">99")
+#                   )
+# # Sort data so the larger regions go first (other than outliers)
+# r <- region
+# r[region == 100] <- 0
+# ord <- order(r, decreasing = TRUE)
+# x <- x[ord, ]
+  
+# p_den_isomap <- plot_embedding(metric_isomap$embedding[ord,], embedding = TRUE, color = x$Region) 
+# p_den_lle <- plot_embedding(metric_lle) + 
+#   geom_point(aes(col = fxy)) 
+# p_den_tsne <- plot_embedding(metric_tsne) + 
+#   geom_point(aes(col = fxy)) 
+# p_den_umap <- plot_embedding(metric_umap) + 
+#   geom_point(aes(col = pfxy)) 
+
+p_den_isomap <- hdrscatterplot(x = metric_isomap$embedding[,1], y = metric_isomap$embedding[,2], levels = prob, noutliers = 20, den = list(fxy = fxy, falpha = falpha))
+p_den_lle <- hdrscatterplot(x = metric_lle$embedding[,1], y = metric_lle$embedding[,2], levels = prob, noutliers = 20, den = list(fxy = fxy, falpha = falpha))
+p_den_tsne <- hdrscatterplot(x = metric_tsne$embedding[,1], y = metric_tsne$embedding[,2], levels = prob, noutliers = 20, den = list(fxy = fxy, falpha = falpha))
+p_den_umap <- hdrscatterplot(x = metric_umap$embedding[,1], y = metric_umap$embedding[,2], levels = prob, noutliers = 20, den = list(fxy = fxy, falpha = falpha))
+
+
+p1 <- (((p_den_isomap$p + ggtitle("Isomap")) | (p_den_lle$p + ggtitle("LLE")) | (p_den_tsne$p + ggtitle("t-SNE")) | (p_den_umap$p + ggtitle("UMAP"))) /
+    ((p_isomap$p) | 
+    (p_lle$p) | 
+    (p_tsne$p) | 
+    (p_umap$p )) /
+(p_hdr_isomap$p | p_hdr_lle$p | p_hdr_tsne | p_hdr_umap) +
+  coord_fixed() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(subtitle = "
+Top: Outliers with true densities;                  
+Middle: Outliers with variable bandwidth;
+Bottom: Outliers with fixed bandwidth;
+",
+  title = "Twin peak mapping data from Clayton copula")) &
+  labs(x = "", y = "") 
+p1
+```
+
+```{r, eval = FALSE}
+save(metric_isomap, metric_lle, metric_tsne, metric_umap, claytonden, x, file = "swissroll/copulatp_metric4methods.rda")
+```
+
+
+<!-- # Compare the density estimates with the true density -->
+<!-- NOT WORKING DUE TO DIFFERENT SCALES -->
+
+```{r, eval=FALSE}
+# fxy_METHOD is scaled to a different level when applying interp.2d
+# can't plot the true densities directly for comparison
+par(mfrow=c(2,2))
+for(i in 1:4) {
+  methods <- c("isomap", "lle", "tsne", "umap")[i]
+  fxy_ml <- get(paste0("fxy_", methods))
+  plot(fxy, fxy_ml, xlab = "True density", ylab = "Density estimates", asp = 1)
+  abline(0, 1, col = "red")
+}
+```
+
+```{r}
+i <- 1
+for(i in 1:4){
+  methods <- c("isomap", "lle", "tsne", "umap")[i]
+  fxy_ml <- get(paste0("fxy_", methods))
+  fxy_hdr <- get(paste0("p_hdr_", methods))
+  fxy_hdr <- fxy_hdr$densities
+  cor(fxy, fxy_ml, method = "spearman") %>% print() # change hdrscatterplot() output
+  cor(fxy, fxy_hdr, method = "spearman") %>% print() # hdr densities
+  
+  p1 <- cbind(fxy, fxy_ml) %>% 
+    as_tibble() %>% 
+    ggplot(aes(fxy, fxy_ml)) + 
+    geom_point(col = col) +
+    scale_x_log10() + 
+    scale_y_log10() + 
+    ggtitle("Variable bandwidth")
+  p2 <- cbind(fxy, fxy_hdr) %>% 
+    as_tibble() %>% 
+    ggplot(aes(fxy, fxy_hdr)) + 
+    geom_point(col = col) +
+    scale_x_log10() + 
+    scale_y_log10() + 
+    ggtitle("Fixed bandwidth")
+  
+  print(p1 + p2)
+}
+```
+
+
+# Compare the rank of outliers with the true density
+
+```{r}
+den_rank <- order(fxy) # true density ranks in increasing order, anomalies first
+p_isomap_all <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, noutliers = N, scales = 1, f = fisomap)
+p_lle_all <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = N, scales = 1, f = flle)
+p_tsne_all <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers =N, scales = 1, f = ftsne)
+p_umap_all <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers =N, scales = 1, f = fumap)
+```
+
+```{r}
+par(mfrow=c(2,2))
+for(i in 1:4) {
+  methods <- c("isomap", "lle", "tsne", "umap")[i]
+  outlier <- get(paste0("p_", methods, "_all"))
+  plot(den_rank, outlier$outlier, xlab = "True outlier rankinng", ylab = "Estimated outlier ranking", col = col, main = toupper(methods))
+  abline(0, 1, col = "red")
+}
+```
+
+<!-- # Compare outliers among different methods -->
+
+```{r, eval=FALSE}
+par(mfrow=c(2,3))
+for(i in 1:4) {
+  for (j in (i+1):4) {
+    methods <- c("isomap", "lle", "tsne", "umap")
+    outlier1 <- get(paste0("p_", methods[i], "_all"))
+    outlier2 <- get(paste0("p_", methods[j], "_all"))
+    plot(outlier1$outlier, outlier2$outlier, xlab = paste("Outlier rankinng from", methods[i]), ylab = paste("Outlier rankinng from", methods[j]), col = col)
+    abline(0, 1, col = "red")
+  }
+}
+```
+
+
+<!-- To compare two manifold learning methods, we calculate the overlap among outliers. To do so, we first rank the outliers from highest to lowest densities. Then calculate the correlation of ranks for both methods.  -->
+
+<!-- To show our methods performs better, we expect a higher correlation of ranks. This shows robustness in finding outliers using different manifold learning methods. -->
+
+<!-- ```{r} -->
+<!-- p_isomap_all <- plot_outlier(x = metric_isomap, n.grid = 20, prob = prob, noutliers = N, scales = 1/20, f = fisomap) -->
+<!-- p_lle_all <- plot_outlier(x = metric_lle, n.grid = 20, prob = prob, noutliers = N, scales = 1/20, f = flle) -->
+<!-- p_tsne_all <- plot_outlier(x = metric_tsne, n.grid = 20, prob = prob, noutliers =N, scales = 1/20, f = ftsne) -->
+<!-- p_umap_all <- plot_outlier(x = metric_umap, n.grid = 20, prob = prob, noutliers =N, scales = 1/20) -->
+
+
+<!-- head(p_isomap_all$outlier, n = 20) -->
+<!-- head(p_tsne_all$outlier, n = 20) -->
+<!-- # head(p_umap_all$outlier, n = 20) -->
+<!-- outlier_isomap <- order(as.numeric(p_isomap_all$outlier)) -->
+<!-- outlier_tsne <- order(as.numeric(p_tsne_all$outlier)) -->
+<!-- # outlier_umap <- order(as.numeric(p_umap_all$outlier)) -->
+<!-- cor(outlier_isomap, outlier_tsne) -->
+<!-- plot(outlier_isomap, outlier_tsne, asp = 1) -->
+<!-- abline(0, 1) -->
+<!-- ``` -->
+
+
+
+
+<!-- ## Outlier ranking comaprison using fixed bandwidth -->
+
+<!-- ```{r} -->
+<!-- head(p_isomap$outlier, n = 20) -->
+<!-- head(p_hdr_tsne$outlier, n = 20) -->
+<!-- hdroutlier_isomap <- order(as.numeric(p_isomap$outlier)) -->
+<!-- hdroutlier_tsne <- order(as.numeric(p_hdr_tsne$outlier)) -->
+<!-- cor(hdroutlier_isomap, hdroutlier_tsne) -->
+<!-- plot(hdroutlier_isomap, hdroutlier_tsne, asp = 1) -->
+<!-- abline(0, 1) -->
+<!-- # cor(hdroutlier_isomap %>% head(50), hdroutlier_tsne %>% head(50)) -->
+<!-- # topconfects::rank_rank_plot(hdroutlier_isomap, hdroutlier_tsne, n=50) -->
+<!-- ``` -->
+
+
+
+<!-- # Compare high density regions -->
+
+<!-- Similarly, we compare the highest density regions from both methods and expect a similar output in detecting most typical observations.  -->
+
+<!-- ## Variable bandwidth -->
+
+<!-- ```{r} -->
+<!-- tail(p_isomap_all$outlier, n = 20) -->
+<!-- tail(p_tsne_all$outlier, n = 20) -->
+<!-- cor(outlier_isomap %>% tail(50), outlier_tsne %>% tail(50)) -->
+<!-- ``` -->
+
+<!-- ## Fixed bandwidth -->
+
+<!-- ```{r} -->
+<!-- tail(p_isomap$outlier, n = 20) -->
+<!-- tail(p_hdr_tsne$outlier, n = 20) -->
+<!-- cor(hdroutlier_isomap %>% tail(50), hdroutlier_tsne %>% tail(50)) -->
+<!-- ``` -->

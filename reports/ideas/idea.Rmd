@@ -1,0 +1,131 @@
+---
+title: "Some ideas about anomalies on manifolds"
+author: "Anastasios Panagiotelis"
+date: "05/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dimRed)
+library(rgl)
+library(hdrcde)
+knitr::knit_hooks$set(webgl = hook_webgl)
+set.seed(1983)
+```
+
+## Background
+
+Consider the case of points on a unit-radius sphere with three coordinates $x$, $y$ and $z$.  Consider only the positive quadrant, i.e. points where $x>0$,$y>0$,$z>0$.  This is not just a toy example, for instance consider a statistical manifold for discrete distributions of a random variable $U$ with domain 0,1,2.  If we set $x=\sqrt{\textrm{Pr}(U=0)}$, $y=\sqrt{\textrm{Pr}(U=1)}$, $z=\sqrt{\textrm{Pr}(U=2)}$ then each distribution is a point that lies in the positive quadrant of unit sphere.
+
+There are three coordinates since the ambient space is $\mathbb{R}^3$ but the surface of the sphere itself is 2-dimensional.  There are a number of ways we can reduce the dimension down to two coordinates.  For instance we can use the polar coordinates given by
+
+
+$$
+\theta=arccos(z)\\
+\phi=arctan(y/x)
+$$
+
+Here, $\theta$ is an angle downwards from the north pole and $\phi$ is an angle around the equator.  For our purposes, think of computing polar coordinates as a way of doing dimension reduction, i.e. you input $(x,y,z)$ and it returns $(\theta,\phi)$.  Although an actual manifold learning algorithm is not going to return the polar coordinates, it serves as a nice illustration of some of the issues around identifying anomalies on manifolds.
+
+
+## Uniform in sphere $\neq$ uniform in polar coordinates
+
+For a more extensive discussion of parts of this section see [this blog post](http://corysimon.github.io/articles/uniformdistn-on-sphere/) noting that they use $\phi$ and $\theta$ the other way around.  Suppose we want to generate data uniformly on the sphere.  Without getting into too much detail as to why, the following will work:
+
+```{r unifsphere, echo=TRUE, eval=TRUE}
+n<-1000 #number of observations to be simulated
+
+#Generate from independent standard normals with constant variance (the fact that constant variance and zero covariance is called sphericity is not a coincidence)
+
+x<-rnorm(n)
+y<-rnorm(n)
+z<-rnorm(n)
+
+#Norm of randomly generated vectors
+norm_xyz<-sqrt(x^2+y^2+z^2) 
+
+#Normalise each coordinate to guarantee they lie on unit sphere
+#Taking the absolute value puts everything into the upper quadrant
+x<-abs(x)/norm_xyz 
+y<-abs(y)/norm_xyz
+z<-abs(z)/norm_xyz
+
+
+```
+
+This can be plotted in three dimensions and looked at interactively by clicking and dragging
+
+```{r unisphereplot, webgl=TRUE, echo=TRUE}
+
+plot3d(x,y,z)
+```
+
+Suppose we want to understand something about the density of these points.  Strictly speaking anomaly detection (Robs colorful plots) will break down a bit because these are uniform data and there are no anomalies.  However the following exercise does give intuition.
+
+Suppose our 'manifold learning' algorithm is to apply the functions that give us spherical coordinates
+
+```{r sphcoord, echo=TRUE, eval=TRUE}
+theta<-acos(z)
+phi<-atan(y/x)
+```
+
+below is a plot of the spherical coordinates with HDRs.
+
+```{r hdeplot}
+plot(hdrscatterplot(theta,phi))
+```
+
+Notice that the region with low values of $\theta$ is sparse and the data is not uniform.  This is the region near the north pole that gets stretched out when we transform from three dimensional coordinates to polar coordinates.  The anomalies we have detected are a consequence of the embedding and NOT a feature of the data.  More generally looking at the distribution of the low-dimensional data does not always tell us the correct things about the distribution of the high dimensional data
+
+## Using dimension reduction algorithms
+
+Now we can try to see what happens when we use an actual dimension reduction algorithm, for instance ISOMAP
+
+```{r isomap, echo=TRUE,message=FALSE}
+dat<-dimRedData(cbind(x,y,z)) #Prepare data to use in dimRed
+emb<-embed(dat,"Isomap") #Isomap embedding
+plot(hdrscatterplot(emb@data@data[,1],emb@data@data[,2])) #HDR plot
+```
+
+Which seems to not distort things too much.  The HDR plot still identifies outliers (because it has to) but they are just scattered around the corners in a very non-systematic way. 
+
+For something that leads to a lot of distortion have a look t t-SNE.
+
+
+```{r tsneplot, echo=TRUE,message=FALSE}
+emb_tsne<-embed(dat,"tSNE") #tSNE embedding
+plot(hdrscatterplot(emb_tsne@data@data[,1],emb_tsne@data@data[,2])) #HDE plot
+```
+
+The aim of the project is not to evaluate different manifold learning algorithms.  Although ISOMAP worked OK here it is still distorted and in real examples you will never 'know' that the data are uniform on the sphere.  Instead the idea of this project is to do kernel density estimation in a way that takes distortion into account.
+
+## Two dimensional kernel density estimation
+
+In general a multivariate kernel density estimate looks something like this
+
+$$
+\hat{f}(\mathbf{x})=\sum\limits_{i=1}^N K_{\mathbf{H}}(\mathbf{x}-\mathbf{x}_i)
+$$
+
+where if a Gaussian kernel is used
+
+$$
+K_{\mathbf{H}}(\mathbf{x}-\mathbf{x}_i)=(2\pi)^{-d/2}|\mathbf{H}|^{-1/2}\exp\left[-\frac{1}{2}(\mathbf{x}-\mathbf{x}_i)'\mathbf{H}^{-1}(\mathbf{x}-\mathbf{x}_i)\right]
+$$
+
+The matrix $\mathbf{H}$ is called the bandwidth matrix and is very important.  You will often read that the bandwidth matrix is about smoothing and it is.  But an alternative way to think of kernel estimation is that kernel densities 'borrow strength' from nearby points and the bandwidth determines what is "nearby".  If the bandwidth is large then all points are "nearby" and we get an overly smooth kernel density estimate.  The interesting thing about a bandwidth matrix is that it allows for different notions of what is "nearby" along different coordinates and even along diagonal directions.
+
+## Using the Riemannian
+
+The Riemannian estimated using the method of Perrault Joncas and Meila gives some idea of the distortion of an embedding (or so they claim). Mapping the points through a non-linear function "stretchs" some regions of space and "shrinks" others. The Riemannian gives us an idea of the direction and angle of this stretching.  The Riemannian is quite a technical concept but an important thing to understand is that the estimate that comes out of Perrault Joncas algorithm is a square matrix.
+
+We saw how points that are far apart in the embedding may not have been so far apart on the original manifold.  The Riemannian gives us some way of correcting this.  Similarly a bandwidth matrix in a kernel density estimate is all about determining the "directions" in which there should be more or less "closeness".  So the basic idea is to replace the kernel density estimate with
+
+$$
+\hat{f}(\mathbf{x})=\sum\limits_{i=1}^N K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)\\
+K_{\mathbf{H}_i}(\mathbf{x}-\mathbf{x}_i)=(2\pi)^{-d/2}|\mathbf{H}_i|^{-1/2}\exp\left[-\frac{1}{2}(\mathbf{x}-\mathbf{x}_i)'\mathbf{H}_i^{-1}(\mathbf{x}-\mathbf{x}_i)\right]
+$$
+
+where $H_i$ is either the Riemannian or the inverse of the Riemannian (I am not totally sure which one).  Notice that the bandwidth matrix is different for each point.  This makes it a kernel density estimate with local smoothing, which is quite interesting, but we should take care to understand the properties of such things.  There is a paper by Terrel and Scott from Annals of Statistics in 1992 where they talk about this (it is called "variable kernel density estimation"). Some other search terms to find relevant papers might be "adaptive" or "varying bandwidth". I don't know if anyone has had the idea of bringing all these ideas together with manifold learning and the estimate of the Riemannian - we should do a thorough literature search.  However, if no one has already done this I think it is a very interesting way to do anomaly detection for very high dimensional data.

@@ -1,0 +1,220 @@
+---
+title: "Plotting for metric learning output"
+author: "Fan Cheng"
+date: "2021-06-17"
+output: 
+  # prettydoc::html_pretty:
+    # theme: cayman
+    # theme: flatly
+    rmdformats::readthedown:
+    toc: true
+    float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, message=FALSE, echo=TRUE, results='hide'}
+library(tidyverse)
+library(dimRed)
+library(reticulate)
+library(here)
+library(viridis)
+library(hdrcde)
+library(igraph)
+library(matrixcalc)
+library(akima)
+library(car)
+library(ggforce)
+library(ks)
+library(patchwork)
+Jmisc::sourceAll(here::here("R/sources"))
+set.seed(123)
+```
+
+# Metric learning
+
+## Setup
+
+```{r parameters}
+train <- readRDS(here::here("data/spdemand_1id336tow_train.rds"))
+# Parameters fixed
+x <- train
+N <- nrow(train)
+s <- 2
+k <- 20
+method <- "annIsomap"
+annmethod <- "kdtree"
+distance <- "euclidean"
+treetype <- "kd"
+searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
+radius <- .4 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm
+```
+
+## The metric learning algorithm
+
+```{r, message=FALSE}
+metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, invert.h = TRUE)
+summary(metric_isomap)
+```
+
+```{r ggellipse, include=FALSE, eval=FALSE}
+plot_embedding(metric_isomap) +
+  labs(x = "ISO1", y = "ISO2")
+plot_ellipse(metric_isomap, add = F, n.plot = 50, scale = 20,
+             color = blues9[5], fill = blues9[5], alpha = 0.2)
+```
+
+
+# Variable kernel density estimate
+
+For multivariate data, the variable kernel density estimate is given by $$\hat{f}(x) = n^{-1} \sum_i K_{H_i} (x - X_i).$$
+
+
+## Outlier plot based on density estimates
+
+### Fixed bandwidth
+
+```{r}
+# fixed bandwidth
+fn <- metric_isomap$embedding
+E1 <- fn[,1] # rename as Ed to match the aesthetics in plot_ellipse()
+E2 <- fn[,2]
+prob <- c(1, 50, 99)
+p_hdr_isomap <- hdrscatterplot(E1, E2, levels = prob, noutliers = 20, label = NULL)
+p_hdr_isomap_p <- p_hdr_isomap + 
+  plot_ellipse(metric_isomap, add = T, n.plot = 50, scale = 20, 
+             color = blues9[5], fill = blues9[5], alpha = 0.2)
+# p_hdr_isomap_p
+```
+
+### Pointwise adaptive bandwidth
+
+```{r outliers}
+Rn <- metric_isomap$rmetric # array
+n.grid <- 10
+f <- vkde2d(x = fn[,1], y = fn[,2], h = Rn, n = n.grid)
+plot_contour(metric_isomap, n.grid = n.grid, scale = 1/10)
+```
+
+```{r hdroutliers}
+source(here::here("R/sources/hdrplotting.R"))
+p_isomap <- plot_outlier(x = metric_isomap, n.grid = 50, prob = prob, scale = 1/8)
+```
+
+```{r compoutlier}
+(p_hdr_isomap_p + p_isomap$p ) + coord_fixed()
+```
+
+
+
+
+
+# t-SNE
+
+```{r tsne, message=FALSE, warning=FALSE, eval=TRUE}
+x <- train
+method <- "anntSNE"
+perplexity <- round(k / 3) # 30 by default
+theta <- 0 # for exact tSNE in the C++ tSNE Barnes-Hut implementation
+# tictoc::tic()
+metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = perplexity, theta = theta, invert.h = TRUE)
+# summary(metric_tsne)
+# tictoc::toc()
+```
+
+
+```{r, message=FALSE, eval=TRUE}
+ftsne <- metric_tsne$embedding
+E1 <- ftsne[,1]; E2 <- ftsne[,2]
+plot_embedding(metric_tsne)
+plot_ellipse(metric_tsne, n.plot = 50)
+plot_contour(metric_tsne, n.grid = 50, scale = 1/10)
+```
+
+```{r}
+p_tsne <- plot_outlier(x = metric_tsne, n.grid = 50, prob = prob, noutliers = 20, scale = 1/10)
+p_hdr_tsne <- hdrscatterplot(E1, E2, kde.package = "ks", noutliers = 20)
+p_hdr_tsne_p <- p_hdr_tsne$p + 
+  plot_ellipse(metric_tsne, n.plot = 50, add = T)
+(p_hdr_tsne_p + p_tsne$p) + coord_fixed()
+```
+
+
+
+
+# Compare outliers from Isomap and t-SNE
+
+To compare two manifold learning methods, we calculate the overlap among outliers. To do so, we first rank the outliers from highest to lowest densities. Then calculate the correlation of ranks for both methods. 
+
+To show our methods performs better, we expect a higher correlation of ranks. This shows robustness in finding outliers using different manifold learning methods.
+
+```{r}
+(p_isomap$p + p_tsne$p) + coord_fixed()
+```
+
+
+## Outlier ranking comaprison using variable bandwidth
+
+The ranking of outliers can be compared as follows. 
+
+```{r}
+p_isomap_all <- plot_outlier(x = metric_isomap, n.grid = 50, prob = prob, noutliers = N, scale = 1/8)
+p_tsne_all <- plot_outlier(x = metric_tsne, n.grid = 50, prob = prob, noutliers =N, scale = 1/10)
+
+head(p_isomap_all$outlier, n = 20)
+head(p_tsne_all$outlier, n = 20)
+outlier_isomap <- order(as.numeric(p_isomap_all$outlier))
+outlier_tsne <- order(as.numeric(p_tsne_all$outlier))
+# outliers <- cbind(outlier_isomap, outlier_tsne)
+plot(outlier_isomap, outlier_tsne)
+
+```
+
+```{r, include=FALSE, eval=FALSE}
+# ggcorrplot::ggcorrplot(r, hc.order = TRUE, type = "lower", lab = TRUE)
+vec1 <- p_isomap$outlier
+vec2 <- p_tsne$outlier
+topconfects::rank_rank_plot(vec1, vec2, n=20)
+
+library(topconfects)
+a <- sample(letters)
+b <- sample(letters)
+rank_rank_plot(a,b, n=20)
+```
+
+
+## Outlier ranking comaprison using fixed bandwidth
+
+```{r}
+head(p_hdr_isomap$outlier, n = 20)
+head(p_hdr_tsne$outlier, n = 20)
+hdroutlier_isomap <- order(as.numeric(p_hdr_isomap$outlier))
+hdroutlier_tsne <- order(as.numeric(p_hdr_tsne$outlier))
+# hdroutliers <- cbind(hdroutlier_isomap, hdroutlier_tsne)
+cor(hdroutlier_isomap, hdroutlier_tsne)
+cor(hdroutlier_isomap %>% head(50), hdroutlier_tsne %>% head(50))
+```
+
+
+
+# Compare high density regions
+
+Similarly, we compare the highest density regions from both methods and expect a similar output in detecing most typical observations. 
+
+## Variable bandwidth
+
+```{r}
+tail(p_isomap_all$outlier, n = 20)
+tail(p_tsne_all$outlier, n = 20)
+cor(outlier_isomap %>% tail(50), outlier_tsne %>% tail(50))
+```
+
+## Fixed bandwidth
+
+```{r}
+tail(p_hdr_isomap$outlier, n = 20)
+tail(p_hdr_tsne$outlier, n = 20)
+cor(hdroutlier_isomap %>% tail(50), hdroutlier_tsne %>% tail(50))
+```

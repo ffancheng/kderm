@@ -1,0 +1,401 @@
+---
+title: "Plotting for metric learning"
+author: "Fan Cheng"
+date: "2021-06-10"
+output: 
+  # prettydoc::html_pretty:
+    # theme: cayman
+    # theme: flatly
+    rmdformats::readthedown:
+    toc: true
+    float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, message=FALSE, echo=TRUE, results='hide'}
+library(tidyverse)
+library(dimRed)
+library(reticulate)
+library(here)
+library(viridis)
+library(hdrcde)
+library(igraph)
+library(matrixcalc)
+library(akima)
+library(car)
+Jmisc::sourceAll(here::here("R/sources"))
+set.seed(123)
+```
+
+# Metric learning
+
+## Smart meter data for one household
+
+```{r data}
+# load(here::here("data/spdemand_3639id336tow.rda"))
+# nid <- 1
+# ntow <- 336
+# 
+# train <- spdemand %>%
+#   lazy_dt() %>%
+#   filter(tow <= ntow,
+#          # id <= sort(unique(spdemand[,id]))[nid],
+#          id == 1003) %>%
+#   dplyr::select(-id, -tow) %>%
+#   data.table::as.data.table()
+train <- readRDS(here::here("data/spdemand_1id336tow_train.rds"))
+```
+
+## Radius searching with k-d trees
+
+```{r parameters}
+# Parameters fixed
+x <- train
+N <- nrow(train)
+s <- 2
+k <- 20
+method <- "annIsomap"
+annmethod <- "kdtree"
+distance <- "euclidean"
+treetype <- "kd"
+searchtype <- "radius" # change searchtype for radius search based on `radius`, or KNN search based on `k`
+radius <- .4 # the bandwidth parameter, \sqrt(\elsilon), as in algorithm
+```
+
+## The metric learning algorithm
+
+```{r, message=FALSE}
+metric_isomap <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, invert.h = TRUE)
+summary(metric_isomap)
+```
+
+The function `metricML()` returns a list of
+
+-   the embedding coordinates `embedding` of $N \times s$
+-   the embedding metric `rmetric` for each point $p \in x$ as an array. By default, `invert.h = TRUE` returns the inverse of Riemannian metric. 
+-   the weighted neighborhood graph as an `igraph` object `weighted_graph`
+-   the sparse adjacency matrix from the graph `adj_matrix`
+-   the graph laplacian matrix `laplacian`
+
+
+# Embedding plot
+
+```{r embedplot, eval=FALSE}
+# Embedding plot of metricML() output for electricity data
+plot.embedding <- function(x) {
+  fn <- x$embedding
+  
+  todcolor <- colorspace::scale_color_continuous_sequential(
+    palette = "viridis",
+    breaks = c(0, 12, 24, 36, 48),
+    labels=c("00:00", "06:00", "12:00", "18:00", "24:00"),
+    name="Time of day",
+    guide=guide_colorbar(barwidth = 10))
+  
+  p <- fn %>% 
+    cbind(tod = rep(1:48, N / 48)) %>% 
+    as_tibble() %>% 
+    ggplot(aes(x = E1, y = E2, col = tod)) + 
+    geom_point() + 
+    # labs(x = "ISO1", y = "ISO2") +
+    coord_fixed(ratio = 1) + 
+    todcolor + 
+    theme(legend.position = 'bottom')
+  
+  return(p)
+}
+```
+
+```{r, eval=T, include=T}
+# fn <- metric_isomap$embedding
+# head(fn)
+# plot(fn, col = viridis::viridis(24), asp = 1)
+plot.embedding(metric_isomap) +
+  labs(x = "ISO1", y = "ISO2")
+```
+
+
+
+# Ellipse plot
+
+Using the Riemannian metric for each point as the 2-d covariance matrix and the 2-d embeddings as the centroid to plot an ellipse for each point.
+
+The underlying requirement is that the Riemannian metric needs to be a square positive definite matrix.
+
+```{r}
+# Done: add argument `n.plot` to specify how many ellipse to be added
+# If add = FALSE, fix xlim, ylim, radius for generating ellipse
+plot.ellipse <- function(x, n.plot = 50) {
+  fn <- x$embedding
+  Rn <- x$rmetric
+  cols <- viridis::viridis(24) 
+  n.plot <- 50
+  plot(fn, col = cols, asp = 1, pch = 20)
+  for (i in sample(1:N, n.plot)) {
+    mat <- Rn[,,i] 
+    center <- c(fn[i,1], fn[i,2])
+    add <- T 
+    car::ellipse(center, mat, 
+                 radius = .1, # controls the size of ellipse, currently set manually
+                 # xlim = c(-.2, .25), ylim = c(-.2, .2),
+                 # col = cols[i],
+                 col = blues9[5],
+                 asp = 1, pty = "s", lwd = 1, center.pch = 19, center.cex = 0,
+                 fill = T, fill.alpha = 0.2, grid = T, add = add, 
+                 )
+  }
+}
+plot.ellipse(metric_isomap)
+```
+
+To plot as an ggplot2 object, the exsiting `stat_ellipse` does not work for variable covariance matrix. I tried to modify the code and create `stat_ellipse_cov()` which takes another aesthetic `covmat`. But all points are connected as one path. 
+
+Also, `purrr:::pmap_dfc()` does not work correctly, so for loop is currently in use. 
+
+```{r}
+fn <- metric_isomap$embedding
+Rn <- metric_isomap$rmetric
+a <- fn %>% 
+  as_tibble() %>% 
+  add_column(covmat = purrr::array_branch(Rn, 3))
+a
+# a$covmat %>% head()
+
+a %>% 
+  cbind(tod = rep(1:48, N / 48)) %>% 
+  ggplot(aes(E1, E2)) + 
+  geom_point() +
+  stat_ellipse()
+  # stat_ellipse(aes(group = tod, color = tod))
+
+# a %>% 
+#   cbind(tod = rep(1:48, N / 48)) %>%
+#   # group_by(tod) %>%
+#   ggplot(aes(x = E1, y = E2, color = tod)) +
+#   geom_point() +
+#   scale_color_viridis() + 
+#   stat_ellipse_cov(aes(covmat = covmat))
+
+plot.embedding(x = fn, embedding = T) + 
+  stat_ellipse_cov(data = cbind(a, tod = rep(1:48, N / 48)), aes(covmat = covmat))
+```
+
+
+# Contour plot
+
+## Variable kernel density estimate
+
+For multivariate data, the variable kernel density estimate is given by $$\hat{f}(x) = n^{-1} \sum_i K_{H_i} (x - X_i).$$
+
+### Inverse of Riemannian metric as bandwidth matrix
+
+If we use the embedding `x` and the inverse of Riemannian metric `h`, we could produce contour plots based on the density estimates.
+
+```{r pydensity, eval=T}
+emb_isomap <- feather::read_feather(here::here("data/embedding_isomap_1id336tow.feather"))
+np <- reticulate::import("numpy")
+H_isomap <- np$load(here::here("data/hmatrix_isomap_1id336tow.npy"))
+pyh_isomap <- array(NA, dim = c(s, s, N))
+for(i in 1:N){
+  pyh_isomap[,,i] <- H_isomap[i,,]
+}
+
+x <- cbind(emb_isomap$`0`, emb_isomap$`1`)
+f <- mkde(x = x, h = pyh_isomap)
+summary(f)
+# Top 20 index with the lowest densities
+head(order(f), n = 20)
+```
+
+```{r, echo=FALSE, message=FALSE}
+p_pyh <- plot.contour(x, f, plot.hdr = F)
+```
+
+Try linear interpolation using `approx()`.
+
+```{r, eval=FALSE, echo=TRUE}
+x_interp <- approx(x[,1], x[,2], n = 100, yleft = 0, yright = 1, ties = mean)
+x_int <- cbind(x_interp$x, x_interp$y)
+dim(x_int)
+f_linerinterp <- mkde(x = x_int, h = pyh_isomap)
+f_linerinterp
+plot.contour(x_interp, f_linerinterp)
+hdrscatterplot(x_interp$x, x_interp$y, noutliers = 10)
+p <- filled.contour(akima.spl, color.palette = viridis,
+                 plot.axes = { axis(1); axis(2);
+                   # title("smooth interp(*, linear = FALSE)");
+                   points(embed_den, pch = 3, col= hcl(c=20, l = 10))})
+```
+
+Now apply the `mkde()` function to the output of `metricML()` written in R.
+
+```{r rdensity}
+x <- metric_isomap$embedding
+riem_isomap <- metric_isomap$rmetric
+f <- mkde(x = x, h = riem_isomap)
+summary(f)
+head(order(f), n=20)
+```
+
+```{r, echo=FALSE, message=FALSE}
+p_rh <- plot.contour(x, f, plot.hdr = F)
+```
+
+We can check the outliers based on density `f`.
+In R, the outliers are similar to the `megaman` output.
+
+
+<!-- ### Riemannian metric itself as bandwidth matrix -->
+
+<!-- ```{r pydensity1, eval=T} -->
+<!-- R_isomap <- np$load(here::here("data/rmatrix_isomap_1id336tow.npy")) -->
+<!-- # R_isomap[1,,, drop=TRUE] %>%  -->
+<!-- #   matrixcalc::is.positive.definite() # not necessarily symmetric -->
+<!-- pyr_isomap <- array(NA, dim = c(s, s, N)) -->
+<!-- for(i in 1:N){ -->
+<!--   pyr_isomap[,,i] <- R_isomap[i,,] -->
+<!-- } -->
+<!-- pyr_isomap[,,1:3] -->
+
+<!-- x <- cbind(emb_isomap$`0`, emb_isomap$`1`) -->
+<!-- f <- mkde(x = x, h = pyr_isomap) -->
+<!-- summary(f) -->
+<!-- # Top 20 index with the lowest densities -->
+<!-- head(order(f), n=20) -->
+<!-- p_pyr <- plot.contour(x, f, plot.hdr = F) -->
+<!-- ``` -->
+
+<!-- Now apply the `mkde()` function to the output of `metricML()` written in R. -->
+
+<!-- ```{r rdensity1} -->
+<!-- hn <- riemann_metric(Y = as.matrix(emb_isomap), laplacian = Ln, d = s, invert.h = T) -->
+<!-- f <- mkde(x = metric_isomap$embedding, h = hn) -->
+<!-- summary(f) -->
+<!-- head(order(f), n=20) -->
+<!-- p_rr <- plot.contour(x, f, plot.hdr = F) -->
+<!-- ``` -->
+
+
+
+# t-SNE
+
+```{r tsne, message=FALSE, warning=FALSE, eval=TRUE}
+method <- "tSNE"
+perplexity <- 30
+theta <- 0.5
+metric_tsne <- metricML(x, s = s, k = k, radius = radius, method = method, annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = perplexity, theta = theta, invert.h = TRUE)
+summary(metric_tsne)
+```
+
+```{r, include=FALSE, eval=FALSE}
+perplexity <- 30
+theta <- 0.5
+method <- "tSNE"
+e <- dimRed::embed(x,
+                     .method = method,
+                     knn = k,
+                     ndim = s,
+                     annmethod = annmethod,
+                     radius = radius,
+                     eps = eps,
+                     nt = nt,
+                     nlinks = nlinks,
+                     ef.construction = ef.construction,
+                     distance = distance,
+                     treetype = treetype,
+                     searchtype = searchtype,
+                     perplexity = perplexity,
+                     theta = theta,
+                     .mute = c("output"),
+                     # ...
+
+  )
+  fn <- e@data@data
+plot(metric_tsne$embedding)
+```
+
+```{r, message=FALSE, eval=TRUE}
+f <- mkde(x = metric_tsne$embedding, h = metric_tsne$rmetric)
+summary(f)
+head(order(f), n=20)
+plot.contour(x = metric_tsne$embedding, f, plot.hdr = F)
+```
+
+
+```{r anntsne, message=FALSE, warning=FALSE, eval=FALSE, echo=FALSE}
+x <- train
+nn2res <- dplyr::case_when(distance=="euclidean" ~ 
+                                 RANN::nn2(data = x, query = x, k = k + 1, 
+                                           treetype = treetype, searchtype = searchtype, eps = eps,
+                                           radius = radius),
+                               distance=="manhattan" ~ 
+                                 RANN.L1::nn2(data = x, query = x, k = k + 1, 
+                                              treetype = treetype, searchtype = searchtype, eps = eps,
+                                              radius = radius),
+    )
+    names(nn2res) <- c("nn.idx", "nn.dists")
+    
+metric_tsne1 <- metricML(x, nn.idx = nn2res$nn.idx, nn.dists = nn2res$nn.dists, s = s, k = k, radius = radius, method = "anntSNE", annmethod = annmethod, eps = 0, distance = distance, treetype = treetype, searchtype = searchtype, perplexity = k-1, theta = 0.5, invert.h = TRUE)
+summary(metric_tsne1)
+
+
+f <- mkde(x = metric_tsne1$embedding, h = metric_tsne1$rmetric)
+summary(f)
+head(order(f), n=20)
+plot.contour(x = metric_tsne1$embedding, f, plot.hdr = F)
+```
+
+
+
+
+
+
+
+```{r, echo=FALSE, eval=FALSE}
+# Countour plot for megaman, dual metric
+# x <- cbind(emb_isomap$`0`, emb_isomap$`1`)
+embed_den <- as_tibble(cbind(x = x[,1], y = x[,2], z = f)) %>%
+  drop_na()
+pixel <- 100
+lenbreak <- 5
+akima.spl <- interp(embed_den$x, embed_den$y, embed_den$z, nx=pixel, ny=pixel, linear=FALSE)
+hdrscatterplot(embed_den$x, embed_den$y, noutliers = 10)
+filled.contour(akima.spl, color.palette = viridis,
+               plot.axes = { axis(1); axis(2);
+                 title("smooth interp(*, linear = FALSE)");
+                 points(embed_den, pch = 3, col= hcl(c=20, l = 10))})
+```
+
+```{r, echo=FALSE, include=FALSE, eval=FALSE}
+embed_den <- as_tibble(cbind(x = x[,1], y = x[,2], z = f)) %>%
+  drop_na()
+# library(akima)
+pixel <- 100
+lenbreak <- 5
+akima.spl <- interp(embed_den$x, embed_den$y, embed_den$z, nx=pixel, ny=pixel, linear=FALSE)
+p.zmin <- min(embed_den$z,na.rm=TRUE)
+p.zmax <- max(embed_den$z,na.rm=TRUE)
+breaks <- pretty(c(p.zmin,p.zmax), lenbreak)
+# hdrcde
+hdrscatterplot(embed_den$x, embed_den$y, noutliers = 10)
+hdrinfo <- hdr.2d(embed_den$x, embed_den$y, prob = c(50, 95, 99))
+plot.hdr2d(hdrinfo)
+# Contour
+contour(akima.spl, main = "smooth interp(*, linear = FALSE)", col = viridis(length(breaks)-1), levels=breaks, add=TRUE)
+points(embed_den, pch = 20)
+
+filled.contour(akima.spl, color.palette = viridis,
+               plot.axes = { axis(1); axis(2);
+                 title("smooth interp(*, linear = FALSE)");
+                 points(embed_den, pch = 3, col= hcl(c=20, l = 10))},
+               # plot.title = {par(cex.main=1);title(main = "The Topography of Maunga Whau", xlab = "Meters North", ylab = "Meters West")},
+               # plot.axes = { axis(1, seq(100, 800, by = 100))
+                 # axis(2, seq(100, 600, by = 100)) },
+               # key.title = {par(cex.main=0.3);title(main="Height\n(meters)")},
+               # key.axes = axis(4, seq(-1, 1.5, by = 0.5), asp=1)
+)
+
+```
